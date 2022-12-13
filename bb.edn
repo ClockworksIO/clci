@@ -1,0 +1,25 @@
+{:paths ["bb" "src/bb"]
+ :deps 	{babashka/process      																		 {:mvn/version "0.3.11"}
+         clojure-term-colors/clojure-term-colors  {:mvn/version "0.1.0"}}
+
+ :pods  {clci/pod    {:path   "./target/clci-0.0.0.main"
+																						:cache  false}}
+
+ :tasks {;prepare	{:doc 		""																   :requires     ([tasks :as t])
+	 ;		 :task          t/prepare}
+	 test   	{:doc   	"Run all tests."
+			 :requires  	([tasks :as t])
+			 :task      	t/run-tests}
+	 nrepl   	{:doc           "Run a nREPL server on localhost."
+                 	 :requires  	([tasks :as t])
+                 	 :task      	t/nrepl}
+         format   	{:doc           "Run the formatter to format the project's clojure code."
+                 	 :requires  	([format :as fmt])
+                 	 :task      	(apply fmt/format *command-line-args*)}
+	 build		{:doc           "Build the specified target. One of [clean|uberjar|pod]"
+                 	 :requires  	([build :as b])
+                 	 :task      	(apply b/build *command-line-args*)}
+	 hooks  	{:doc           "Git hook related commands."
+                 	 :requires      ([git-hooks :as gh])
+                 	 :task          (apply gh/hooks *command-line-args*)}
+}}
