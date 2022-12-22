@@ -1,0 +1,10 @@
+#kaocha/v1
+{:tests [{:id          :unit
+          :test-paths  ["test" "src/clj"]
+          :ns-patterns [".*"]}]
+										:kaocha/reporter                    [kaocha.report/documentation]
+          ;; :reporter kaocha.report.progress/report
+          ;; :plugins [:kaocha.plugin/profiling :kaocha.plugin/notifier]
+ 									;; Enable/disable output capturing.
+ 									:capture-output? false
+ }
