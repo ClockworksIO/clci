@@ -1,7 +1,8 @@
 (ns git-hooks
   "This module defines several funtions that are invoked by Git hooks."
   (:require
-    [clci.git-hooks-utils :refer [spit-hook]]
+    [babashka.process :refer [shell sh]]
+    [clci.git-hooks-utils :refer [spit-hook changed-files]]
     [clci.pod :refer [valid-commit-msg?]]
     [clojure.term.colors :as c]
     [format :as fmt]))
@@ -23,7 +24,10 @@
 ;; Git 'pre-commit' hook.
 (defmethod hooks "pre-commit" [& _]
   (println (c/blue "Executing pre-commit hook"))
-  (fmt/format "fix"))
+  (let [files (changed-files)]
+    (fmt/format "fix")
+    (doseq [file files]
+      (sh (format "git add %s" file)))))
 
 
 ;; (when-let [files (changed-files)]
@@ -34,6 +38,7 @@
 (defmethod hooks "commit-msg" [& _]
   (let [commit-msg (slurp ".git/COMMIT_EDITMSG")
         msg-valid? (true? (valid-commit-msg? commit-msg))]
+    (println (valid-commit-msg? commit-msg) msg-valid?)
     (if msg-valid?
       (println (c/green "\u2713") " commit message follows the Conventional Commit specification")
       (do
