@@ -1,0 +1,3 @@
+;; cljstyle configuration
+{:files {:ignore #{"target" "docs"}}
+ :rules {:blank-lines {:max-consecutive 3}}}

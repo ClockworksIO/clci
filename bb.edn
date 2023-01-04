@@ -22,4 +22,7 @@
 	 hooks  	{:doc           "Git hook related commands."
                  	 :requires      ([git-hooks :as gh])
                  	 :task          (apply gh/hooks *command-line-args*)}
+         foo            {:doc      ""
+                         :requires  	([tasks :as t])
+                         :task     t/foo}
 }}

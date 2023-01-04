@@ -3,7 +3,7 @@
   **Note**: This code is based on https://blaster.ai/blog/posts/manage-git-hooks-w-babashka.html"
   (:require
     [babashka.fs :as fs]
-    [babashka.process :refer [sh]]
+    [babashka.process :refer [sh shell]]
     [clojure.string :as str]))
 
 
@@ -29,11 +29,9 @@ bb hooks %s" (java.util.Date.) hook))
 (defn changed-files
   "Get a collection of all changed files."
   []
-  (->> (sh "git" "diff" "--name-only" "--cached" "--diff-filter=ACM")
-       :out
-       str/split-lines
-       (filter seq)
-       seq))
+  (-> (shell {:out :string} "git --no-pager diff --name-only --no-color --cached --diff-filter=ACM")
+      :out
+      str/split-lines))
 
 
 (def extensions

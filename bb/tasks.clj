@@ -3,8 +3,11 @@
   This includes perform tests and building the library."
   (:require
     [babashka.process :refer [shell sh]]
+    [clci.git-hooks-utils :refer [changed-files]]
     [clojure.edn :as edn]
-    [clojure.term.colors :as c]))
+    [clojure.string :as str]
+    [clojure.term.colors :as c]
+    [format :as fmt]))
 
 
 (defn run-tests
@@ -21,3 +24,7 @@
   (-> (sh "clj -M:nREPL -m nrepl.cmdline") :out println))
 
 
+(defn foo
+  ""
+
+  [])
