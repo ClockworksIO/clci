@@ -1,8 +1,8 @@
 {:paths ["bb" "src/bb"]
- :deps 	{babashka/process      																		 {:mvn/version "0.3.11"}
-         clojure-term-colors/clojure-term-colors  {:mvn/version "0.1.0"}}
+ :deps 	{babashka/process     		 		{:mvn/version "0.3.11"}
+         clojure-term-colors/clojure-term-colors  	{:mvn/version "0.1.0"}}
 
- :pods  {clci/pod    {:path   "./target/clci-0.0.0.main"
+ :pods  {clci/pod    {:path   "./target/clci-0.1.2.main"
 																						:cache  false}}
 
  :tasks {;prepare	{:doc 		""																   :requires     ([tasks :as t])

@@ -1,4 +1,4 @@
-{:paths ["src/clj"]
+{:paths ["src/clj" "src/bb"]
  :description "ClCI"
  :url       "https://github.com/ClockworksIO/clci"
  :scm       {:name "git"
@@ -6,7 +6,8 @@
  :license   {:name "Apache-2.0"
              :url "https://www.apache.org/licenses/LICENSE-2.0"}
  :deps
- {org.clojure/clojure                 {:mvn/version   "1.11.1"}
+ {org.clojure/clojure                       {:mvn/version "1.11.1"}
+  babashka/babashka                         {:mvn/version "1.0.169"}
   instaparse/instaparse 					{:mvn/version "1.4.12"}
   org.endot/bb-pod-racer 					{:mvn/version "0.1.9"}}
 
@@ -21,7 +22,7 @@
                         :ns-default       build}
   }
 
- :build                 {:version         "0.0.0"					; uses semantic versioning!
+ :build                 {:version         "0.1.2"					; uses semantic versioning!
                          :target-dir	   "target" 				; target directory for build artifacts
                          :lib-name        'clockworks/clci}
  }
