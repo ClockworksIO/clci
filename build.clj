@@ -28,7 +28,7 @@
 (defn uberpod
   "Assemble an uberjar from the project to build a babashka pod."
   [_]
-  (clean! nil)
+  ;(clean! nil)
   (b/copy-dir {:src-dirs    src-dirs
                :target-dir  class-dir})
   (b/compile-clj {:basis    basis

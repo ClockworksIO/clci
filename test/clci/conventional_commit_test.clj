@@ -35,57 +35,208 @@
       [:SUBJECT
        [:TEXT "adding a new awesome feature"]]
       [:BODY
-       [:TEXT "This commit implements the new feature of epic "]
-       [:ISSUE-REF [:ISSUE-ID "RR-111"]]
-       [:TEXT ". It is very good."]])]
+       [:PARAGRAPH
+        [:TEXT "This commit implements the new feature of epic "]
+        [:ISSUE-REF [:ISSUE-ID "RR-111"]]
+        [:TEXT ". It is very good."]]])]
    ;; 6
-   ["fix: resolves input error of #RR-22\n\nThis commit implements a fix of input validation. It is very good :)"
+   ["fix: resolves input error of #RR-22\n\nThis commit implements a fix of input validation. It is very good."
     '([:TYPE "fix"]
       [:SUBJECT
        [:TEXT "resolves input error of "]
        [:ISSUE-REF [:ISSUE-ID "RR-22"]]]
       [:BODY
-       [:TEXT "This commit implements a fix of input validation. It is very good :)"]])]
+       [:PARAGRAPH 
+        [:TEXT "This commit implements a fix of input validation. It is very good."]]])]
    ;; 7
    [(str
+      "fix: resolves input error of #RR-22\n\n"
+      "This commit implements a fix of input validation. It is very good.\n\n"
+      "And another paragraph.\n")
+    '([:TYPE "fix"]
+      [:SUBJECT
+       [:TEXT "resolves input error of "]
+       [:ISSUE-REF [:ISSUE-ID "RR-22"]]]
+      [:BODY
+       [:PARAGRAPH
+        [:TEXT "This commit implements a fix of input validation. It is very good."]]
+       [:PARAGRAPH
+        [:TEXT "And another paragraph."]]])]
+   ;; 8
+   [(str
+      "fix: resolves input error of #RR-22\n\n"
+      "This commit implements a fix of input validation. It is very good.\n\n"
+      "And another paragraph with an issue #RR-123.\n")
+    '([:TYPE "fix"]
+      [:SUBJECT
+       [:TEXT "resolves input error of "]
+       [:ISSUE-REF [:ISSUE-ID "RR-22"]]]
+      [:BODY
+       [:PARAGRAPH
+        [:TEXT "This commit implements a fix of input validation. It is very good."]]
+       [:PARAGRAPH
+        [:TEXT "And another paragraph with an issue "]
+        [:ISSUE-REF [:ISSUE-ID "RR-123"]]
+        [:TEXT "."]]])]
+   ;; 9
+   [(str
+      "fix: resolves input error of #RR-22\n\n"
+      "This commit implements a fix of input validation. It is very good.\n\n"
+      "One more paragraph.\n\n"
+      "And another paragraph with an issue #RR-123.\n")
+    '([:TYPE "fix"]
+      [:SUBJECT
+       [:TEXT "resolves input error of "]
+       [:ISSUE-REF [:ISSUE-ID "RR-22"]]]
+      [:BODY
+       [:PARAGRAPH
+        [:TEXT "This commit implements a fix of input validation. It is very good."]]
+       [:PARAGRAPH
+        [:TEXT "One more paragraph."]]
+       [:PARAGRAPH
+        [:TEXT "And another paragraph with an issue "]
+        [:ISSUE-REF [:ISSUE-ID "RR-123"]]
+        [:TEXT "."]]])]
+   ;; 10
+   [(str
       "feat: switch to new API #RR-33\n\n"
-      "BREAKING: With this commit we are switching to the new API. Please update your access token!\n\n"
-      "See #RR-44 for more details.")
+      "With this commit we are switching to the new API. Please update your access token!\n\n"
+      "BREAKING CHANGE: will not work with library xzy before 0.2.4\n")
     '([:TYPE "feat"]
       [:SUBJECT
        [:TEXT "switch to new API "]
        [:ISSUE-REF [:ISSUE-ID "RR-33"]]]
       [:BODY
-       [:BREAKING]
-       [:TEXT "With this commit we are switching to the new API. Please update your access token!"]]
+       [:PARAGRAPH
+        [:TEXT "With this commit we are switching to the new API. Please update your access token!"]]]
       [:FOOTER
-       [:TEXT "See "]
-       [:ISSUE-REF [:ISSUE-ID "RR-44"]]
-       [:TEXT " for more details."]])]
-   ;; 8
+       [:FOOTER-ELEMENT
+        [:FOOTER-TOKEN "BREAKING CHANGE"] 
+        [:FOOTER-VALUE [:TEXT "will not work with library xzy before 0.2.4"]]]])]
+   ;; 11
    [(str
       "feat: switch to new API #RR-33\n\n"
-      "BREAKING: With this commit we are switching to the new API. Please update your access token!\n\n"
-      "See #RR-44 for more details.\n\n"
+      "With this commit we are switching to the new API. Please update your access token!\n\n"
+      "BREAKING CHANGE: will not work with library xzy before 0.2.4\n"
+      "note: Thanks for all the fish.\n")
+    '([:TYPE "feat"]
+      [:SUBJECT
+       [:TEXT "switch to new API "]
+       [:ISSUE-REF [:ISSUE-ID "RR-33"]]]
+      [:BODY
+       [:PARAGRAPH
+        [:TEXT "With this commit we are switching to the new API. Please update your access token!"]]]
+      [:FOOTER
+       [:FOOTER-ELEMENT
+        [:FOOTER-TOKEN "BREAKING CHANGE"] 
+        [:FOOTER-VALUE [:TEXT "will not work with library xzy before 0.2.4"]]]
+       [:FOOTER-ELEMENT
+        [:FOOTER-TOKEN "note"] 
+        [:FOOTER-VALUE [:TEXT "Thanks for all the fish."]]]])]
+   ;; 12
+   [(str
+      "feat: switch to new API #RR-33\n\n"
+      "With this commit we are switching to the new API. Please update your access token!\n\n"
+      "note: Thanks for all the fish.\n")
+    '([:TYPE "feat"]
+      [:SUBJECT
+       [:TEXT "switch to new API "]
+       [:ISSUE-REF [:ISSUE-ID "RR-33"]]]
+      [:BODY
+       [:PARAGRAPH
+        [:TEXT "With this commit we are switching to the new API. Please update your access token!"]]]
+      [:FOOTER
+       [:FOOTER-ELEMENT
+        [:FOOTER-TOKEN "note"] 
+        [:FOOTER-VALUE [:TEXT "Thanks for all the fish."]]]])]
+   ;; 13
+   [(str
+      "feat: switch to new API #RR-33\n\n"
+      "With this commit we are switching to the new API. Please update your access token!\n\n"
+      "note: Thanks for all the fish.\n"
+      "more: Don't forget to look at #RR-45!\n")
+    '([:TYPE "feat"]
+      [:SUBJECT
+       [:TEXT "switch to new API "]
+       [:ISSUE-REF [:ISSUE-ID "RR-33"]]]
+      [:BODY
+       [:PARAGRAPH
+        [:TEXT "With this commit we are switching to the new API. Please update your access token!"]]]
+      [:FOOTER
+       [:FOOTER-ELEMENT
+        [:FOOTER-TOKEN "note"] 
+        [:FOOTER-VALUE [:TEXT "Thanks for all the fish."]]]
+       [:FOOTER-ELEMENT
+        [:FOOTER-TOKEN "more"] 
+        [:FOOTER-VALUE 
+         [:TEXT "Don't forget to look at "] 
+         [:ISSUE-REF [:ISSUE-ID "RR-45"]]
+         [:TEXT "!"]]]])]
+   ;; 14
+   [(str
+      "feat: switch to new API #RR-33\n\n"
+      "With this commit we are switching to the new API. Please update your access token!\n\n"
+      "note: Thanks for all the fish.\n"
+      "see-docs: See [the docs](https://www.example.com/foo?id=22&page=3)\n"
+      "more: Don't forget to look at #RR-45!\n")
+    '([:TYPE "feat"]
+      [:SUBJECT
+       [:TEXT "switch to new API "]
+       [:ISSUE-REF [:ISSUE-ID "RR-33"]]]
+      [:BODY
+       [:PARAGRAPH
+        [:TEXT "With this commit we are switching to the new API. Please update your access token!"]]]
+      [:FOOTER
+       [:FOOTER-ELEMENT
+        [:FOOTER-TOKEN "note"] 
+        [:FOOTER-VALUE [:TEXT "Thanks for all the fish."]]]
+       [:FOOTER-ELEMENT
+        [:FOOTER-TOKEN "see-docs"] 
+        [:FOOTER-VALUE [:TEXT "See [the docs](https://www.example.com/foo?id=22&page=3)"]]]
+       [:FOOTER-ELEMENT
+        [:FOOTER-TOKEN "more"] 
+        [:FOOTER-VALUE 
+         [:TEXT "Don't forget to look at "] 
+         [:ISSUE-REF [:ISSUE-ID "RR-45"]]
+         [:TEXT "!"]]]])]
+   ;;;;;
+   ;; 15
+   [(str
+      "feat: switch to new API #RR-33\n\n"
+      "With this commit we are switching to the new API. Please update your access token!\n\n"
       "# Please enter a commit message")
     '([:TYPE "feat"]
       [:SUBJECT
        [:TEXT "switch to new API "]
        [:ISSUE-REF [:ISSUE-ID "RR-33"]]]
       [:BODY
-       [:BREAKING]
-       [:TEXT "With this commit we are switching to the new API. Please update your access token!"]]
-      [:FOOTER
-       [:TEXT "See "]
-       [:ISSUE-REF [:ISSUE-ID "RR-44"]]
-       [:TEXT " for more details."]]
+       [:PARAGRAPH
+        [:TEXT "With this commit we are switching to the new API. Please update your access token!"]]]
       [:GIT-REPORT
        [:COMMENT " Please enter a commit message"]])]
-   ;; 9
+   ;; 16
    [(str
       "feat: switch to new API #RR-33\n\n"
-      "BREAKING: With this commit we are switching to the new API. Please update your access token!\n\n"
-      "See #RR-44 for more details.\n\n"
+      "With this commit we are switching to the new API. Please update your access token!\n\n"
+      "BREAKING CHANGE: will not work with library xzy before 0.2.4\n\n"
+      "# Please enter a commit message")
+    '([:TYPE "feat"]
+      [:SUBJECT
+       [:TEXT "switch to new API "]
+       [:ISSUE-REF [:ISSUE-ID "RR-33"]]]
+      [:BODY
+       [:PARAGRAPH
+        [:TEXT "With this commit we are switching to the new API. Please update your access token!"]]]
+      [:FOOTER
+       [:FOOTER-ELEMENT
+        [:FOOTER-TOKEN "BREAKING CHANGE"] 
+        [:FOOTER-VALUE [:TEXT "will not work with library xzy before 0.2.4"]]]]
+      [:GIT-REPORT
+       [:COMMENT " Please enter a commit message"]])]
+   ;; 17
+   [(str
+      "feat: switch to new API #RR-33\n\n"
+      "BREAKING CHANGE: With this commit we are switching to the new API. Please update your access token!\n\n"
       "# Please enter the commit message for your changes. Lines starting\n"
       "#  with '#' will be ignored, and an empty message aborts the commit.\n"
       "#\n"
@@ -97,13 +248,10 @@
       [:SUBJECT
        [:TEXT "switch to new API "]
        [:ISSUE-REF [:ISSUE-ID "RR-33"]]]
-      [:BODY
-       [:BREAKING]
-       [:TEXT "With this commit we are switching to the new API. Please update your access token!"]]
       [:FOOTER
-       [:TEXT "See "]
-       [:ISSUE-REF [:ISSUE-ID "RR-44"]]
-       [:TEXT " for more details."]]
+       [:FOOTER-ELEMENT
+        [:FOOTER-TOKEN "BREAKING CHANGE"]
+        [:FOOTER-VALUE [:TEXT "With this commit we are switching to the new API. Please update your access token!"]]]]
       [:GIT-REPORT
        [:COMMENT " Please enter the commit message for your changes. Lines starting"]
        [:COMMENT "  with '#' will be ignored, and an empty message aborts the commit."]
@@ -112,17 +260,18 @@
        [:COMMENT " On branch feat/rr-2"]
        [:COMMENT " Changes to be committed:"]
        [:COMMENT "       renamed:    ci-bb/src/clj/ci_bb/pod.clj -> ci-bb/src/clj/ci_bb/main.clj"]])]
-   ;; 10
+   ;; 18
    ["chore: this does stuff\n\n"
     '([:TYPE "chore"]
       [:SUBJECT
        [:TEXT "this does stuff"]])]
-   ;; 11
+   ;; 19
    ["fix: this fixes the bug in #123\n\n"
     '([:TYPE "fix"]
       [:SUBJECT
        [:TEXT "this fixes the bug in "]
-       [:ISSUE-REF [:ISSUE-ID "123"]]])]])
+       [:ISSUE-REF [:ISSUE-ID "123"]]])]
+   ])
 
 
 (def invalid-messages
@@ -140,25 +289,22 @@
    ;; 5
    "feat(this!): adding a new awesome feature"
    ;;
-   ;; "feat: Adding a new awesome feature"
+   (str "build: add pod manifest and enable bb lib\n"
+     "\n"
+     "This commit adds a manifest file for the library to be used as a pod and\n"
+     "adds the babashka code to the path to enable use from other\n"
+     "applications.\n\n"
+     "# Please enter the commit message for your changes. Lines starting\n"
+     "# with '#' will be ignored, and an empty message aborts the commit.\n")
    ])
 
 
 (deftest validate-messages
   (testing "Testing to validate correct commit messages."
     (let [parser	(insta/parser grammar)]
-      (is (parseable? parser (get-in valid-messages [0 0])))
-      (is (parseable? parser (get-in valid-messages [1 0])))
-      (is (parseable? parser (get-in valid-messages [2 0])))
-      (is (parseable? parser (get-in valid-messages [3 0])))
-      (is (parseable? parser (get-in valid-messages [4 0])))
-      (is (parseable? parser (get-in valid-messages [5 0])))
-      (is (parseable? parser (get-in valid-messages [6 0])))
-      (is (parseable? parser (get-in valid-messages [7 0])))
-      (is (parseable? parser (get-in valid-messages [8 0])))
-      (is (parseable? parser (get-in valid-messages [9 0])))
-      (is (parseable? parser (get-in valid-messages [10 0]))
-          (is (parseable? parser (get-in valid-messages [11 0])))))))
+      (doseq [[message _] valid-messages]
+        (is (parseable? parser message)))
+      )))
 
 
 (deftest validate-messages-api
@@ -169,26 +315,16 @@
 (deftest parse-messages
   (testing "Testing to parse valid commit messages."
     (let [parser  (insta/parser grammar)]
-      (is (= (parser (get-in valid-messages [0 0])) (get-in valid-messages [0 1])))
-      (is (= (parser (get-in valid-messages [1 0])) (get-in valid-messages [1 1])))
-      (is (= (parser (get-in valid-messages [2 0])) (get-in valid-messages [2 1])))
-      (is (= (parser (get-in valid-messages [3 0])) (get-in valid-messages [3 1])))
-      (is (= (parser (get-in valid-messages [4 0])) (get-in valid-messages [4 1])))
-      (is (= (parser (get-in valid-messages [5 0])) (get-in valid-messages [5 1])))
-      (is (= (parser (get-in valid-messages [6 0])) (get-in valid-messages [6 1])))
-      (is (= (parser (get-in valid-messages [7 0])) (get-in valid-messages [7 1])))
-      (is (= (parser (get-in valid-messages [8 0])) (get-in valid-messages [8 1])))
-      (is (= (parser (get-in valid-messages [9 0])) (get-in valid-messages [9 1])))
-      (is (= (parser (get-in valid-messages [10 0])) (get-in valid-messages [10 1])))
-      (is (= (parser (get-in valid-messages [11 0])) (get-in valid-messages [11 1]))))))
+      (doseq [[message expected] valid-messages]
+        (is (= expected (parser message ))
+          )
+
+        ))))
 
 
 (deftest parse-invalid-messages
   (testing "Testing to parse invalid commit messages. Expect to fail!"
     (let [parser  (insta/parser grammar)]
-      (is (insta/failure? (parser (get invalid-messages 0))))
-      (is (insta/failure? (parser (get invalid-messages 1))))
-      (is (insta/failure? (parser (get invalid-messages 2))))
-      (is (insta/failure? (parser (get invalid-messages 3))))
-      (is (insta/failure? (parser (get invalid-messages 4))))
-      (is (insta/failure? (parser (get invalid-messages 5)))))))
+      (doseq [message invalid-messages]
+        (is (insta/failure? (parser message))))
+      )))
