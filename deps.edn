@@ -5,6 +5,21 @@
              :url "git@github.com:ClockworksIO/clci.git"}
  :license   {:name "Apache-2.0"
              :url "https://www.apache.org/licenses/LICENSE-2.0"}
+ ;; library name - required to build the uberjar, create the pom and build the native binary
+ :lib-name clockworksio/clci
+ ;; current version - uses semantic versioning
+ :version "0.2.0"
+ ;; directory where all non-code resources are located
+ :resources-dir "resources"
+ ;; build target directory - used to place build artifacts
+ :target-dir "target"
+ ;; main pod entrypoint
+ :pod-main clci.main
+ ;; the pod artifacts available to be build
+ :pod-artifacts 
+ [{:os/name         "Linux.*"
+   :os/arch         "amd64"
+   }]
  :deps
  {org.clojure/clojure                       {:mvn/version "1.11.1"}
   babashka/babashka                         {:mvn/version "1.0.169"}
@@ -21,8 +36,4 @@
                                      com.github.clj-easy/graal-build-time   {:mvn/version "0.1.4"}}
                         :ns-default       build}
   }
-
- :build                 {:version         "0.1.2"					; uses semantic versioning!
-                         :target-dir	   "target" 				; target directory for build artifacts
-                         :lib-name        'clockworks/clci}
  }
