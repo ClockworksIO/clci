@@ -46,7 +46,7 @@
        [:TEXT "resolves input error of "]
        [:ISSUE-REF [:ISSUE-ID "RR-22"]]]
       [:BODY
-       [:PARAGRAPH 
+       [:PARAGRAPH
         [:TEXT "This commit implements a fix of input validation. It is very good."]]])]
    ;; 7
    [(str
@@ -111,7 +111,7 @@
         [:TEXT "With this commit we are switching to the new API. Please update your access token!"]]]
       [:FOOTER
        [:FOOTER-ELEMENT
-        [:FOOTER-TOKEN "BREAKING CHANGE"] 
+        [:FOOTER-TOKEN "BREAKING CHANGE"]
         [:FOOTER-VALUE [:TEXT "will not work with library xzy before 0.2.4"]]]])]
    ;; 11
    [(str
@@ -128,10 +128,10 @@
         [:TEXT "With this commit we are switching to the new API. Please update your access token!"]]]
       [:FOOTER
        [:FOOTER-ELEMENT
-        [:FOOTER-TOKEN "BREAKING CHANGE"] 
+        [:FOOTER-TOKEN "BREAKING CHANGE"]
         [:FOOTER-VALUE [:TEXT "will not work with library xzy before 0.2.4"]]]
        [:FOOTER-ELEMENT
-        [:FOOTER-TOKEN "note"] 
+        [:FOOTER-TOKEN "note"]
         [:FOOTER-VALUE [:TEXT "Thanks for all the fish."]]]])]
    ;; 12
    [(str
@@ -147,7 +147,7 @@
         [:TEXT "With this commit we are switching to the new API. Please update your access token!"]]]
       [:FOOTER
        [:FOOTER-ELEMENT
-        [:FOOTER-TOKEN "note"] 
+        [:FOOTER-TOKEN "note"]
         [:FOOTER-VALUE [:TEXT "Thanks for all the fish."]]]])]
    ;; 13
    [(str
@@ -164,12 +164,12 @@
         [:TEXT "With this commit we are switching to the new API. Please update your access token!"]]]
       [:FOOTER
        [:FOOTER-ELEMENT
-        [:FOOTER-TOKEN "note"] 
+        [:FOOTER-TOKEN "note"]
         [:FOOTER-VALUE [:TEXT "Thanks for all the fish."]]]
        [:FOOTER-ELEMENT
-        [:FOOTER-TOKEN "more"] 
-        [:FOOTER-VALUE 
-         [:TEXT "Don't forget to look at "] 
+        [:FOOTER-TOKEN "more"]
+        [:FOOTER-VALUE
+         [:TEXT "Don't forget to look at "]
          [:ISSUE-REF [:ISSUE-ID "RR-45"]]
          [:TEXT "!"]]]])]
    ;; 14
@@ -188,18 +188,18 @@
         [:TEXT "With this commit we are switching to the new API. Please update your access token!"]]]
       [:FOOTER
        [:FOOTER-ELEMENT
-        [:FOOTER-TOKEN "note"] 
+        [:FOOTER-TOKEN "note"]
         [:FOOTER-VALUE [:TEXT "Thanks for all the fish."]]]
        [:FOOTER-ELEMENT
-        [:FOOTER-TOKEN "see-docs"] 
+        [:FOOTER-TOKEN "see-docs"]
         [:FOOTER-VALUE [:TEXT "See [the docs](https://www.example.com/foo?id=22&page=3)"]]]
        [:FOOTER-ELEMENT
-        [:FOOTER-TOKEN "more"] 
-        [:FOOTER-VALUE 
-         [:TEXT "Don't forget to look at "] 
+        [:FOOTER-TOKEN "more"]
+        [:FOOTER-VALUE
+         [:TEXT "Don't forget to look at "]
          [:ISSUE-REF [:ISSUE-ID "RR-45"]]
          [:TEXT "!"]]]])]
-   ;;;;;
+   ;;
    ;; 15
    [(str
       "feat: switch to new API #RR-33\n\n"
@@ -229,7 +229,7 @@
         [:TEXT "With this commit we are switching to the new API. Please update your access token!"]]]
       [:FOOTER
        [:FOOTER-ELEMENT
-        [:FOOTER-TOKEN "BREAKING CHANGE"] 
+        [:FOOTER-TOKEN "BREAKING CHANGE"]
         [:FOOTER-VALUE [:TEXT "will not work with library xzy before 0.2.4"]]]]
       [:GIT-REPORT
        [:COMMENT " Please enter a commit message"]])]
@@ -271,7 +271,61 @@
       [:SUBJECT
        [:TEXT "this fixes the bug in "]
        [:ISSUE-REF [:ISSUE-ID "123"]]])]
-   ])
+   ;; 20
+   [(str
+      "feat: implements pod optimizations of #7\n"
+      "\n"
+      "This commit updates how the pod is build. This includes\n"
+      "- writing a correct Pom file according to babashkas pod spec\n"
+      "- including different platforms and architectures for pods\n"
+      "- versioned file names for pods\n"
+      "- cleaning everything up\n"
+      "# Please enter the commit message for your changes. Lines starting\n"
+      "# with '#' will be ignored, and an empty message aborts the commit.\n"
+      "#\n"
+      "# On branch feat/clci-7\n"
+      "# Changes to be committed:\n"
+      "# new file:   .babashka/clci-0.1.2.main.metadata.cache\n"
+      "# modified:   bb.edn\n"
+      "# modified:   bb/build.clj\n"
+      "# modified:   build.clj\n"
+      "# modified:   deps.edn\n"
+      "# deleted:    manifest.edn\n"
+      "# new file:   resources/clockworksio/clci/pod-manifest.edn\n"
+      "# modified:   src/clj/user.clj\n"
+      "# modified:   test/clci/conventional_commit_test.clj\n"
+      "#\n")
+    '([:TYPE "feat"]
+      [:SUBJECT
+       [:TEXT "implements pod optimizations of "]
+       [:ISSUE-REF [:ISSUE-ID "7"]]]
+      [:BODY
+       [:PARAGRAPH
+        [:TEXT "This commit updates how the pod is build. This includes"]
+        [:NEWLINE]
+        [:TEXT "- writing a correct Pom file according to babashkas pod spec"]
+        [:NEWLINE]
+        [:TEXT "- including different platforms and architectures for pods"]
+        [:NEWLINE]
+        [:TEXT "- versioned file names for pods"]
+        [:NEWLINE]
+        [:TEXT "- cleaning everything up"]]]
+      [:GIT-REPORT
+       [:COMMENT " Please enter the commit message for your changes. Lines starting"]
+       [:COMMENT " with '#' will be ignored, and an empty message aborts the commit."]
+       [:COMMENT ""]
+       [:COMMENT " On branch feat/clci-7"]
+       [:COMMENT " Changes to be committed:"]
+       [:COMMENT " new file:   .babashka/clci-0.1.2.main.metadata.cache"]
+       [:COMMENT " modified:   bb.edn"]
+       [:COMMENT " modified:   bb/build.clj"]
+       [:COMMENT " modified:   build.clj"]
+       [:COMMENT " modified:   deps.edn"]
+       [:COMMENT " deleted:    manifest.edn"]
+       [:COMMENT " new file:   resources/clockworksio/clci/pod-manifest.edn"]
+       [:COMMENT " modified:   src/clj/user.clj"]
+       [:COMMENT " modified:   test/clci/conventional_commit_test.clj"]
+       [:COMMENT ""]])]])
 
 
 (def invalid-messages
@@ -287,24 +341,14 @@
    ;; 4
    "feat:adding a new awesome feature"
    ;; 5
-   "feat(this!): adding a new awesome feature"
-   ;;
-   (str "build: add pod manifest and enable bb lib\n"
-     "\n"
-     "This commit adds a manifest file for the library to be used as a pod and\n"
-     "adds the babashka code to the path to enable use from other\n"
-     "applications.\n\n"
-     "# Please enter the commit message for your changes. Lines starting\n"
-     "# with '#' will be ignored, and an empty message aborts the commit.\n")
-   ])
+   "feat(this!): adding a new awesome feature"])
 
 
 (deftest validate-messages
   (testing "Testing to validate correct commit messages."
     (let [parser	(insta/parser grammar)]
       (doseq [[message _] valid-messages]
-        (is (parseable? parser message)))
-      )))
+        (is (parseable? parser message))))))
 
 
 (deftest validate-messages-api
@@ -316,15 +360,11 @@
   (testing "Testing to parse valid commit messages."
     (let [parser  (insta/parser grammar)]
       (doseq [[message expected] valid-messages]
-        (is (= expected (parser message ))
-          )
-
-        ))))
+        (is (= expected (parser message)))))))
 
 
 (deftest parse-invalid-messages
   (testing "Testing to parse invalid commit messages. Expect to fail!"
     (let [parser  (insta/parser grammar)]
       (doseq [message invalid-messages]
-        (is (insta/failure? (parser message))))
-      )))
+        (is (insta/failure? (parser message)))))))
