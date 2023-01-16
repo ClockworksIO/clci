@@ -1,9 +1,9 @@
 (ns git-hooks
   "This module defines several funtions that are invoked by Git hooks."
   (:require
-    [babashka.process :refer [shell sh]]
+    [babashka.process :refer [sh]]
+    [clci.conventional-commit :refer [valid-commit-msg?]]
     [clci.git-hooks-utils :refer [spit-hook changed-files]]
-    [clci.pod :refer [valid-commit-msg?]]
     [clojure.term.colors :as c]
     [format :as fmt]))
 
@@ -25,7 +25,7 @@
 (defmethod hooks "pre-commit" [& _]
   (println (c/blue "Executing pre-commit hook"))
   (let [files (changed-files)]
-    (fmt/format "fix")
+    (fmt/format-code "fix")
     (doseq [file files]
       (sh (format "git add %s" file)))))
 

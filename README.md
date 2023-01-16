@@ -26,8 +26,6 @@ We aim to keep all decisions made that influence this project as ADRs (Any Decis
 
 All tools should be able to be run not only on the JVM but also with Babashka. This keeps execution time down and eliminates external dependencies. 
 
-Unfortunately not all Clojure modules used by ClCI are compatible with Babashka. This makes it necessary to build some of the tools as Babashka Pods which can be run quickly from any Babashka script. This project uses GraalVM and the _native-image_ tool to build a standalone binary that can be called by Babashka using the Pods protocol. The Pods protocol interface is implemented using the [Podracer](https://github.com/justone/bb-pod-racer) library.
-
 ## How to use
 
 The library can either be used as a normal Clojure module by including it in your project. If you want to use it from Babashka you need to include it as a Pod:
@@ -35,8 +33,9 @@ The library can either be used as a normal Clojure module by including it in you
 ```clojure
 ;; bb.edn
 ;; ...
-  :pods  {clci/pod    {:path   "./path/to/executable/clci-0.0.0.main"
-                       :cache  false}}
+  :deps  {clockworksio/clci    {:git/url "https://github.com/clockworksio/clci"
+                                :git/tag "0.3.0" 
+                                :git/sha ""}}
 ;; ...
 ```
 
@@ -45,7 +44,7 @@ You can then use the pod i.e. to execute the commit linter from a Babashka task:
 (ns git-hooks
  (:require
   [clojure.term.colors :as c]
-  [clci.pod :refer [valid-commit-msg?]]
+  [clci.conventional-commit :refer [valid-commit-msg?]]
   ; ...
 ))
 
@@ -67,48 +66,7 @@ You can then use the pod i.e. to execute the commit linter from a Babashka task:
 
 ## Development Workflow
 
-### Build a Pod
-
-First run the tests to check if your changes broke any existing functionality:
+Run the tests to check if your changes broke any existing functionality:
 ```sh
 bb test
 ```
-
-After all tests succeeded you can build a binary compatible with the pod protocol that can be used from any babashka script:
-```sh
-bb build pod
-```
-The pod binary will be placed `target/ci-bb-0.0.0.main`
-
-**Hint**: The repository uses semantic versioning based on the commit message. As such the version is calculated in the automated build process and must not be changed manually!
-
-
-
-# CC-CLJ
-
-
-## How to use
-
-The library can either be used as a normal Clojure module by including it in your project:
-```clojure
-(ns example.core
-  (:require [ci-bb.conventional-commit :refer [valid-commit-msg?]]))
-
-(valid-commit-msg? "chore: this is a valid message with an issue #123") ; -> true
-```
-
-To use the library from Babashka you need to load the library as a pod:
-```clojure
-#!/usr/bin/env bb
-(require '[babashka.pods :as pods])
-
-(pods/load-pod "ci-bb") ; path to the binary packaging the library w the pod protocol interface
-
-(require '[ci-bb.pod :refer [valid-commit-msg?]])
-
-(valid-commit-msg? "chore: this is a valid message with an issue #123") ; -> true
-
-```
-
-
-

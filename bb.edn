@@ -1,23 +1,23 @@
-{:paths ["bb" "src/bb"]
- :deps 	{babashka/process     		 		{:mvn/version "0.3.11"}
-         clojure-term-colors/clojure-term-colors  	{:mvn/version "0.1.0"}}
+{:paths ["bb" "src"]
+ :deps  {babashka/process     		 		      {:mvn/version "0.3.11"}
+         clojure-term-colors/clojure-term-colors  {:mvn/version "0.1.0"}
+         io.github.babashka/instaparse.bb         {:git/sha "0e86a09bafead57eed251cbda53ab35032688bdf"}}
 
- :pods  {clci/pod    {:path   "./target/v0.2.0-linux-amd64-clci.main"
-                      :cache  false}}
 
- :tasks {test   	{:doc   	"Run all tests."
-			 :requires  	([tasks :as t])
-			 :task      	t/run-tests}
-	 nrepl   	{:doc           "Run a nREPL server on localhost."
-                 	 :requires  	([tasks :as t])
-                 	 :task      	t/nrepl}
+ :tasks {test           {:extra-paths       ["test"]
+                         :extra-deps        {io.github.cognitect-labs/test-runner   {:git/tag "v0.5.1" 
+                                                                                     :git/sha "dfb30dd"}}
+                         :task              (exec 'cognitect.test-runner.api/test)
+                         :exec-args         {:dirs ["test"] :patterns [".*-test$"]}
+                         :org.babashka/cli  {:coerce {:nses [:symbol]
+                                                      :vars [:symbol]}}}
          format   	{:doc           "Run the formatter to format the project's clojure code."
                  	 :requires  	([format :as fmt])
-                 	 :task      	(apply fmt/format *command-line-args*)}
-	 build		{:doc           "Build the specified target. One of [clean|uberjar|pod]"
-                 	 :requires  	([build :as b])
-                 	 :task      	(apply b/build *command-line-args*)}
-	 hooks  	{:doc           "Git hook related commands."
+                 	 :task      	(apply fmt/format-code *command-line-args*)}
+	     hooks  	{:doc           "Git hook related commands."
                  	 :requires      ([git-hooks :as gh])
                  	 :task          (apply gh/hooks *command-line-args*)}
+         foo        {:doc       ""
+                     :requires  ([tasks :as t])
+                     :task      t/foo}
          }}
