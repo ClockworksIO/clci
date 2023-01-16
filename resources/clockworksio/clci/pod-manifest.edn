@@ -1,1 +1,0 @@
-{:pod/name clockworksio/clci, :pod/description "ClCI", :pod/version "0.2.0", :pod/license "Apache-2.0", :pod/language "clojure", :pod/artifacts [{:os/name "Linux.*", :os/arch "amd64", :artifact/url "https://github.com/ClockworksIO/clci/archive/refs/tags/v0.2.0.zip", :artifact/executable "v0.2.0-linux-amd64-clci.main"}]}

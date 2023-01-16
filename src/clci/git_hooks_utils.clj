@@ -3,7 +3,7 @@
   **Note**: This code is based on https://blaster.ai/blog/posts/manage-git-hooks-w-babashka.html"
   (:require
     [babashka.fs :as fs]
-    [babashka.process :refer [sh shell]]
+    [babashka.process :refer [shell]]
     [clojure.string :as str]))
 
 

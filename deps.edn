@@ -1,39 +1,18 @@
-{:paths ["src/clj" "src/bb"]
+{:paths ["src"]
  :description "ClCI"
  :url       "https://github.com/ClockworksIO/clci"
  :scm       {:name "git"
              :url "git@github.com:ClockworksIO/clci.git"}
  :license   {:name "Apache-2.0"
              :url "https://www.apache.org/licenses/LICENSE-2.0"}
- ;; library name - required to build the uberjar, create the pom and build the native binary
+ ;; library name
  :lib-name clockworksio/clci
  ;; current version - uses semantic versioning
- :version "0.2.0"
+ :version "0.3.0"
  ;; directory where all non-code resources are located
  :resources-dir "resources"
- ;; build target directory - used to place build artifacts
- :target-dir "target"
- ;; main pod entrypoint
- :pod-main clci.main
- ;; the pod artifacts available to be build
- :pod-artifacts 
- [{:os/name         "Linux.*"
-   :os/arch         "amd64"
-   }]
- :deps
- {org.clojure/clojure                       {:mvn/version "1.11.1"}
-  babashka/babashka                         {:mvn/version "1.0.169"}
-  instaparse/instaparse 					{:mvn/version "1.4.12"}
-  org.endot/bb-pod-racer 					{:mvn/version "0.1.9"}}
 
  :aliases
- {:test                {:extra-paths     ["test"]
-                        :main-opts       ["-m" "kaocha.runner"]
-                        :extra-deps      {lambdaisland/kaocha                    {:mvn/version "1.70.1086"}}}
-  :nREPL			      {:extra-deps 		{nrepl/nrepl 			                   {:mvn/version "1.0.0"}}}
-  :format				   {:deps 				{mvxcvi/cljstyle 		                   {:mvn/version "0.15.0"}}}
-  :build               {:deps    			{io.github.clojure/tools.build 	       {:git/tag "v0.8.5" :git/sha "9c738da"}
-                                     com.github.clj-easy/graal-build-time   {:mvn/version "0.1.4"}}
-                        :ns-default       build}
+ {:format				   {:deps 				{mvxcvi/cljstyle 		                   {:mvn/version "0.15.0"}}}
   }
  }

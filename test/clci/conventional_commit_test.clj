@@ -9,7 +9,7 @@
 (defn parseable?
   "Helper function to test if the given `msg` (string) can be parsed with the given `parser`."
   [parser msg]
-  (not (insta/failure? (parser msg))))
+  (not (insta/failure? (insta/parse parser msg))))
 
 
 (def valid-messages
@@ -333,7 +333,7 @@
   [;; 0
    "foo: adding a new awesome feature"
    ;; 1
-   "feat(): adding a new awesome feature"
+   "feat(d: adding a new awesome feature"
    ;; 2
    "adding a new awesome feature"
    ;; 3
@@ -341,7 +341,11 @@
    ;; 4
    "feat:adding a new awesome feature"
    ;; 5
-   "feat(this!): adding a new awesome feature"])
+   "feat(this!): adding a new awesome feature"
+   ;; 6
+   "featd): adding a new awesome feature"
+   ;; 7
+   "feat: adding a new awesome feature\nBREAKING reason\ntoken value"])
 
 
 (deftest validate-messages
@@ -360,11 +364,12 @@
   (testing "Testing to parse valid commit messages."
     (let [parser  (insta/parser grammar)]
       (doseq [[message expected] valid-messages]
-        (is (= expected (parser message)))))))
+        (is (= expected (insta/parse parser message)))))))
 
 
 (deftest parse-invalid-messages
   (testing "Testing to parse invalid commit messages. Expect to fail!"
-    (let [parser  (insta/parser grammar)]
+    (let [parser (insta/parser grammar)]
       (doseq [message invalid-messages]
-        (is (insta/failure? (parser message)))))))
+        (is (insta/failure? (insta/parse parser message)))))))
+

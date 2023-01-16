@@ -3,7 +3,7 @@ scope: Project
 version: 1.0.0
 date: 2022-12-21
 authors: Moritz Moxter (moritz@clockworks.io)
-status: accepted
+status: superseded by adr006
 ---
 # ADR005 - Build Process
 

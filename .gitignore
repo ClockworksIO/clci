@@ -1,3 +1,6 @@
 .nrepl-port
 .cpcache
-target/*
+target/
+.lsp
+.clj-kondo/
+.babashka/

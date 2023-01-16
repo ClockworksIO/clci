@@ -1,9 +1,7 @@
 (ns clci.conventional-commit
-  "This module defines a PEG based grammer to validate and parse conventional commit messages
-  including several functions to parse and validate a message satisfies the specification."
+  ""
   (:require
-    [instaparse.core :as insta]
-    [pod-racer.core :as pod]))
+    [instaparse.core :as insta]))
 
 
 (def grammar
@@ -48,4 +46,6 @@
 
 (defn msg->ast
   "Get the AST from a commit `msg`."
-  [msg])
+  [msg]
+  (-> (insta/parser grammar)
+      (insta/parse msg)))
