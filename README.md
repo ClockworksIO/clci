@@ -35,7 +35,7 @@ The library can either be used as a normal Clojure module by including it in you
 ;; ...
   :deps  {clockworksio/clci    {:git/url "https://github.com/clockworksio/clci"
                                 :git/tag "0.3.0" 
-                                :git/sha ""}}
+                                :git/sha "0662a1b3dd61079a09def6c71d357629b72df383"}}
 ;; ...
 ```
 
