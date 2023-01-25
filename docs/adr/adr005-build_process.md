@@ -1,11 +1,23 @@
 ---
-scope: Project
-version: 1.0.0
+scope: project
+version: 1.0.1
 date: 2022-12-21
 authors: Moritz Moxter (moritz@clockworks.io)
 status: superseded by adr006
+namespace: io.clockworks
+document-type: adr@2.0.0
 ---
 # ADR005 - Build Process
+
+**Scope**: project
+
+**Status**: superseded by [ADR006](./adr006-instaparse_bb_pod.md)
+
+**Version**: 1.0.1
+
+**Date**: 2022-12-21
+
+**Authors**: Moritz Moxter (moritz@clockworks.io)
 
 ## Summary
 

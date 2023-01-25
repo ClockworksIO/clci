@@ -1,11 +1,23 @@
 ---
-scope: Project
-version: 1.0.0
+scope: project
+version: 1.0.1
 date: 2022-12-16
 authors: Moritz Moxter (moritz@clockworks.io)
 status: accepted
+namespace: io.clockworks
+document-type: adr@2.0.0
 ---
 # ADR004 - Conventional Commit Linter
+
+**Scope**: project
+
+**Status**: accepted
+
+**Version**: 1.0.1
+
+**Date**: 2022-12-16
+
+**Authors**: Moritz Moxter (moritz@clockworks.io)
 
 ## Summary
 

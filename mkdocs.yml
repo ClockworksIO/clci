@@ -1,0 +1,55 @@
+site_name: clci
+site_description: >-
+  The documentation of clci.
+
+# Repository
+repo_name: ClockworksIO/clci
+repo_url: https://github.com/ClockworksIO/clci
+
+site_dir: target/docs
+
+theme:
+  name: material
+  icon:
+    repo: fontawesome/brands/gitlab
+  # Don't include MkDocs' JavaScript
+  include_search_page: false
+  search_index_only: true
+
+  # Default values, taken from mkdocs_theme.yml
+  language: en
+  features:
+    - navigation.tabs
+    - navigation.sections
+
+markdown_extensions:
+  - footnotes
+  - pymdownx.critic
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - def_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+nav:
+  - Home: index.md
+  - 'User Guide': './userguide/index.md'
+  - Any Decision Records:
+    - 'Overview': './adr/index.md'
+    - 'ADR Template': './adr/adr_template.md'
+    - 'ADR Index':
+      - 'ADR001 - Conventional Commits': './adr/adr001-conventional_commits.md'
+      - 'ADR002 - Git Workflow': './adr/adr002-git_workflow.md'
+      - 'ADR003 - Git Branch Naming': './adr/adr003-git_branch_naming.md'
+      - 'ADR004 - Conventional Commit Linter': './adr/adr004-conventional_commit_linter.md'
+      - 'ADR005 - Build Process': './adr/adr005-build_process.md'
+      - 'ADR006 - Instaparse Pod': './adr/adr006-instaparse_bb_pod.md'
+  - Docs:
+    - 'Overview': './docs.md'

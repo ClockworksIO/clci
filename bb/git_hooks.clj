@@ -40,7 +40,6 @@
 (defmethod hooks "commit-msg" [& _]
   (let [commit-msg (slurp ".git/COMMIT_EDITMSG")
         msg-valid? (true? (valid-commit-msg? commit-msg))]
-    (println (valid-commit-msg? commit-msg) msg-valid?)
     (if msg-valid?
       (println (c/green "\u2713") " commit message follows the Conventional Commit specification")
       (do
