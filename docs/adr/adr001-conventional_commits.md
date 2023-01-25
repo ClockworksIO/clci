@@ -1,12 +1,24 @@
 ---
 scope: project
-version: 1.0.0
+version: 1.0.1
 date: 2022-12-12
 authors: Moritz Moxter (moritz@clockworks.io)
 status: accepted
+namespace: io.clockworks
+document-type: adr@2.0.0
 ---
 
 # ADR001 - Conventional Commits
+
+**Scope**: project
+
+**Status**: accepted
+
+**Version**: 1.0.1
+
+**Date**: 2022-12-12
+
+**Authors**: Moritz Moxter (moritz@clockworks.io)
 
 ## Summary
 

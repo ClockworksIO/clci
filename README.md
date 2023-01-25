@@ -16,7 +16,7 @@ When building production grade software we need to ensure a high level of qualit
 
 One of the ways to prevent degrading quality over time are conventions how to develop the product and using automations to ensure those conventions. Because - lets be honest - when nobody enforces those conventions we developers will get lazy and won't always keep to our own rules.
 
-A second import part of keeping our product quality high is to use testing. Since there are other tools and guides how to do software testing this will not be covered by ClCI.
+A second important part of keeping our product quality high is to use testing. Since there are other tools and guides how to do software testing this will not be covered by ClCI.
 
 Independently of which exact measures the product- and development team uses to keep quality at a high level, the use of automations is highly recommended and certainly will make life easier. ClCI is build to be used in automations or on a developers local machine. It can be used from any CI/CD system. This project uses Github Actions and the provided examples will also focus on Github Actions.
 
