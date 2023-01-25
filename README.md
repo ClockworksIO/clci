@@ -26,11 +26,11 @@ We aim to keep all decisions made that influence this project as ADRs (Any Decis
 
 ## Technical Overview
 
-All tools should be able to be run not only on the JVM but also with Babashka. This keeps execution time down and eliminates external dependencies. 
+All tools are intended to be used with Babashka. This keeps execution time down and eliminates external dependencies. It should still be possible to use most of the modules with plain Clojure by making some alterations.
 
 ## How to use
 
-The library can either be used as a normal Clojure module by including it in your project. If you want to use it from Babashka you need to include it as a Pod:
+The library can either be used as a Babashka library by including it in your project:
 
 ```clojure
 ;; bb.edn
@@ -41,7 +41,7 @@ The library can either be used as a normal Clojure module by including it in you
 ;; ...
 ```
 
-You can then use the pod i.e. to execute the commit linter from a Babashka task:
+You can then use the module i.e. to execute the commit linter from a Babashka task:
 ```clojure
 (ns git-hooks
  (:require
