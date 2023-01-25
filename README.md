@@ -2,6 +2,8 @@
 
 This library aims to provide utilities to improve the workflow of building production grade Clojure applications.
 
+**Early Version**: This project is still quite new and has most likely several bugs. Using ClCi in production is at your own risk. Please feel free to file any bugs you find.
+
 ## Summary
 
 The ClCI library provides tooling for the following use cases:
