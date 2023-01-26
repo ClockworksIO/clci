@@ -13,7 +13,7 @@
                             / (HEADER <EMPTY-LINE> BODY GIT-REPORT? <NEWLINE>*)
                             / (HEADER GIT-REPORT? <NEWLINE>*);"
     "<HEADER>       =       TYPE (<'('>SCOPE<')'>)? <':'> <SPACE> SUBJECT;"
-    "TYPE           =       'feat' | 'fix' | 'refactor' | 'perf' | 'style' | 'test' | 'docs' | 'build' | 'ops' | 'chore';"
+    "TYPE           =       'feat' | 'fix' | 'refactor' | 'perf' | 'style' | 'test' | 'docs' | 'build' | 'ci' | 'chore';"
     "SCOPE          =       #'[a-zA-Z0-9]+';"
     "SUBJECT        =       TEXT ISSUE-REF? TEXT? !'.';"
     "BODY           =       (!PRE-FOOTER PARAGRAPH) / (!PRE-FOOTER PARAGRAPH (<EMPTY-LINE> PARAGRAPH)*);"
