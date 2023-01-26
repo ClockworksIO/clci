@@ -5,7 +5,8 @@
     [clci.conventional-commit :refer [valid-commit-msg?]]
     [clci.git-hooks-utils :refer [spit-hook changed-files]]
     [clojure.term.colors :as c]
-    [format :as fmt]))
+    [format :as fmt]
+    [utils :refer [kondo-lint]]))
 
 
 ;;
@@ -26,6 +27,7 @@
   (println (c/blue "Executing pre-commit hook"))
   (let [files (changed-files)]
     (fmt/format-code "fix")
+    (kondo-lint)
     (doseq [file files]
       (sh (format "git add %s" file)))))
 
