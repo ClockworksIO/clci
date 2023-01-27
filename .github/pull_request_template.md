@@ -7,7 +7,7 @@ Resolves # (issue)
 
 ## Type of Change
 
-Please delete options that are not relevant.
+_Please delete options that are not relevant_
 
 - [ ] Bug fix (non-breaking change which fixes an issue)
 - [ ] New feature (non-breaking change which adds functionality)
@@ -16,17 +16,20 @@ Please delete options that are not relevant.
 
 # How Has This Been Tested?
 
-Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce. Please also list any relevant details for your test configuration
+Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce. Please also list any relevant details for your test configuration and how stakeholders can test and verify your changes.
 
-- [ ] Standard Unit Tests
+- ...
 
 **Test Configuration**:
-_Describe any extra configuration required when running the tests._
+_Describe any extra configuration required when performing the tests._
 
 # Checklist:
 
+_Please delete all options not relevant for this PR_
+
 - [ ] My code follows the style guidelines of this project
 - [ ] I have performed a self-review of my own code
+- [ ] The Acceptence Criteria of the related issue are satisfied
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] I have made corresponding changes to the documentation
 - [ ] My changes generate no new warnings
