@@ -1,5 +1,7 @@
 {:paths ["bb" "src"]
  :deps  {babashka/process     		 		        {:mvn/version "0.3.11"}
+         org.clojure/spec.alpha                   {:mvn/version "0.3.218"}
+         org.babashka/http-client                 {:mvn/version "0.0.2"}
          version-clj/version-clj                  {:mvn/version "2.0.2"}
          clojure-term-colors/clojure-term-colors  {:mvn/version "0.1.0"}
          io.github.babashka/instaparse.bb         {:git/sha "0e86a09bafead57eed251cbda53ab35032688bdf"}
