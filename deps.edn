@@ -8,7 +8,7 @@
  ;; library name
  :lib-name clockworksio/clci
  ;; current version - uses semantic versioning
- :version "0.3.0"
+ :version "0.3.1"
  ;; directory where all non-code resources are located
  :resources-dir "resources"
 
