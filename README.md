@@ -37,7 +37,7 @@ The library can either be used as a Babashka library by including it in your pro
 ;; ...
   :deps  {clockworksio/clci    {:git/url "https://github.com/clockworksio/clci"
                                 :git/tag "0.3.2" 
-                                :git/sha "50eade781ef806202d39d7cb960c1940d0330211"}}
+                                :git/sha "7d4413d2b2f681325f0daffb8cd8ff9e92abcabd"}}
 ;; ...
 ```
 
