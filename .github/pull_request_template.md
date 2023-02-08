@@ -29,7 +29,7 @@ _Please delete all options not relevant for this PR_
 
 - [ ] My code follows the style guidelines of this project
 - [ ] I have performed a self-review of my own code
-- [ ] The Acceptence Criteria of the related issue are satisfied
+- [ ] The Acceptance Criteria of the related issue are satisfied
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] I have made corresponding changes to the documentation
 - [ ] My changes generate no new warnings
