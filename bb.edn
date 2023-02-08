@@ -1,6 +1,5 @@
 {:paths ["bb" "src"]
- :deps  {babashka/process     		 		      {:mvn/version "0.3.11"}
-         clojure-term-colors/clojure-term-colors  {:mvn/version "0.1.0"}
+ :deps  {babashka/process     		 		        {:mvn/version "0.3.11"}
          io.github.babashka/instaparse.bb         {:git/sha "0e86a09bafead57eed251cbda53ab35032688bdf"}
          io.github.clj-kondo/clj-kondo-bb         {:git/tag "v2023.01.20" 
                                                    :git/sha "adfc7df"}}

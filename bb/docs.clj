@@ -2,7 +2,7 @@
   "Babashka related to the documentation of the project."
   (:require
     [babashka.process :refer [sh]]
-    [clojure.term.colors :as c]))
+    [clci.term :refer [with-c]]))
 
 
 (defmulti docs! (fn [& args] (first args)))
@@ -20,4 +20,4 @@
 
 ;; Default handler to catch invalid hooks
 (defmethod docs! :default [& args]
-  (println (c/yellow "Unknown command: ") (c/red (first args))))
+  (println (with-c :yellow "Unknown command: ") (with-c :red (first args))))
