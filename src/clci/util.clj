@@ -1,0 +1,16 @@
+(ns clci.util)
+
+
+(defn join-paths
+  "Takes an arboitrary number of (partital) paths and joins them together.
+  Handles slashes at the end of the path.
+	I.e. 
+	```clojure
+	(join-paths \"/some/base/path\" \"local/path/\") ; -> \"/some/base/path/local/path\"
+  (join-paths \"/some/base/path/\" \"local/path\") ; -> \"/some/base/path/local/path\"
+	```
+	"
+  [& parts]
+  (as-> (map #(str/split % #"/") parts) $
+        (apply concat $)
+        (str/join "/" $)))

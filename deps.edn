@@ -11,6 +11,8 @@
  :version "0.4.0"
  ;; directory where all non-code resources are located
  :resources-dir "resources"
+ ;; build target directory - used to place build artifacts
+ :target-dir  "target"
  
  :deps      {babashka/process                         {:mvn/version "0.3.11"}
              io.github.babashka/instaparse.bb         {:git/sha "0e86a09bafead57eed251cbda53ab35032688bdf"}
@@ -19,5 +21,6 @@
 
  :aliases
  {:format				   {:deps 				{mvxcvi/cljstyle 		                   {:mvn/version "0.15.0"}}}
+  :nREPL           {:extra-deps   {nrepl/nrepl                           {:mvn/version "1.0.0"}}}
   }
  }
