@@ -1,0 +1,8 @@
+clci.git-hooks-utils/spit-hook
+clci.git-hooks-utils/changed-files
+clci.git-hooks-utils/clj?
+clci.conventional-commit/valid-commit-msg?
+clci.conventional-commit/msg->ast
+clci.term/with-c
+clci.term/with-h
+clci.carve/carve

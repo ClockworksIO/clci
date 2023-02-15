@@ -2,6 +2,7 @@
   "This module defines several funtions that are invoked by Git hooks."
   (:require
     [babashka.process :refer [sh]]
+    [clci.carve :refer [carve]]
     [clci.conventional-commit :refer [valid-commit-msg?]]
     [clci.git-hooks-utils :refer [spit-hook changed-files]]
     [clci.term :refer [with-c]]
@@ -28,6 +29,7 @@
   (let [files (changed-files)]
     (fmt/format-code "fix")
     (kondo-lint)
+    (carve {:check true :report true})
     (doseq [file files]
       (sh (format "git add %s" file)))))
 
