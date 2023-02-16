@@ -1,7 +1,7 @@
 (ns clci.conventional-commit-test
   "This module provides tests for the conventional commit parser."
   (:require
-    [clci.conventional-commit :refer [grammar valid-commit-msg?]]
+    [clci.conventional-commit :refer [valid-commit-msg? parser parse-only-valid get-type get-scope]]
     [clojure.test :refer [deftest testing is]]
     [instaparse.core :as insta]))
 
@@ -350,9 +350,8 @@
 
 (deftest validate-messages
   (testing "Testing to validate correct commit messages."
-    (let [parser	(insta/parser grammar)]
-      (doseq [[message _] valid-messages]
-        (is (parseable? parser message))))))
+    (doseq [[message _] valid-messages]
+      (is (parseable? parser message)))))
 
 
 (deftest validate-messages-api
@@ -362,14 +361,56 @@
 
 (deftest parse-messages
   (testing "Testing to parse valid commit messages."
-    (let [parser  (insta/parser grammar)]
-      (doseq [[message expected] valid-messages]
-        (is (= expected (insta/parse parser message)))))))
+    (doseq [[message expected] valid-messages]
+      (is (= expected (insta/parse parser message))))))
 
 
 (deftest parse-invalid-messages
   (testing "Testing to parse invalid commit messages. Expect to fail!"
-    (let [parser (insta/parser grammar)]
-      (doseq [message invalid-messages]
-        (is (insta/failure? (insta/parse parser message)))))))
+    (doseq [message invalid-messages]
+      (is (insta/failure? (insta/parse parser message))))))
 
+
+(deftest test-parse-only-valid
+  (testing "Testing the `parse-only-valid` shortcut function."
+    (let [data-col  [(get-in valid-messages [0 0]) ; res[0]
+                     (get-in valid-messages [1 0]) ; res[1]
+                     (get invalid-messages 0)
+                     (get-in valid-messages [3 0]) ; res[2]
+                     (get invalid-messages 1)
+                     (get invalid-messages 3)
+                     (get-in valid-messages [7 0]) ; res[3]
+                     (get-in valid-messages [8 0]) ; res[4]
+                     (get invalid-messages 5)
+                     (get-in valid-messages [10 0]) ; res[5]
+                     (get-in valid-messages [11 0]) ; res[6]
+                     (get invalid-messages 4)
+                     (get-in valid-messages [16 0]) ; res[7]
+                     (get invalid-messages 6)
+                     (get-in valid-messages [19 0])] ; res[8]
+          res-col   (parse-only-valid data-col)]
+      (is (= 9 (count res-col)))
+      (is (= (get-in valid-messages [0 1]) (nth res-col 0)))
+      (is (= (get-in valid-messages [1 1]) (nth res-col 1)))
+      (is (= (get-in valid-messages [3 1]) (nth res-col 2)))
+      (is (= (get-in valid-messages [7 1]) (nth res-col 3)))
+      (is (= (get-in valid-messages [8 1]) (nth res-col 4)))
+      (is (= (get-in valid-messages [10 1]) (nth res-col 5)))
+      (is (= (get-in valid-messages [11 1]) (nth res-col 6)))
+      (is (= (get-in valid-messages [16 1]) (nth res-col 7)))
+      (is (= (get-in valid-messages [19 1]) (nth res-col 8))))))
+
+
+(deftest test-get-type
+  (testing "Testing the `get-type` function to get the type of a CC message."
+    (is (= "feat" (get-type (get-in valid-messages [0 1]))))
+    (is (= "chore" (get-type (get-in valid-messages [1 1]))))
+    (is (= "fix" (get-type (get-in valid-messages [2 1]))))
+    (is (= "build" (get-type (get-in valid-messages [3 1]))))))
+
+
+(deftest test-get-scope
+  (testing "Testing the `get-scope` function to get the type of a CC message."
+    (is (= nil (get-scope (get-in valid-messages [0 1]))))
+    (is (= "webapp" (get-scope (get-in valid-messages [3 1]))))
+    (is (= "mobile" (get-scope (get-in valid-messages [4 1]))))))

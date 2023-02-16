@@ -1,5 +1,7 @@
 (ns clci.semver
-  "Semantic Versioning related functionality.")
+  "Semantic Versioning related functionality."
+  (:require
+    [clojure.string :as str]))
 
 
 (def semver-re
@@ -14,3 +16,38 @@
   the semantic versioning convention."
   [tag]
   (some? (re-matches semver-re tag)))
+
+
+(defn major
+  "Get the major part of the version."
+  [version]
+  (when (re-matches semver-re version)
+    (-> (str/split version #"\.|-")
+        (first)
+        (Integer/parseInt))))
+
+
+(defn minor
+  "Get the minor part of the version."
+  [version]
+  (when (re-matches semver-re version)
+    (-> (str/split version #"\.|-")
+        (second)
+        (Integer/parseInt))))
+
+
+(defn patch
+  "Get the patch part of the version."
+  [version]
+  (when (re-matches semver-re version)
+    (-> (str/split version #"\.|-")
+        (nth 2)
+        (Integer/parseInt))))
+
+
+(defn pre-release
+  "Get the pre-release part of the version - if any."
+  [version]
+  (when (re-matches semver-re version)
+    (-> (str/split version #"-" 2)
+        (get 1 nil))))
