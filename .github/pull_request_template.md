@@ -13,6 +13,8 @@ _Please delete options that are not relevant_
 - [ ] New feature (non-breaking change which adds functionality)
 - [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
 - [ ] This change requires a documentation update
+- [ ] Refactoring (changes that do not affect the functionality)
+- [ ] Build Configuration (changes that affect building the project, includes changes to the CICD pipelines)
 
 # How Has This Been Tested?
 
