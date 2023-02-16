@@ -30,4 +30,10 @@
          docs       {:doc         "Handle the documentation of the project."
                      :requires    ([docs :as docs])
                      :task        (apply docs/docs! *command-line-args*)}
+         nrepl    {:doc         "Run a nREPL server on localhost."
+                   :requires    ([babashka.process :refer [sh]])
+                   :task        (-> (shell "clj -M:nREPL -m nrepl.cmdline") :out println)}
+         build    {:doc           "Build the specified target. One of [clean|uberjar|static]"
+                   :requires     ([build :as b])
+                   :task         (apply b/build *command-line-args*)}
          }}

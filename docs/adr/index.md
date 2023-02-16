@@ -14,3 +14,4 @@ The full specification as defined by `io.clockworks` can be found as a copy in [
 - [ADR004 - Conventional Commit Linter](./adr004-conventional_commit_linter.md)
 - [ADR005 - Build Process](./adr005-build_process.md)
 - [ADR006 - Instaparse Pod](./adr006-instaparse_bb_pod.md)
+- [ADR007 - CLI Tool](./adr007-clci-cli-tool.md)

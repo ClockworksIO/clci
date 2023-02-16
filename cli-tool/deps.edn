@@ -1,0 +1,17 @@
+{:paths ["src"]
+
+ ;; directory where all non-code resources are located
+ :resources-dir "./../resources"
+ ;; build target directory - used to place build artifacts
+ :target-dir "./../target"
+ ;; main entrypoint for the static cli tool build from clci
+ :main clci.main
+ 
+ :deps      {}
+
+ :aliases
+ {:build           {:deps         {io.github.clojure/tools.build         {:git/tag "v0.8.5" :git/sha "9c738da"}
+                                   com.github.clj-easy/graal-build-time  {:mvn/version "0.1.4"}}
+                    :ns-default   build}
+  }
+ }
