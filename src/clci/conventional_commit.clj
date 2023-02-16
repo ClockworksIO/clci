@@ -1,5 +1,6 @@
 (ns clci.conventional-commit
-  ""
+  "This module provides the tools to parse and validate commit messages
+  to follow the Conventional Commit Specification."
   (:require
     [instaparse.core :as insta]))
 
