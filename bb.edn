@@ -1,8 +1,12 @@
 {:paths ["bb" "src"]
  :deps  {babashka/process     		 		        {:mvn/version "0.3.11"}
+         org.babashka/cli                         {:mvn/version "0.4.39"}
          io.github.babashka/instaparse.bb         {:git/sha "0e86a09bafead57eed251cbda53ab35032688bdf"}
          io.github.clj-kondo/clj-kondo-bb         {:git/tag "v2023.01.20" 
-                                                   :git/sha "adfc7df"}}
+                                                   :git/sha "adfc7df"}
+         io.github.borkdude/carve                 {:git/url "https://github.com/borkdude/carve"
+                                                   :git/tag "v0.3.5"
+                                                   :git/sha "6f0f3bf"}}
 
 
  :tasks {test           {:extra-paths       ["test"]
@@ -12,12 +16,14 @@
                          :exec-args         {:dirs ["test"] :patterns [".*-test$"]}
                          :org.babashka/cli  {:coerce {:nses [:symbol]
                                                       :vars [:symbol]}}}
-         format   	{:doc         "Run the formatter to format the project's clojure code."
-                 	 :requires    ([format :as fmt])
-                 	 :task        (apply fmt/format-code *command-line-args*)}
-	     hooks  	{:doc         "Git hook related commands."
-                 	 :requires    ([git-hooks :as gh])
-                 	 :task        (apply gh/hooks *command-line-args*)}
+         carve        {:doc         "Remove unused vars."        
+                       :task        (exec 'clci.carve/carve)}
+         format   	 {:doc         "Run the formatter to format the project's clojure code."
+                 	     :requires    ([format :as fmt])
+                 	     :task        (apply fmt/format-code *command-line-args*)}
+	      hooks  	    {:doc         "Git hook related commands."
+                 	     :requires    ([git-hooks :as gh])
+                 	     :task        (apply gh/hooks *command-line-args*)}
          lint       {:doc         "Run kondo to lint the code. Fail on errors."
                      :requires    ([utils :as u])
                      :task        u/kondo-lint}
