@@ -6,3 +6,7 @@ clci.conventional-commit/msg->ast
 clci.term/with-c
 clci.term/with-h
 clci.carve/carve
+clci.git/get-release-tags
+clci.git/latest-release
+clci.git/latest-commit
+clci.semver/valid-version-tag?

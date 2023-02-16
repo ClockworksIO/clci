@@ -1,5 +1,5 @@
 (ns clci.carve
-  ""
+  "This module provides a task to run Carve on the codebase."
   (:require
     [babashka.cli :as cli]
     [carve.api :as api]
@@ -28,7 +28,7 @@
 
 
 (defn carve-print-help
-  ""
+  "Print help for the carve task."
   []
   (println "Run carve to remove unused vars.\n")
   (println (cli/format-opts carve-cli-options)))
@@ -46,13 +46,14 @@
   (let [report          (-> (api/carve! {:paths (get-paths) :report {:format :edn} :dry-run true})
                             with-out-str
                             edn/read-string)
-        failure?        (not (empty? report))
+        incident-cnt    (count report)
+        failure?        (seq report)
         write-report?   (:report opts)
         silent?         (:silent opts)
         no-fail?        (:no-fail opts)]
     ;; print report to stdout
     (when (and failure? (not silent?))
-      (println (with-c :yellow "Carve found the following issues:"))
+      (println (with-c :yellow "Carve found") (with-c :magenta incident-cnt) (with-c :yellow "issues:"))
       (pprint report))
     (when write-report?
       (println (with-c :magenta "REPORT NOT IMPLEMENTED YET!")))
@@ -62,7 +63,7 @@
 
 
 ;; Run carve in fix mode - use with care!
-(defmethod carve-impl :fix [_ opts]
+(defmethod carve-impl :fix [_]
   (println (with-c :blue "Running Carve in fix mode"))
   (let [report          (-> (api/carve! {:paths (get-paths) :report {:format :edn}}))]
     (println (with-c :yellow "Carve fixed the following issues:"))
