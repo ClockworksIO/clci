@@ -1,12 +1,10 @@
 (ns clci.git
   "Various git tooling."
   (:require
-    [babashka.process :refer [sh shell]]
-    [clci.conventional-commit :as cc]
-    [clci.semver :as sv]
-    [clojure.string :as str]))
-
-
+   [babashka.process :refer [sh shell]]
+   [clci.conventional-commit :as cc]
+   [clci.semver :as sv]
+   [clojure.string :as str]))
 
 (defn get-release-tags
   "Get a list of all release tags.
@@ -17,10 +15,9 @@
   - `1.2.3-ac3619f0d7`"
   []
   (as-> (shell {:out :string} "git tag") $
-        (:out $)
-        (str/split-lines $)
-        (filter (fn [tag] (re-matches sv/semver-re tag)) $)))
-
+    (:out $)
+    (str/split-lines $)
+    (filter (fn [tag] (re-matches sv/semver-re tag)) $)))
 
 ;; (defn latest-release
 ;;   "Get the latest release.
@@ -37,7 +34,6 @@
    :tag     "0.3.1"
    :name    "Version 0.3.1"})
 
-
 (defn derive-release-version
   "Get the version of the given `release` in a convenient vec format.
   Returns a vector in the format `[major minor patch pre-release]` where
@@ -48,14 +44,12 @@
    (sv/patch (:tag release))
    (sv/pre-release (:tag release))])
 
-
 (defn latest-commit
   "Get the latest commit on the current branch."
   []
   (-> (sh "git" "rev-parse" "HEAD")
       :out
       str/trim))
-
 
 (defn commits-on-branch-since
   "Get all commits using git cli.
@@ -81,20 +75,19 @@
                               :files   (subvec v 4)})
          ;; git shell command used to get the log in the format required
          cmd (str/join
-               " "
-               ["git log --format=\"%n%n%n%H%n%ai%n%ae%n%s\""
-                "--name-only"
-                (when-not with-tags "--decorate-refs-exclude=refs/tags")
-                (format "--first-parent %s" branch)
-                (when since (format "%s..HEAD" since))])]
+              " "
+              ["git log --format=\"%n%n%n%H%n%ai%n%ae%n%s\""
+               "--name-only"
+               (when-not with-tags "--decorate-refs-exclude=refs/tags")
+               (format "--first-parent %s" branch)
+               (when since (format "%s..HEAD" since))])]
      (as-> (shell {:out :string} cmd) $
-           (:out $)
-           (str/split $ #"\n\n\n")
-           (remove str/blank? $)
-           (map
-             (comp commit-col->map (partial into []) #(remove str/blank? %) str/split-lines)
-             $)))))
-
+       (:out $)
+       (str/split $ #"\n\n\n")
+       (remove str/blank? $)
+       (map
+        (comp commit-col->map (partial into []) #(remove str/blank? %) str/split-lines)
+        $)))))
 
 (defn- dervice-version-from-commits
   "Derive a version based on an inital version and a list of commits.
@@ -113,10 +106,9 @@
                         (= t "fix")   (inc-patch v)
                         :else         v))]
     (reduce
-      (fn [acc commit] (inc-version commit acc))
-      inital-version
-      (reverse commits))))
-
+     (fn [acc commit] (inc-version commit acc))
+     inital-version
+     (reverse commits))))
 
 (defn derive-current-commit-version
   "Derive the version of the current codebase.

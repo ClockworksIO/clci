@@ -1,16 +1,14 @@
 (ns clci.conventional-commit-test
   "This module provides tests for the conventional commit parser."
   (:require
-    [clci.conventional-commit :refer [valid-commit-msg? parser parse-only-valid get-type get-scope]]
-    [clojure.test :refer [deftest testing is]]
-    [instaparse.core :as insta]))
-
+   [clci.conventional-commit :refer [valid-commit-msg? parser parse-only-valid get-type get-scope]]
+   [clojure.test :refer [deftest testing is]]
+   [instaparse.core :as insta]))
 
 (defn parseable?
   "Helper function to test if the given `msg` (string) can be parsed with the given `parser`."
   [parser msg]
   (not (insta/failure? (insta/parse parser msg))))
-
 
 (def valid-messages
   "Defines a collection of pairs of valid messages and their corresponding AST. Used to run tests."
@@ -50,9 +48,9 @@
         [:TEXT "This commit implements a fix of input validation. It is very good."]]])]
    ;; 7
    [(str
-      "fix: resolves input error of #RR-22\n\n"
-      "This commit implements a fix of input validation. It is very good.\n\n"
-      "And another paragraph.\n")
+     "fix: resolves input error of #RR-22\n\n"
+     "This commit implements a fix of input validation. It is very good.\n\n"
+     "And another paragraph.\n")
     '([:TYPE "fix"]
       [:SUBJECT
        [:TEXT "resolves input error of "]
@@ -64,9 +62,9 @@
         [:TEXT "And another paragraph."]]])]
    ;; 8
    [(str
-      "fix: resolves input error of #RR-22\n\n"
-      "This commit implements a fix of input validation. It is very good.\n\n"
-      "And another paragraph with an issue #RR-123.\n")
+     "fix: resolves input error of #RR-22\n\n"
+     "This commit implements a fix of input validation. It is very good.\n\n"
+     "And another paragraph with an issue #RR-123.\n")
     '([:TYPE "fix"]
       [:SUBJECT
        [:TEXT "resolves input error of "]
@@ -80,10 +78,10 @@
         [:TEXT "."]]])]
    ;; 9
    [(str
-      "fix: resolves input error of #RR-22\n\n"
-      "This commit implements a fix of input validation. It is very good.\n\n"
-      "One more paragraph.\n\n"
-      "And another paragraph with an issue #RR-123.\n")
+     "fix: resolves input error of #RR-22\n\n"
+     "This commit implements a fix of input validation. It is very good.\n\n"
+     "One more paragraph.\n\n"
+     "And another paragraph with an issue #RR-123.\n")
     '([:TYPE "fix"]
       [:SUBJECT
        [:TEXT "resolves input error of "]
@@ -99,9 +97,9 @@
         [:TEXT "."]]])]
    ;; 10
    [(str
-      "feat: switch to new API #RR-33\n\n"
-      "With this commit we are switching to the new API. Please update your access token!\n\n"
-      "BREAKING CHANGE: will not work with library xzy before 0.2.4\n")
+     "feat: switch to new API #RR-33\n\n"
+     "With this commit we are switching to the new API. Please update your access token!\n\n"
+     "BREAKING CHANGE: will not work with library xzy before 0.2.4\n")
     '([:TYPE "feat"]
       [:SUBJECT
        [:TEXT "switch to new API "]
@@ -115,10 +113,10 @@
         [:FOOTER-VALUE [:TEXT "will not work with library xzy before 0.2.4"]]]])]
    ;; 11
    [(str
-      "feat: switch to new API #RR-33\n\n"
-      "With this commit we are switching to the new API. Please update your access token!\n\n"
-      "BREAKING CHANGE: will not work with library xzy before 0.2.4\n"
-      "note: Thanks for all the fish.\n")
+     "feat: switch to new API #RR-33\n\n"
+     "With this commit we are switching to the new API. Please update your access token!\n\n"
+     "BREAKING CHANGE: will not work with library xzy before 0.2.4\n"
+     "note: Thanks for all the fish.\n")
     '([:TYPE "feat"]
       [:SUBJECT
        [:TEXT "switch to new API "]
@@ -135,9 +133,9 @@
         [:FOOTER-VALUE [:TEXT "Thanks for all the fish."]]]])]
    ;; 12
    [(str
-      "feat: switch to new API #RR-33\n\n"
-      "With this commit we are switching to the new API. Please update your access token!\n\n"
-      "note: Thanks for all the fish.\n")
+     "feat: switch to new API #RR-33\n\n"
+     "With this commit we are switching to the new API. Please update your access token!\n\n"
+     "note: Thanks for all the fish.\n")
     '([:TYPE "feat"]
       [:SUBJECT
        [:TEXT "switch to new API "]
@@ -151,10 +149,10 @@
         [:FOOTER-VALUE [:TEXT "Thanks for all the fish."]]]])]
    ;; 13
    [(str
-      "feat: switch to new API #RR-33\n\n"
-      "With this commit we are switching to the new API. Please update your access token!\n\n"
-      "note: Thanks for all the fish.\n"
-      "more: Don't forget to look at #RR-45!\n")
+     "feat: switch to new API #RR-33\n\n"
+     "With this commit we are switching to the new API. Please update your access token!\n\n"
+     "note: Thanks for all the fish.\n"
+     "more: Don't forget to look at #RR-45!\n")
     '([:TYPE "feat"]
       [:SUBJECT
        [:TEXT "switch to new API "]
@@ -174,11 +172,11 @@
          [:TEXT "!"]]]])]
    ;; 14
    [(str
-      "feat: switch to new API #RR-33\n\n"
-      "With this commit we are switching to the new API. Please update your access token!\n\n"
-      "note: Thanks for all the fish.\n"
-      "see-docs: See [the docs](https://www.example.com/foo?id=22&page=3)\n"
-      "more: Don't forget to look at #RR-45!\n")
+     "feat: switch to new API #RR-33\n\n"
+     "With this commit we are switching to the new API. Please update your access token!\n\n"
+     "note: Thanks for all the fish.\n"
+     "see-docs: See [the docs](https://www.example.com/foo?id=22&page=3)\n"
+     "more: Don't forget to look at #RR-45!\n")
     '([:TYPE "feat"]
       [:SUBJECT
        [:TEXT "switch to new API "]
@@ -202,9 +200,9 @@
    ;;
    ;; 15
    [(str
-      "feat: switch to new API #RR-33\n\n"
-      "With this commit we are switching to the new API. Please update your access token!\n\n"
-      "# Please enter a commit message")
+     "feat: switch to new API #RR-33\n\n"
+     "With this commit we are switching to the new API. Please update your access token!\n\n"
+     "# Please enter a commit message")
     '([:TYPE "feat"]
       [:SUBJECT
        [:TEXT "switch to new API "]
@@ -216,10 +214,10 @@
        [:COMMENT " Please enter a commit message"]])]
    ;; 16
    [(str
-      "feat: switch to new API #RR-33\n\n"
-      "With this commit we are switching to the new API. Please update your access token!\n\n"
-      "BREAKING CHANGE: will not work with library xzy before 0.2.4\n\n"
-      "# Please enter a commit message")
+     "feat: switch to new API #RR-33\n\n"
+     "With this commit we are switching to the new API. Please update your access token!\n\n"
+     "BREAKING CHANGE: will not work with library xzy before 0.2.4\n\n"
+     "# Please enter a commit message")
     '([:TYPE "feat"]
       [:SUBJECT
        [:TEXT "switch to new API "]
@@ -235,15 +233,15 @@
        [:COMMENT " Please enter a commit message"]])]
    ;; 17
    [(str
-      "feat: switch to new API #RR-33\n\n"
-      "BREAKING CHANGE: With this commit we are switching to the new API. Please update your access token!\n\n"
-      "# Please enter the commit message for your changes. Lines starting\n"
-      "#  with '#' will be ignored, and an empty message aborts the commit.\n"
-      "#\n"
-      "# Date:      Thu Dec 8 17:01:23 2022 +0100\n"
-      "# On branch feat/rr-2\n"
-      "# Changes to be committed:\n"
-      "#       renamed:    ci-bb/src/clj/ci_bb/pod.clj -> ci-bb/src/clj/ci_bb/main.clj")
+     "feat: switch to new API #RR-33\n\n"
+     "BREAKING CHANGE: With this commit we are switching to the new API. Please update your access token!\n\n"
+     "# Please enter the commit message for your changes. Lines starting\n"
+     "#  with '#' will be ignored, and an empty message aborts the commit.\n"
+     "#\n"
+     "# Date:      Thu Dec 8 17:01:23 2022 +0100\n"
+     "# On branch feat/rr-2\n"
+     "# Changes to be committed:\n"
+     "#       renamed:    ci-bb/src/clj/ci_bb/pod.clj -> ci-bb/src/clj/ci_bb/main.clj")
     '([:TYPE "feat"]
       [:SUBJECT
        [:TEXT "switch to new API "]
@@ -273,28 +271,28 @@
        [:ISSUE-REF [:ISSUE-ID "123"]]])]
    ;; 20
    [(str
-      "feat: implements pod optimizations of #7\n"
-      "\n"
-      "This commit updates how the pod is build. This includes\n"
-      "- writing a correct Pom file according to babashkas pod spec\n"
-      "- including different platforms and architectures for pods\n"
-      "- versioned file names for pods\n"
-      "- cleaning everything up\n"
-      "# Please enter the commit message for your changes. Lines starting\n"
-      "# with '#' will be ignored, and an empty message aborts the commit.\n"
-      "#\n"
-      "# On branch feat/clci-7\n"
-      "# Changes to be committed:\n"
-      "# new file:   .babashka/clci-0.1.2.main.metadata.cache\n"
-      "# modified:   bb.edn\n"
-      "# modified:   bb/build.clj\n"
-      "# modified:   build.clj\n"
-      "# modified:   deps.edn\n"
-      "# deleted:    manifest.edn\n"
-      "# new file:   resources/clockworksio/clci/pod-manifest.edn\n"
-      "# modified:   src/clj/user.clj\n"
-      "# modified:   test/clci/conventional_commit_test.clj\n"
-      "#\n")
+     "feat: implements pod optimizations of #7\n"
+     "\n"
+     "This commit updates how the pod is build. This includes\n"
+     "- writing a correct Pom file according to babashkas pod spec\n"
+     "- including different platforms and architectures for pods\n"
+     "- versioned file names for pods\n"
+     "- cleaning everything up\n"
+     "# Please enter the commit message for your changes. Lines starting\n"
+     "# with '#' will be ignored, and an empty message aborts the commit.\n"
+     "#\n"
+     "# On branch feat/clci-7\n"
+     "# Changes to be committed:\n"
+     "# new file:   .babashka/clci-0.1.2.main.metadata.cache\n"
+     "# modified:   bb.edn\n"
+     "# modified:   bb/build.clj\n"
+     "# modified:   build.clj\n"
+     "# modified:   deps.edn\n"
+     "# deleted:    manifest.edn\n"
+     "# new file:   resources/clockworksio/clci/pod-manifest.edn\n"
+     "# modified:   src/clj/user.clj\n"
+     "# modified:   test/clci/conventional_commit_test.clj\n"
+     "#\n")
     '([:TYPE "feat"]
       [:SUBJECT
        [:TEXT "implements pod optimizations of "]
@@ -327,7 +325,6 @@
        [:COMMENT " modified:   test/clci/conventional_commit_test.clj"]
        [:COMMENT ""]])]])
 
-
 (def invalid-messages
   "Defines a collection of invalid messages to test the parser."
   [;; 0
@@ -347,29 +344,24 @@
    ;; 7
    "feat: adding a new awesome feature\nBREAKING reason\ntoken value"])
 
-
 (deftest validate-messages
   (testing "Testing to validate correct commit messages."
     (doseq [[message _] valid-messages]
       (is (parseable? parser message)))))
 
-
 (deftest validate-messages-api
   (testing "Testing Method to validate commit messages trough pod's."
     (is (valid-commit-msg? (get-in valid-messages [0 0])))))
-
 
 (deftest parse-messages
   (testing "Testing to parse valid commit messages."
     (doseq [[message expected] valid-messages]
       (is (= expected (insta/parse parser message))))))
 
-
 (deftest parse-invalid-messages
   (testing "Testing to parse invalid commit messages. Expect to fail!"
     (doseq [message invalid-messages]
       (is (insta/failure? (insta/parse parser message))))))
-
 
 (deftest test-parse-only-valid
   (testing "Testing the `parse-only-valid` shortcut function."
@@ -400,14 +392,12 @@
       (is (= (get-in valid-messages [16 1]) (nth res-col 7)))
       (is (= (get-in valid-messages [19 1]) (nth res-col 8))))))
 
-
 (deftest test-get-type
   (testing "Testing the `get-type` function to get the type of a CC message."
     (is (= "feat" (get-type (get-in valid-messages [0 1]))))
     (is (= "chore" (get-type (get-in valid-messages [1 1]))))
     (is (= "fix" (get-type (get-in valid-messages [2 1]))))
     (is (= "build" (get-type (get-in valid-messages [3 1]))))))
-
 
 (deftest test-get-scope
   (testing "Testing the `get-scope` function to get the type of a CC message."

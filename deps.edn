@@ -20,7 +20,7 @@
                                                        :git/sha "adfc7df"}}
 
  :aliases
- {:format				   {:deps 				{mvxcvi/cljstyle 		                   {:mvn/version "0.15.0"}}}
+ {:format				   {:deps 				{cljfmt                                {:mvn/version "0.9.2"}}}
   :nREPL           {:extra-deps   {nrepl/nrepl                           {:mvn/version "1.0.0"}}}
   }
  }

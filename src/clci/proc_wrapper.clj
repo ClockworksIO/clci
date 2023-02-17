@@ -2,13 +2,11 @@
   "Taken from: https://github.com/babashka/nbb/blob/proc-wrapper/script/proc_wrapper.clj
   as a result of this discussion https://github.com/babashka/process/discussions/102."
   (:require
-    [babashka.process :as process :refer [process]]
-    [clci.term :refer [with-c]]
-    [clojure.string :as str]))
-
+   [babashka.process :as process :refer [process]]
+   [clci.term :refer [with-c]]
+   [clojure.string :as str]))
 
 (def output-lock (Object.))
-
 
 (defn- output-wrapper
   [stream prefix writer]
@@ -38,13 +36,11 @@
                               buffer)))
             (recur)))))))
 
-
 #_(defn output-wrapper [stream prefix writer]
-  (let [rdr (io/reader stream)
-        lines (line-seq rdr)]
-    (run! #(binding [*out* writer]
-             (println prefix %)) lines)))
-
+    (let [rdr (io/reader stream)
+          lines (line-seq rdr)]
+      (run! #(binding [*out* writer]
+               (println prefix %)) lines)))
 
 (defn wrap-process
   "Wrap a Process output.
@@ -60,7 +56,6 @@
      @output-out
      @output-err
      checked)))
-
 
 (comment
   "example use:"

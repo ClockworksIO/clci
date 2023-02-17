@@ -25,3 +25,9 @@ clci.semver/minor
 clci.semver/patch
 clci.semver/pre-release
 clci.conventional-commit/get-scope
+clci.tools.core/lint
+clci.tools.core/carve!
+clci.tools.core/docs!
+clci.tools.core/git-hooks
+clci.tools.core/format!
+clci.tools.ghooks/clj?

@@ -1,13 +1,13 @@
 ---
 scope: project
 version: 1.0.0
-date: 2023-02-15
+date: 2023-02-20
 authors: Moritz Moxter (moritz@clockworks.io)
 status: draft
 namespace: io.clockworks
 document-type: adr@2.0.0
 ---
-# ADR009 - A New Draft
+# ADR009 - Library vs. CLI Tool
 
 **Scope**: Project
 
@@ -15,7 +15,7 @@ document-type: adr@2.0.0
 
 **Version**: 1.0.0
 
-**Date**: 2023-02-15
+**Date**: 2023-02-20
 
 **Authors**: Moritz Moxter (moritz@clockworks.io)
 
