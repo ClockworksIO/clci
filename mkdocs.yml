@@ -51,5 +51,8 @@ nav:
       - 'ADR004 - Conventional Commit Linter': './adr/adr004-conventional_commit_linter.md'
       - 'ADR005 - Build Process': './adr/adr005-build_process.md'
       - 'ADR006 - Instaparse Pod': './adr/adr006-instaparse_bb_pod.md'
+      - 'ADR007 - Carve': './adr/adr007-carve.md'
+      - 'ADR008 - Conventional Commits: Footer': './adr/adr008-cc_footer_values.md'
+      - 'ADR009 - Library vs. CLI Tool': './adr/adr009-library_vs_cli_tool.md'
   - Docs:
     - 'Overview': './docs.md'

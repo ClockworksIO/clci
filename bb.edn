@@ -17,19 +17,15 @@
                          :org.babashka/cli  {:coerce {:nses [:symbol]
                                                       :vars [:symbol]}}}
          carve        {:doc         "Remove unused vars."        
-                       :task        (exec 'clci.carve/carve)}
+                       :task        (exec 'clci.tools.core/carve!)}
          format   	 {:doc         "Run the formatter to format the project's clojure code."
-                 	     :requires    ([format :as fmt])
-                 	     :task        (apply fmt/format-code *command-line-args*)}
+                 	     :task        (exec 'clci.tools.core/format!)}
 	      hooks  	    {:doc         "Git hook related commands."
-                 	     :requires    ([git-hooks :as gh])
-                 	     :task        (apply gh/hooks *command-line-args*)}
+                 	     :task        (exec 'clci.tools.core/git-hooks)}
          lint       {:doc         "Run kondo to lint the code. Fail on errors."
-                     :requires    ([utils :as u])
-                     :task        u/kondo-lint}
+                     :task        (exec 'clci.tools.core/lint)}
          docs       {:doc         "Handle the documentation of the project."
-                     :requires    ([docs :as docs])
-                     :task        (apply docs/docs! *command-line-args*)}
+                     :task        (exec 'clci.tools.core/docs!)}
          nrepl    {:doc         "Run a nREPL server on localhost."
                    :requires    ([babashka.process :refer [sh]])
                    :task        (-> (shell "clj -M:nREPL -m nrepl.cmdline") :out println)}

@@ -1,7 +1,5 @@
-{:jobs []
+{:jobs {:on-commit []}
  :projects 
- [{:root "pwa/"
-   :extra-jobs []
-   :skip-jobs []}
-  {:root "backend/"
-   :root "mobile/"}]}
+ [{:root ""
+   :extra-jobs {}
+   :skip-jobs {}}]}
