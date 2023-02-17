@@ -1,26 +1,26 @@
 (ns user
   (:require
     [babashka.fs :as fs]
+    [babashka.process :refer [shell]]
+    [clci.term :refer [red]]
     [clojure.edn :as edn]
     [clojure.string :as str]))
 
 
-(defn- join-paths
+(defn join-paths
   "Takes an arboitrary number of (partital) paths and joins them together.
   Handles slashes at the end of the path.
-	I.e. 
-	```clojure
-	(join-paths \"/some/base/path\" \"local/path/\") ; -> \"/some/base/path/local/path\"
+  I.e. 
+  ```clojure
+  (join-paths \"/some/base/path\" \"local/path/\") ; -> \"/some/base/path/local/path\"
   (join-paths \"/some/base/path/\" \"local/path\") ; -> \"/some/base/path/local/path\"
-	```
-	"
+  ```
+  "
   [& parts]
   (as-> (map #(str/split % #"/") parts) $
         (apply concat $)
         (str/join "/" $)))
 
-
-;; (join-paths "/home/foo" "some/go")
 
 (def repo-config
   "Configuration of the repository."
@@ -82,3 +82,86 @@
 (def collect-all-paths
   ""
   [])
+
+
+
+;; (commits-on-branch-since {:since "4d38687e63c8de636c5aa2b475e6c337b9b9f4f1"})
+
+(defn get-latest-release
+  "Fake Adapter to get the latest release.
+  TODO: Use the proper GH API for this instead!"
+  []
+  {:commit  "4d38687e63c8de636c5aa2b475e6c337b9b9f4f1"
+   :tag     "0.3.1"
+   :name    "Version 0.3.1"})
+
+
+(str/split "1.2.3-ff-3-33" #"-" 2)
+
+
+(Integer/parseInt "2")
+
+
+(def semver-re
+  "Regular Expression to match version strings following the
+  Semantic Versioning specification.
+  See https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string."
+  #"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$")
+
+
+(defn pre-release
+  "Get the pre-release part of the version - if any."
+  [version]
+  (when (re-matches semver-re version)
+    (-> (str/split version #"-" 2)
+        (get 1 nil))))
+
+
+(pre-release "2.2.77")
+
+
+(def tree-1
+  '([:TYPE "feat"]
+    [:SCOPE "mobile"]
+    [:SUBJECT
+     [:TEXT "switch to new API "]
+     [:ISSUE-REF [:ISSUE-ID "RR-33"]]]
+    [:BODY
+     [:PARAGRAPH
+      [:TEXT "With this commit we are switching to the new API. Please update your access token!"]]
+     [:PARAGRAPH
+      [:TEXT "One more paragraph."]]]
+    [:FOOTER
+     [:FOOTER-ELEMENT
+      [:FOOTER-TOKEN "BREAKING CHANGE"]
+      [:FOOTER-VALUE [:TEXT "will not work with library xzy before 0.2.4"]]]
+     [:FOOTER-ELEMENT
+      [:FOOTER-TOKEN "note"]
+      [:FOOTER-VALUE [:TEXT "Thanks for all the fish."]]]]
+    [:GIT-REPORT
+     [:COMMENT " Please enter the commit message for your changes. Lines starting"]
+     [:COMMENT "  with '#' will be ignored, and an empty message aborts the commit."]
+     [:COMMENT ""]
+     [:COMMENT " Date:      Thu Dec 8 17:01:23 2022 +0100"]
+     [:COMMENT " On branch feat/rr-2"]
+     [:COMMENT " Changes to be committed:"]
+     [:COMMENT "       renamed:    ci-bb/src/clj/ci_bb/pod.clj -> ci-bb/src/clj/ci_bb/main.clj"]]))
+
+
+(defn subtree-by-token
+  "Implements a depth-first search on the abstract syntax `tree` to find
+  the first subtree identified by the given `token`."
+  [tree token]
+  (let [token'        (first (first tree))
+        child         (rest (first tree))
+        tail          (rest tree)]
+    (cond
+      (= token' token)        child
+      (coll? (first child))   (if-let [rec-res (subtree-by-token child token)]
+                                rec-res
+                                (subtree-by-token tail token))
+      (empty? tail)           nil
+      :else                   (subtree-by-token tail token))))
+
+
+(subtree-by-token tree-1 :TYPE)

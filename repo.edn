@@ -1,0 +1,7 @@
+{:jobs []
+ :projects 
+ [{:root "pwa/"
+   :extra-jobs []
+   :skip-jobs []}
+  {:root "backend/"
+   :root "mobile/"}]}

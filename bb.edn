@@ -6,8 +6,7 @@
                                                    :git/sha "adfc7df"}
          io.github.borkdude/carve                 {:git/url "https://github.com/borkdude/carve"
                                                    :git/tag "v0.3.5"
-                                                   :git/sha "6f0f3bf"}
-         version-clj/version-clj {:mvn/version "2.0.2"}}
+                                                   :git/sha "6f0f3bf"}}
 
 
  :tasks {test           {:extra-paths       ["test"]
@@ -37,4 +36,7 @@
          build    {:doc           "Build the specified target. One of [clean|uberjar|static]"
                    :requires     ([build :as b])
                    :task         (apply b/build *command-line-args*)}
+         semver   {:doc "semver test"
+                   :requires ([clci.git :as g])
+                   :task g/derive-current-commit-version}
          }}
