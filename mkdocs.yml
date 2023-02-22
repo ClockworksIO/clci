@@ -56,5 +56,6 @@ nav:
       - 'ADR009 - Library vs. CLI Tool': './adr/adr009-library_vs_cli_tool.md'
       - 'ADR010 - Lines of Code': './adr/adr010-tinesofcode.md'
       - 'ADR011 - Find Outdated Dependencies': './adr/adr011-antq.md'
+      - 'ADR012 - Test Coverave': './adr/adr012-cloverage.md'
   - Docs:
     - 'Overview': './docs.md'
