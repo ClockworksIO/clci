@@ -3,8 +3,7 @@
   (:require
    [babashka.cli :as cli]
    [clci.term :as c]
-   [babashka.process :refer [sh]]
-   [clci.util :refer []]))
+   [babashka.process :refer [sh]]))
 
 (def cli-options
   ""

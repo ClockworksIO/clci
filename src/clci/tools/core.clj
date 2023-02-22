@@ -8,7 +8,8 @@
    [clci.tools.ghooks :as gh]
    [clci.tools.format :as fmt]
    [clci.tools.linesofcode :as loc]
-   [clci.tools.antq :as aq]))
+   [clci.tools.antq :as aq]
+   [clci.tools.cloverage :as cov]))
 
 (defn lint
   "Lint the code."
@@ -44,3 +45,8 @@
   "Find outdated dependencies."
   [opts]
   (aq/find-outdated-dependencies opts))
+
+(defn test-coverage
+  "Get the test coverage of the project's code."
+  [opts]
+  (cov/cloverage opts))

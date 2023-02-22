@@ -41,7 +41,7 @@ jobs:
           restore-keys: cljdeps-
       # Run cljstyle to verify the code is formatted correctly
       - name: Format code
-        run: bb format check
+        run: bb format --check --silent
       # Run kondo to lint the code
       - name: Lint code
         run: bb lint
