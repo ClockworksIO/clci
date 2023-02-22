@@ -38,7 +38,7 @@
       (println (c/magenta "REPORT NOT IMPLEMENTED YET!")))))
 
 ;; Check dependencies for outdated and upgrade.
-(defmethod find-outdated-impl :fix [_ opts]
+(defmethod find-outdated-impl :upgrade [_ opts]
   (let [write-report?   (:report opts)
         silent?         (:silent opts)
         result   				(sh {:out :string :err :string} "clj -M:outdated -m antq.core --upgrade")
@@ -60,5 +60,5 @@
   [opts]
   (cond
     (:check opts) (find-outdated-impl :check opts)
-    (:fix opts) (find-outdated-impl :fix opts)
+    (:upgrade opts) (find-outdated-impl :upgrade opts)
     :else (find-outdated-impl :help)))
