@@ -6,7 +6,8 @@
    [clci.tools.linter :as linter]
    [clci.tools.mkdocs :as mkdocs]
    [clci.tools.ghooks :as gh]
-   [clci.tools.format :as fmt]))
+   [clci.tools.format :as fmt]
+   [clci.tools.linesofcode :as loc]))
 
 (defn lint
   "Lint the code."
@@ -32,3 +33,8 @@
   "Run the formatter on all Clojure files."
   [opts]
   (fmt/format! opts))
+
+(defn lines-of-code
+  "Get the lines of code of the project."
+  [opts]
+  (loc/lines-of-code opts))

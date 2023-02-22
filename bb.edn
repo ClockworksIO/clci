@@ -6,7 +6,9 @@
                                                    :git/sha "adfc7df"}
          io.github.borkdude/carve                 {:git/url "https://github.com/borkdude/carve"
                                                    :git/tag "v0.3.5"
-                                                   :git/sha "6f0f3bf"}}
+                                                   :git/sha "6f0f3bf"}
+         io.github.matthewdowney/linesofcode-bb   {:git/tag "v0.0.2" 
+                                                   :git/sha "12e4f52"}}
 
 
  :tasks {test           {:extra-paths       ["test"]
@@ -16,23 +18,25 @@
                          :exec-args         {:dirs ["test"] :patterns [".*-test$"]}
                          :org.babashka/cli  {:coerce {:nses [:symbol]
                                                       :vars [:symbol]}}}
-         carve        {:doc         "Remove unused vars."        
-                       :task        (exec 'clci.tools.core/carve!)}
-         format   	 {:doc         "Run the formatter to format the project's clojure code."
-                 	     :task        (exec 'clci.tools.core/format!)}
-	      hooks  	    {:doc         "Git hook related commands."
-                 	     :task        (exec 'clci.tools.core/git-hooks)}
-         lint       {:doc         "Run kondo to lint the code. Fail on errors."
-                     :task        (exec 'clci.tools.core/lint)}
-         docs       {:doc         "Handle the documentation of the project."
-                     :task        (exec 'clci.tools.core/docs!)}
-         nrepl    {:doc         "Run a nREPL server on localhost."
-                   :requires    ([babashka.process :refer [sh]])
-                   :task        (-> (shell "clj -M:nREPL -m nrepl.cmdline") :out println)}
-         build    {:doc           "Build the specified target. One of [clean|uberjar|static]"
-                   :requires     ([build :as b])
-                   :task         (apply b/build *command-line-args*)}
-         semver   {:doc "semver test"
-                   :requires ([clci.git :as g])
-                   :task g/derive-current-commit-version}
+         carve          {:doc         "Remove unused vars."        
+                         :task        (exec 'clci.tools.core/carve!)}
+         format   	   {:doc         "Run the formatter to format the project's clojure code."
+                 	       :task        (exec 'clci.tools.core/format!)}
+	      hooks  	      {:doc         "Git hook related commands."
+                 	       :task        (exec 'clci.tools.core/git-hooks)}
+         lint           {:doc         "Run kondo to lint the code. Fail on errors."
+                         :task        (exec 'clci.tools.core/lint)}
+         lines-of-code  {:doc         "Get the lines of code in the project."
+                         :task        (exec 'clci.tools.core/lines-of-code)}
+         docs           {:doc         "Handle the documentation of the project."
+                         :task        (exec 'clci.tools.core/docs!)}
+         nrepl          {:doc         "Run a nREPL server on localhost."
+                         :requires    ([babashka.process :refer [sh]])
+                         :task        (-> (shell "clj -M:nREPL -m nrepl.cmdline") :out println)}
+         build          {:doc           "Build the specified target. One of [clean|uberjar|static]"
+                         :requires     ([build :as b])
+                         :task         (apply b/build *command-line-args*)}
+         semver         {:doc "semver test"
+                         :requires ([clci.git :as g])
+                         :task g/derive-current-commit-version}
          }}
