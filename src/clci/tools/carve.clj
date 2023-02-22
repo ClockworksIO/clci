@@ -4,12 +4,13 @@
   and dead code from a project. The module defines an api how to
   use carve in an easy way from a bb task."
    (:require
-    [babashka.cli :as cli]
-    [carve.api :as api]
-    [clci.term :as c]
-    [clci.util :refer [get-paths]]
-    [clojure.edn :as edn]
-    [clojure.pprint :refer [pprint]]))
+     [babashka.cli :as cli]
+     [carve.api :as api]
+     [clci.term :as c]
+     [clci.util :refer [get-paths]]
+     [clojure.edn :as edn]
+     [clojure.pprint :refer [pprint]]))
+
 
 (def cli-options
   "Available cli options for carve."
@@ -22,13 +23,16 @@
     :interactive  {:coerce :boolean :desc "Interactive mode: ask what to do with an unused var."}
     :help         {:coerce :boolean :desc "Show help."}}})
 
+
 (defn- print-help
   "Print help for the carve task."
   []
   (println "Run carve to remove unused vars.\n")
   (println (cli/format-opts cli-options)))
 
+
 (defmulti carve-impl (fn [& args] (first args)))
+
 
 ;; Run carve in check mode - the code won't be changed but a
 ;; report may be created and a non zero exit code may be returned
@@ -53,6 +57,7 @@
     (when (and failure? (not no-fail?))
       (System/exit 1))))
 
+
 ;; Run carve in fix mode - use with care!
 (defmethod carve-impl :fix [_]
   (println (c/blue "Running Carve in fix mode"))
@@ -60,14 +65,17 @@
     (println (c/yellow "Carve fixed the following issues:"))
     (pprint report)))
 
+
 ;; Run carve in interactive mode - useful during development on a local machine
 (defmethod carve-impl :interactive [_]
   (println (c/blue "Running Carve in interactive mode"))
   (api/carve! {:paths (get-paths) :interactive true}))
 
+
 ;; Print help
 (defmethod carve-impl :help [_]
   (print-help))
+
 
 (defn carve!
   "Run carve to identify and optionally remove unused vars."

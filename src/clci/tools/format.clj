@@ -1,11 +1,12 @@
 (ns clci.tools.format
   "This module provides a task to check and fix code formatting using [cljfmt](https://github.com/weavejester/cljfmt)."
   (:require
-   [clojure.string :as str]
-   [clojure.pprint :refer [pprint]]
-   [babashka.process :refer [sh]]
-   [babashka.cli :as cli]
-   [clci.term :as c]))
+    [babashka.cli :as cli]
+    [babashka.process :refer [sh]]
+    [clci.term :as c]
+    [clojure.pprint :refer [pprint]]
+    [clojure.string :as str]))
+
 
 (def cli-options
   ""
@@ -17,14 +18,17 @@
     :fix  		{:coerce :boolean :desc "Run the formatter and automatically fix all style violations."}
     :help  		{:coerce :boolean :desc "Show help."}}})
 
+
 (defn- print-help
   "Print help for the format task."
   []
   (println "Run the code formatter.\n")
   (println (cli/format-opts cli-options)))
 
+
 ;; Method to handle formatter tasks.
 (defmulti format-code-impl (fn [& args] (first args)))
+
 
 ;; Check the style of all Clojure files.
 (defmethod format-code-impl :check [_ opts]
@@ -33,7 +37,7 @@
         no-fail?        (:no-fail opts)
         _								(when-not silent?
                    (println (c/blue "Checking Clojure file style...")))
-        result   				(sh {:out :string :err :string} "clj -M:format -m cljfmt.main check")
+        result   				(sh {:out :string :err :string} "clj -M:format -m cljstyle.main check")
         failure?				(not= 0 (:exit result))
         report          (-> result :err str/split-lines)]
     ;; write report to stdout if not supressed
@@ -46,19 +50,22 @@
     (when (and failure? (not no-fail?))
       (System/exit 1))))
 
+
 ;; Fix the style of all Clojure files.
 (defmethod format-code-impl :fix [_ opts]
   (println (c/blue "Checking Clojure file style..."))
-  (let [result   				(sh {:out :string :err :string} "clj -M:format -m cljfmt.main fix")
+  (let [result   				(sh {:out :string :err :string} "clj -M:format -m cljstyle.main fix")
         failure?				(not= 0 (:exit result))
         report          (-> result :err str/split-lines)]
     (pprint report)
     (when failure?
       (System/exit 1))))
 
+
 ;; Default handler to catch unknown formatter commands.
 (defmethod format-code-impl :default [& _]
   (print-help))
+
 
 (defn format!
   "Implementation wrapper to format clojure code."

@@ -1,4 +1,12 @@
-{:jobs {:on-commit []}
+{;
+ :scm       {:name    "git"
+             :url     "git@github.com:ClockworksIO/clci.git"
+             :github  {:repo  "clci"
+                       :owner "ClockworksIO"
+             }}
+ ;
+ :jobs {:on-commit []}
+ ;
  :projects 
  [{:root ""
    :extra-jobs {}

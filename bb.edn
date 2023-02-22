@@ -39,6 +39,6 @@
                          :requires     ([build :as b])
                          :task         (apply b/build *command-line-args*)}
          semver         {:doc "semver test"
-                         :requires ([clci.git :as g])
-                         :task g/derive-current-commit-version}
+                         :requires ([clci.semver :as sv])
+                         :task sv/derive-current-commit-version}
          }}

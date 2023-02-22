@@ -1,4 +1,4 @@
-name: cleanup caches of a branch when the PR is closed
+name: PR closed
 on:
   pull_request:
     types:
