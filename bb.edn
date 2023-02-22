@@ -28,6 +28,8 @@
                          :task        (exec 'clci.tools.core/lint)}
          lines-of-code  {:doc         "Get the lines of code in the project."
                          :task        (exec 'clci.tools.core/lines-of-code)}
+         outdated       {:doc         "Run find outdated dependencies."
+                         :task        (exec 'clci.tools.core/outdated-deps)}
          docs           {:doc         "Handle the documentation of the project."
                          :task        (exec 'clci.tools.core/docs!)}
          nrepl          {:doc         "Run a nREPL server on localhost."

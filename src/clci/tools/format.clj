@@ -18,9 +18,9 @@
     :help  		{:coerce :boolean :desc "Show help."}}})
 
 (defn- print-help
-  "Print help for the git hook task."
+  "Print help for the format task."
   []
-  (println "Run a git hook.\n")
+  (println "Run the code formatter.\n")
   (println (cli/format-opts cli-options)))
 
 ;; Method to handle formatter tasks.

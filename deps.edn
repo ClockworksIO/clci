@@ -25,7 +25,8 @@
                                                        :git/sha "12e4f52"}}
 
  :aliases
- {:format				   {:deps 				{cljfmt                                {:mvn/version "0.9.2"}}}
+ {:format				   {:extra-deps 	{cljfmt                                {:mvn/version "0.9.2"}}}
+  :outdated        {:extra-deps   {com.github.liquidz/antq               {:mvn/version "2.2.992"}}}
   :nREPL           {:extra-deps   {nrepl/nrepl                           {:mvn/version "1.0.0"}}}
   }
  }

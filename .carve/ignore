@@ -32,3 +32,4 @@ clci.tools.core/git-hooks
 clci.tools.core/format!
 clci.tools.ghooks/clj?
 clci.tools.core/lines-of-code
+clci.tools.core/outdated-deps
