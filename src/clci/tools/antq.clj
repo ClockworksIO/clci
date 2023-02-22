@@ -1,9 +1,10 @@
 (ns clci.tools.antq
   ""
   (:require
-   [babashka.cli :as cli]
-   [clci.term :as c]
-   [babashka.process :refer [sh]]))
+    [babashka.cli :as cli]
+    [babashka.process :refer [sh]]
+    [clci.term :as c]))
+
 
 (def cli-options
   ""
@@ -14,14 +15,17 @@
     :upgrade	{:coerce :boolean :desc "Run antq and upgrade all outdated dependencies automatically."}
     :help  		{:coerce :boolean :desc "Show help."}}})
 
+
 (defn- print-help
   "Print help for the antq task."
   []
   (println "Check for outdated dependencies.\n")
   (println (cli/format-opts cli-options)))
 
+
 ;; Method to handle antq task.
 (defmulti find-outdated-impl (fn [& args] (first args)))
+
 
 ;; Check dependencies for outdated - don't upgrade!.
 (defmethod find-outdated-impl :check [_ opts]
@@ -36,6 +40,7 @@
     (when write-report?
       (println (c/magenta "REPORT NOT IMPLEMENTED YET!")))))
 
+
 ;; Check dependencies for outdated and upgrade.
 (defmethod find-outdated-impl :upgrade [_ opts]
   (let [write-report?   (:report opts)
@@ -49,9 +54,11 @@
     (when write-report?
       (println (c/magenta "REPORT NOT IMPLEMENTED YET!")))))
 
+
 ;; Default handler to catch unknown formatter commands.
 (defmethod find-outdated-impl :default [& _]
   (print-help))
+
 
 (defn find-outdated-dependencies
   ""

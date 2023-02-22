@@ -1,10 +1,11 @@
 (ns clci.tools.linesofcode
   "Implementation of the tool to get the lines of code"
   (:require
-   [babashka.cli :as cli]
-   [com.mjdowney.loc :as loc]
-   [clci.term :as c]
-   [clci.util :refer [get-paths]]))
+    [babashka.cli :as cli]
+    [clci.term :as c]
+    [clci.util :refer [get-paths]]
+    [com.mjdowney.loc :as loc]))
+
 
 (def cli-options
   "Available cli options for carve."
@@ -13,11 +14,13 @@
     :silent       {:coerce :boolean :desc "Set to true if you would like to not write anything to stdout when running the tool i.e. in a CI environment."}
     :help         {:coerce :boolean :desc "Show help."}}})
 
+
 (defn- print-help
   "Print help for the carve task."
   []
   (println "Get the lines of code of the project's code base.\n")
   (println (cli/format-opts cli-options)))
+
 
 (defn- lines-of-code-impl
   [opts]
@@ -29,6 +32,7 @@
       (print report))
     (when write-report?
       (println (c/magenta "REPORT NOT IMPLEMENTED YET!")))))
+
 
 (defn lines-of-code
   "Run linesofcode-bb to get the lines of code."

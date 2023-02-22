@@ -2,8 +2,9 @@
   "Implementation of the linter. Uses the `clj-kondo` library
 	and defines some sane abstractions how to use it from a bb task."
   (:require
-   [babashka.cli :as cli]
-   [clj-kondo.core :as clj-kondo]))
+    [babashka.cli :as cli]
+    [clj-kondo.core :as clj-kondo]))
+
 
 (defn- lint-impl
   "Run kondo to lint the code.
@@ -24,6 +25,7 @@
       :else
       nil)))
 
+
 (def cli-options
   "Available cli options for linter/kondo."
   {:spec
@@ -31,11 +33,13 @@
     :no-fail      		{:coerce :boolean :desc "Set to true when the linter should not return a non zero exit code at any errors."}
     :help         		{:coerce :boolean :desc "Show help."}}})
 
+
 (defn- print-help
   "Print help for the lint task."
   []
   (println "Run kondo to lint the codebase.\n")
   (println (cli/format-opts cli-options)))
+
 
 (defn lint
   "Run kondo to lint the codebase."

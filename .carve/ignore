@@ -34,3 +34,8 @@ clci.tools.ghooks/clj?
 clci.tools.core/lines-of-code
 clci.tools.core/outdated-deps
 clci.tools.core/test-coverage
+clci.gh.core/create-release
+clci.gh.core/get-all-releases
+clci.gh.core/list-releases
+clci.semver/get-release-tags
+clci.semver/derive-current-commit-version

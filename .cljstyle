@@ -1,3 +1,3 @@
 ;; cljstyle configuration
-{:files {:ignore #{"target" "docs" ".clj-kondo"}}
+{:files {:ignore #{"target" "docs" ".clj-kondo" "cli-tool"}}
  :rules {:blank-lines {:max-consecutive 3}}}
