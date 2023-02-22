@@ -7,7 +7,8 @@
    [clci.tools.mkdocs :as mkdocs]
    [clci.tools.ghooks :as gh]
    [clci.tools.format :as fmt]
-   [clci.tools.linesofcode :as loc]))
+   [clci.tools.linesofcode :as loc]
+   [clci.tools.antq :as aq]))
 
 (defn lint
   "Lint the code."
@@ -38,3 +39,8 @@
   "Get the lines of code of the project."
   [opts]
   (loc/lines-of-code opts))
+
+(defn outdated-deps
+  "Find outdated dependencies."
+  [opts]
+  (aq/find-outdated-dependencies opts))

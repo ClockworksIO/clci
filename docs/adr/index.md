@@ -17,3 +17,5 @@ The full specification as defined by `io.clockworks` can be found as a copy in [
 - [ADR007 - Carve](./adr007-carve.md)
 - [ADR008 - Conventional Commits: Footer](./adr008-cc_footer_values.md)
 - [ADR009 - Library vs. CLI Tool](./adr009-library_vs_cli_tool.md)
+- [ADR010 - Lines of Code](./adr010-tinesofcode.md)
+- [ADR011 - Find Outdated Dependencies](./adr011-antq.md)
