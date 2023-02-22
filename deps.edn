@@ -14,8 +14,8 @@
  ;; build target directory - used to place build artifacts
  :target-dir  "target"
  
- :deps      {babashka/process                         {:mvn/version "0.3.11"}
-             io.github.babashka/instaparse.bb         {:git/sha "0e86a09bafead57eed251cbda53ab35032688bdf"}
+ :deps      {babashka/process                         {:mvn/version "0.4.16"}
+             io.github.babashka/instaparse.bb         {:git/sha "2bdd8726d197abfbe3d943d2c3af547f296a2190"}
              io.github.clj-kondo/clj-kondo-bb         {:git/tag "v2023.01.20" 
                                                        :git/sha "adfc7df"}
              io.github.borkdude/carve                 {:git/url "https://github.com/borkdude/carve"
