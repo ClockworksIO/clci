@@ -1,13 +1,7 @@
-{;
- :scm       {:name    "git"
-             :url     "git@github.com:ClockworksIO/clci.git"
-             :github  {:repo  "clci"
-                       :owner "ClockworksIO"
-             }}
- ;
- :jobs {:on-commit []}
- ;
- :projects 
- [{:root ""
-   :extra-jobs {}
-   :skip-jobs {}}]}
+{:version "0.0.0.",
+ :scm
+ {:name "git",
+  :url "git@github.com:ClockworksIO/clci.git",
+  :github {:repo "clci", :owner "ClockworksIO"}},
+ :jobs {:on-commit []},
+ :projects [{:root "", :extra-jobs {}, :skip-jobs {}}]}

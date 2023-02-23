@@ -6,8 +6,8 @@
    (:require
      [babashka.cli :as cli]
      [carve.api :as api]
+     [clci.repo :refer [get-paths]]
      [clci.term :as c]
-     [clci.util :refer [get-paths]]
      [clojure.edn :as edn]
      [clojure.pprint :refer [pprint]]))
 

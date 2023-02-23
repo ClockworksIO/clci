@@ -2,8 +2,8 @@
   "Implementation of the tool to get the lines of code"
   (:require
     [babashka.cli :as cli]
+    [clci.repo :refer [get-paths]]
     [clci.term :as c]
-    [clci.util :refer [get-paths]]
     [com.mjdowney.loc :as loc]))
 
 

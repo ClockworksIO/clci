@@ -4,7 +4,7 @@
     [clci.conventional-commit :as cc]
     [clci.gh.core :as gh]
     [clci.git :as git]
-    [clci.util :refer [read-repo]]
+    [clci.repo :refer [read-repo]]
     [clojure.string :as str]))
 
 
@@ -92,6 +92,13 @@
    (minor (:tag release))
    (patch (:tag release))
    (pre-release (:tag release))])
+
+
+(defn vec->str
+  "Takes a vector `version` in the form [major minor patch pre-release] and
+  returns a string of the version following the SemVer spec."
+  [version]
+  (str/join "." version))
 
 
 (defn- dervice-version-from-commits

@@ -9,7 +9,8 @@
     [clci.tools.ghooks :as gh]
     [clci.tools.linesofcode :as loc]
     [clci.tools.linter :as linter]
-    [clci.tools.mkdocs :as mkdocs]))
+    [clci.tools.mkdocs :as mkdocs]
+    [clci.tools.release :as rel]))
 
 
 (defn lint
@@ -58,3 +59,9 @@
   "Get the test coverage of the project's code."
   [opts]
   (cov/cloverage opts))
+
+
+(defn release!
+  "Create a new release."
+  [opts]
+  (rel/release! opts))

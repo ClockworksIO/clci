@@ -39,3 +39,4 @@ clci.gh.core/get-all-releases
 clci.gh.core/list-releases
 clci.semver/get-release-tags
 clci.semver/derive-current-commit-version
+clci.tools.core/release!

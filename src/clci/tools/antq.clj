@@ -31,7 +31,7 @@
 (defmethod find-outdated-impl :check [_ opts]
   (let [write-report?   (:report opts)
         silent?         (:silent opts)
-        result   				(sh {:out :string :err :string} "clj -M:outdated -m antq.core")
+        result   				(sh {:out :string :err :string} "clojure -M:outdated -m antq.core")
         report          (-> result :out)]
     ;; write report to stdout if not supressed
     (when-not silent?
@@ -45,7 +45,7 @@
 (defmethod find-outdated-impl :upgrade [_ opts]
   (let [write-report?   (:report opts)
         silent?         (:silent opts)
-        result   				(sh {:out :string :err :string} "clj -M:outdated -m antq.core --upgrade --force --download")
+        result   				(sh {:out :string :err :string} "clojure -M:outdated -m antq.core --upgrade --force --download")
         report          (-> result :out)]
     ;; write report to stdout if not supressed
     (when-not silent?
