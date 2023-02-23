@@ -38,6 +38,8 @@
          build          {:doc           "Build the specified target. One of [clean|uberjar|static]"
                          :requires     ([build :as b])
                          :task         (apply b/build *command-line-args*)}
+         release        {:doc           "Build the specified target. One of [clean|uberjar|static]"
+                         :task         (exec 'clci.tools.core/release!)}
          semver         {:doc "semver test"
                          :requires ([clci.semver :as sv])
                          :task sv/derive-current-commit-version}

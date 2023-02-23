@@ -37,7 +37,7 @@
         no-fail?        (:no-fail opts)
         _								(when-not silent?
                    (println (c/blue "Checking Clojure file style...")))
-        result   				(sh {:out :string :err :string} "clj -M:format -m cljstyle.main check")
+        result   				(sh {:out :string :err :string} "clojure -M:format -m cljstyle.main check")
         failure?				(not= 0 (:exit result))
         report          (-> result :err str/split-lines)]
     ;; write report to stdout if not supressed
@@ -54,7 +54,7 @@
 ;; Fix the style of all Clojure files.
 (defmethod format-code-impl :fix [_ opts]
   (println (c/blue "Checking Clojure file style..."))
-  (let [result   				(sh {:out :string :err :string} "clj -M:format -m cljstyle.main fix")
+  (let [result   				(sh {:out :string :err :string} "clojure -M:format -m cljstyle.main fix")
         failure?				(not= 0 (:exit result))
         report          (-> result :err str/split-lines)]
     (pprint report)

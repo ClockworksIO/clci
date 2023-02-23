@@ -20,15 +20,3 @@
         (str/join "/" $)))
 
 
-(defn get-paths
-  "TODO: combine with utils from monorepo!"
-  []
-  ["src"])
-
-
-(defn read-repo
-  "Read the repo configuration."
-  []
-  (-> (slurp "repo.edn")
-      ;; TODO: Add checks that the mandatory fields are here!
-      (edn/read-string)))

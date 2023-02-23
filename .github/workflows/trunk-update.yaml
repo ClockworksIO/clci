@@ -1,12 +1,13 @@
-name: PR updated
+name: Trunk Update 
 on:
-  pull_request:
-    types: [opened, synchronize]
+  push:
+    branches:
+      - 'master'
 
 jobs:
-  perform_checks:
+  create_release:
     runs-on: ubuntu-latest
-    name: Perform a series of checks on the committed code.
+    name: Create a new release based on the new commits
     steps:
       # first checkout the code
       - name: Checkout
@@ -39,9 +40,6 @@ jobs:
           # List all files containing dependencies:
           key: cljdeps-${{ hashFiles('deps.edn', 'bb.edn') }}
           restore-keys: cljdeps-
-      # Fetch all dependencies
-      - name: Fetch Dependencies
-        run: clojure -P && bb prepare
       # Run cljstyle to verify the code is formatted correctly
       - name: Format code
         run: bb format --check --silent
@@ -51,3 +49,13 @@ jobs:
       # Run all unit Tests
       - name: Unit Tests
         run: bb test
+      # Set the version for the release
+      - name: create release
+        run: bb release --only-update-version
+      # Add and commit the new version
+      - uses: EndBug/add-and-commit@v9
+        with:
+          message: chore: new release
+      # Create the actual release
+      - name: create release
+        run: bb release --only-release

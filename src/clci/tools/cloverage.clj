@@ -32,7 +32,7 @@
         test-path       (:test-path opts)
         result   				(sh
                        {:out :string :err :string}
-                       (format "clj -M:coverage -m cloverage.coverage -p %s -s %s --text" src-path test-path))
+                       (format "clojure -M:coverage -m cloverage.coverage -p %s -s %s --text" src-path test-path))
         report          (-> result :out)]
     ;; write report to stdout if not supressed
     (when-not silent?
