@@ -1,4 +1,4 @@
-{:version "0.0.0.",
+{:version "0.12.2.",
  :scm
  {:name "git",
   :url "git@github.com:ClockworksIO/clci.git",

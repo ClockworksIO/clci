@@ -115,8 +115,13 @@
   "Get a tag object.
   Takes the `owner` and the `repo` name and the `tag`."
   [owner repo tag]
-  (-> (http/get (path endpoint "repos" owner repo "git" "ref" "tags" tag)
-                (with-headers {}))
-      :body
-      (cheshire/parse-string true)))
+  (let [url   (-> (http/get (path endpoint "repos" owner repo "git" "ref" "tags" tag)
+                            (with-headers {}))
+                  :body
+                  (cheshire/parse-string true)
+                  :object
+                  :url)]
+    (-> (http/get url (with-headers {}))
+        :body
+        (cheshire/parse-string true))))
 
