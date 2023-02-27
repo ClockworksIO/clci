@@ -113,7 +113,12 @@
 
 (defn get-tag
   "Get a tag object.
-  Takes the `owner` and the `repo` name and the `tag`."
+  Takes the `owner` and the `repo` name and the `tag`.
+  **Note**: Github does not provide an API to get a tag including its commit.
+    This makes it necessary to make two API calls: The first call gets the tag
+    object via the tag API and the second call takes the url from the response
+    of the first call that points to the commit object and retrieves the commit
+    including it's SHA."
   [owner repo tag]
   (let [url   (-> (http/get (path endpoint "repos" owner repo "git" "ref" "tags" tag)
                             (with-headers {}))
@@ -125,3 +130,14 @@
         :body
         (cheshire/parse-string true))))
 
+
+(defn delete-reference
+  "Deletes a reference.
+  Takes the  `owner`, the `repo` name and the `ref` that shall be deleted.
+  See: https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#delete-a-reference"
+  [owner repo ref]
+  (-> (http/delete
+        (path endpoint "repos" owner repo "git" "refs" ref)
+        (with-headers {}))
+      :body
+      (cheshire/parse-string true)))
