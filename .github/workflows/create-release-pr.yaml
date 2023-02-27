@@ -64,7 +64,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
       # Add and commit the new version
       - name: Commit Release Changes
-      - uses: EndBug/add-and-commit@v9
+        uses: EndBug/add-and-commit@v9
         with:
           message: 'chore: new release'
           new_branch: 'release'
