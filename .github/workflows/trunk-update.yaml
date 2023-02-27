@@ -52,6 +52,8 @@ jobs:
       # Set the version for the release
       - name: create release
         run: bb release --only-update-version
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       # Add and commit the new version
       - uses: EndBug/add-and-commit@v9
         with:
@@ -59,3 +61,5 @@ jobs:
       # Create the actual release
       - name: create release
         run: bb release --only-release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
