@@ -7,6 +7,7 @@ jobs:
   perform_checks:
     runs-on: ubuntu-latest
     name: Perform a series of checks on the committed code.
+    if: "!contains(github.event.head_commit.message, 'chore: new release')"
     steps:
       # first checkout the code
       - name: Checkout
