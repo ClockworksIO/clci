@@ -1,13 +1,14 @@
-name: Trunk Update 
+name: Create Release PR 
 on:
-  push:
-    branches:
-      - 'master'
+  pull_request:
+    types: [opened]
+    branches: master
 
 jobs:
   create_release:
     runs-on: ubuntu-latest
-    name: Create a new release based on the new commits
+    name: Automatically approve and merge a Release PR
+    if: "contains(github.event.head_commit.message, 'chore: new release')"
     steps:
       # first checkout the code
       - name: Checkout
@@ -42,26 +43,25 @@ jobs:
           # List all files containing dependencies:
           key: cljdeps-${{ hashFiles('deps.edn', 'bb.edn') }}
           restore-keys: cljdeps-
-      # Run cljstyle to verify the code is formatted correctly
-      - name: Format code
-        run: bb format --check --silent
-      # Run kondo to lint the code
-      - name: Lint code
-        run: bb lint
-      # Run all unit Tests
-      - name: Unit Tests
-        run: bb test
-      # Set the version for the release
-      - name: create release
-        run: bb release --only-update-version
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-      # Add and commit the new version
-      - uses: EndBug/add-and-commit@v9
+      # Approve the PR
+      - name: Approve Pull Request
+        uses: juliangruber/approve-pull-request-action@v2.0.0
         with:
-          message: 'chore: new release'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          number: ${{ github.event.number }}
+      # Merge the PR
+      - name: Merge Pull Request
+        uses: juliangruber/merge-pull-request-action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          number: ${{ github.event.number }}
+          method: rebase # merge squash rebase
       # Create the actual release
       - name: create release
-        run: bb release --only-release
+        run: |
+          git fetch --all
+          git checkout master
+          git pull origin master
+          bb release --only-release
         env:
           GITHUB_TOKEN: ${{ github.token }}
