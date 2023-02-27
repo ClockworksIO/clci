@@ -12,6 +12,8 @@ jobs:
       # first checkout the code
       - name: Checkout
         uses: actions/checkout@v3
+        width:
+          fetch-depth: 0
       # Install java before installing clojure tools which needs java
       - name: Prepare java
         uses: actions/setup-java@v3
