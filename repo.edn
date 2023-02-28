@@ -1,7 +1,5 @@
-{:version "0.12.2.",
- :scm
- {:name "git",
-  :url "git@github.com:ClockworksIO/clci.git",
-  :github {:repo "clci", :owner "ClockworksIO"}},
- :jobs {:on-commit []},
- :projects [{:root "", :extra-jobs {}, :skip-jobs {}}]}
+{:scm
+ {:type :git,
+  :url "git@github.com:superman/example.git",
+  :provider {:name :github, :repo "example", :owner "superman"}},
+ :projects [{:root "", :version "0.0.0"}]}

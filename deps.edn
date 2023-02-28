@@ -12,7 +12,8 @@
  ;; build target directory - used to place build artifacts
  :target-dir  "target"
  
- :deps      {babashka/process                         {:mvn/version "0.4.16"}
+ :deps      {org.clojure/clojure                      {:mvn/version "1.11.1"}
+             babashka/process                         {:mvn/version "0.4.16"}
              org.babashka/http-client                 {:mvn/version "0.1.4"}
              io.github.babashka/instaparse.bb         {:git/sha "2bdd8726d197abfbe3d943d2c3af547f296a2190"}
              io.github.clj-kondo/clj-kondo-bb         {:git/tag "v2023.01.20" 
