@@ -4,3 +4,4 @@ target/
 .lsp
 .clj-kondo/
 .babashka/
+example/

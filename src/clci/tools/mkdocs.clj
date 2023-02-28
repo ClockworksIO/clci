@@ -1,4 +1,6 @@
 (ns clci.tools.mkdocs
+  "This module provides tooling to use mkdocs as an external tool to
+  build a beautiful documentation."
   (:require
     [babashka.cli :as cli]
     [clci.proc-wrapper :as pw]))

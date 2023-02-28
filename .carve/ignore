@@ -40,3 +40,10 @@ clci.gh.core/list-releases
 clci.semver/get-release-tags
 clci.semver/derive-current-commit-version
 clci.tools.core/release!
+clci.core/cli-args
+clci.core/clci
+clci.repo/write-deps!
+clci.repo/add-task
+clci.repo/valid-scm
+clci.repo/valid-scm-provider
+clci.tools.release/get-release-tags

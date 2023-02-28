@@ -1,46 +1,62 @@
-{:paths ["bb" "src"]
- :deps  {babashka/process     		 		        {:mvn/version "0.4.16"}
-         org.babashka/cli                         {:mvn/version "0.6.46"}
-         io.github.babashka/instaparse.bb         {:git/sha "2bdd8726d197abfbe3d943d2c3af547f296a2190"}
-         io.github.clj-kondo/clj-kondo-bb         {:git/tag "v2023.01.20" 
-                                                   :git/sha "adfc7df"}
-         io.github.borkdude/carve                 {:git/url "https://github.com/borkdude/carve"
-                                                   :git/tag "v0.3.5"
-                                                   :git/sha "6f0f3bf"}
-         io.github.matthewdowney/linesofcode-bb   {:git/tag "v0.0.2" 
-                                                   :git/sha "12e4f52"}}
-
-
- :tasks {test           {:extra-paths       ["test"]
-                         :extra-deps        {io.github.cognitect-labs/test-runner   {:git/tag "v0.5.1" 
-                                                                                     :git/sha "dfb30dd"}}
-                         :task              (exec 'cognitect.test-runner.api/test)
-                         :exec-args         {:dirs ["test"] :patterns [".*-test$"]}
-                         :org.babashka/cli  {:coerce {:nses [:symbol]
-                                                      :vars [:symbol]}}}
-         carve          {:doc         "Remove unused vars."        
-                         :task        (exec 'clci.tools.core/carve!)}
-         format   	   {:doc         "Run the formatter to format the project's clojure code."
-                 	       :task        (exec 'clci.tools.core/format!)}
-	      hooks  	      {:doc         "Git hook related commands."
-                 	       :task        (exec 'clci.tools.core/git-hooks)}
-         lint           {:doc         "Run kondo to lint the code. Fail on errors."
-                         :task        (exec 'clci.tools.core/lint)}
-         lines-of-code  {:doc         "Get the lines of code in the project."
-                         :task        (exec 'clci.tools.core/lines-of-code)}
-         outdated       {:doc         "Run find outdated dependencies."
-                         :task        (exec 'clci.tools.core/outdated-deps)}
-         docs           {:doc         "Handle the documentation of the project."
-                         :task        (exec 'clci.tools.core/docs!)}
-         nrepl          {:doc         "Run a nREPL server on localhost."
-                         :requires    ([babashka.process :refer [sh]])
-                         :task        (-> (shell "clj -M:nREPL -m nrepl.cmdline") :out println)}
-         build          {:doc           "Build the specified target. One of [clean|uberjar|static]"
-                         :requires     ([build :as b])
-                         :task         (apply b/build *command-line-args*)}
-         release        {:doc           "Build the specified target. One of [clean|uberjar|static]"
-                         :task         (exec 'clci.tools.core/release!)}
-         semver         {:doc "semver test"
-                         :requires ([clci.semver :as sv])
-                         :task sv/derive-current-commit-version}
-         }}
+{:paths ["bb" "src"],
+ :deps
+ {babashka/process {:mvn/version "0.4.16"},
+  org.babashka/cli {:mvn/version "0.6.46"},
+  io.github.babashka/instaparse.bb
+  {:git/sha "2bdd8726d197abfbe3d943d2c3af547f296a2190"},
+  io.github.clj-kondo/clj-kondo-bb
+  {:git/tag "v2023.01.20", :git/sha "adfc7df"},
+  io.github.borkdude/carve
+  {:git/url "https://github.com/borkdude/carve",
+   :git/tag "v0.3.5",
+   :git/sha "6f0f3bf"},
+  io.github.matthewdowney/linesofcode-bb
+  {:git/tag "v0.0.2", :git/sha "12e4f52"}},
+ :tasks
+ {carve
+  {:doc "Remove unused vars.", :task (exec 'clci.tools.core/carve!)},
+  clci
+  {:doc "Run clci.",
+   :requires ([clci.core :as clci]),
+   :task (exec 'clci/clci)},
+  test
+  {:extra-paths ["test"],
+   :extra-deps
+   {io.github.cognitect-labs/test-runner
+    {:git/tag "v0.5.1", :git/sha "dfb30dd"}},
+   :task (exec 'cognitect.test-runner.api/test),
+   :exec-args {:dirs ["test"], :patterns [".*-test$"]},
+   :org.babashka/cli {:coerce {:nses [:symbol], :vars [:symbol]}}},
+  lines-of-code
+  {:doc "Get the lines of code in the project.",
+   :task (exec 'clci.tools.core/lines-of-code)},
+  semver
+  {:doc "semver test",
+   :requires ([clci.semver :as sv]),
+   :task sv/derive-current-commit-version},
+  format
+  {:doc "Run the formatter to format the project's clojure code.",
+   :task (exec 'clci.tools.core/format!)},
+  outdated
+  {:doc "Run find outdated dependencies.",
+   :task (exec 'clci.tools.core/outdated-deps)},
+  hooks
+  {:doc "Git hook related commands.",
+   :task (exec 'clci.tools.core/git-hooks)},
+  docs
+  {:doc "Handle the documentation of the project.",
+   :task (exec 'clci.tools.core/docs!)},
+  release
+  {:doc "Build the specified target. One of [clean|uberjar|static]",
+   :task (exec 'clci.tools.core/release!)},
+  nrepl
+  {:doc "Run a nREPL server on localhost.",
+   :requires ([babashka.process :refer [sh]]),
+   :task (-> (shell "clj -M:nREPL -m nrepl.cmdline") :out println)},
+  build
+  {:doc "Build the specified target. One of [clean|uberjar|static]",
+   :requires ([build :as b]),
+   :task (apply b/build *command-line-args*)},
+  lint
+  {:doc "Run kondo to lint the code. Fail on errors.",
+   :task (exec 'clci.tools.core/lint)}}}

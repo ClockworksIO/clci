@@ -1,5 +1,34 @@
 # Userguide
 
+## Install clci
+
+You can use clci either in a new project or from an existing one.
+
+When you would like to create a new project and use clci and its functionality you can simply start by creating a new `bb.edn` file with the following contents:
+
+```clojure
+{:paths []
+ :deps  {clockworksio/clci    {:git/url "https://github.com/clockworksio/clci"
+                               :git/tag "0.4.0" 
+                               :git/sha "e8c12ca327721caaafa05a8688dfad2cd080b243"}}}
+```
+
+If you would like to add clci to an existing project that already uses Babashka, just add the dependency and leave the rest of your `bb.edn` file as it was.
+
+To install clci and setup a basic Babashka task to run it execute the following command in your terminal:
+
+```sh
+bb -m clci.core install \
+  --scm git \
+  --scm-provider github \
+  --scm-repo-name example \ 
+  --scm-repo-owner bigcoorp \ 
+  --single-repo
+```
+
+**OLD**
+
+
 When building production grade software we need to ensure a high level of quality of our product. This can get more difficult over time as the code base grows in size and complexity. The number of external dependencies may increase which introduces an extra level of things to keep updated and look out for security problems. 
 
 One of the ways to prevent degrading quality over time are conventions how to develop the product and using automations to ensure those conventions. Because - lets be honest - when nobody enforces those conventions we developers will get lazy and won't always keep to our own rules.

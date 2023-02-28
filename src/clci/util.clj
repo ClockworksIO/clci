@@ -1,7 +1,6 @@
 (ns clci.util
   "Utilities required by several modules of the project."
   (:require
-    [clojure.edn :as edn]
     [clojure.string :as str]))
 
 
