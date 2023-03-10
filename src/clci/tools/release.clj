@@ -136,7 +136,7 @@
     (r/update-version new-version-str)
     (when gh-action?
       (println (format "echo 'version=%s' >> $GITHUB_OUTPUT" new-version-str))
-      (shell {:out :string} (format "echo 'version=%s' >> $GITHUB_OUTPUT" new-version-str)))
+      (println (shell {:out :string} (format "echo 'version=%s' >> $GITHUB_OUTPUT" new-version-str))))
     (when write-report?
       (println (c/magenta "REPORT NOT IMPLEMENTED YET!")))))
 
@@ -154,7 +154,7 @@
         repo-conf   		(r/read-repo)
         repo        		(get-in repo-conf [:scm :provider :repo])
         owner       		(get-in repo-conf [:scm :provider :owner])
-        version-str     (get-in repo-conf [:version])]
+        version-str     (get-in repo-conf [:projects 0 :version])]
     (when-not silent?
       (println (c/blue "[NEW RELEASE] Create Release")))
     (gh/create-release {:owner owner :repo repo :tag version-str :draft draft? :pre-release pre-release?})
