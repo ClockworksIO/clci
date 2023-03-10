@@ -136,7 +136,7 @@
     (r/update-version new-version-str)
     (when gh-action?
       (println (format "echo 'version=%s' >> $GITHUB_OUTPUT" new-version-str))
-      (println (shell {:out :string} (format "echo 'version=%s' >> $GITHUB_OUTPUT" new-version-str))))
+      (shell {:out :string} (format "echo \"version=%s\" >> $GITHUB_OUTPUT" new-version-str)))
     (when write-report?
       (println (c/magenta "REPORT NOT IMPLEMENTED YET!")))))
 
