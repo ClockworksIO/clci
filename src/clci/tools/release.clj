@@ -16,8 +16,8 @@
   **Note**: Only supports the Github API to get the latest release at this time."
   []
   (let [repo-conf   (r/read-repo)
-        repo        (get-in repo-conf [:scm :github :repo])
-        owner       (get-in repo-conf [:scm :github :owner])
+        repo        (get-in repo-conf [:scm :provider :repo])
+        owner       (get-in repo-conf [:scm :provider :owner])
         release     (gh/get-latest-release owner repo)
         tag         (gh/get-tag owner repo (:tag_name release))]
     {:commit  (get-in tag [:object :sha])
@@ -146,8 +146,8 @@
         silent?         (:silent opts)
         write-report?   (:report opts)
         repo-conf   		(r/read-repo)
-        repo        		(get-in repo-conf [:scm :github :repo])
-        owner       		(get-in repo-conf [:scm :github :owner])
+        repo        		(get-in repo-conf [:scm :provider :repo])
+        owner       		(get-in repo-conf [:scm :provider :owner])
         version-str     (get-in repo-conf [:version])]
     (when-not silent?
       (println (c/blue "[NEW RELEASE] Create Release")))
