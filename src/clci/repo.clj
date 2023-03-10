@@ -187,7 +187,7 @@
   Takes the `version` as string."
   [version]
   (as-> (read-repo) $
-        (assoc $ :version version)
+        (assoc-in $ [:projects 0 :version] version)
         (pretty-spit! "repo.edn" $)))
 
 
