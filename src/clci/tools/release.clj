@@ -2,6 +2,7 @@
   "This module provides tools to create releases."
   (:require
     [babashka.cli :as cli]
+    [babashka.process :refer [sh]]
     [clci.conventional-commit :as cc]
     [clci.gh.core :as gh]
     [clci.git :as git]
@@ -106,6 +107,7 @@
     :pre-release  {:coerce :boolean :desc "Set to true if you would like to mark the new release as pre-release."}
     :report   		{:coerce :boolean :desc "Set to true if you would like to write the result to a report file."}
     :silent       {:coerce :boolean :desc "Set to true if you would like to not write anything to stdout when running i.e. in a CI environment."}
+    :gh-action    {:coerce :boolean :desc "Set to true if this is run as part of a GH action. Will set the action output 'version' to the new version."}
     :help  				{:coerce :boolean :desc "Show help."}}})
 
 
@@ -125,12 +127,15 @@
 (defmethod release-impl :only-update-version [_ opts]
   (let [silent?         (:silent opts)
         write-report?   (:report opts)
+        gh-action?      (:gh-action opts)
         new-version 		(derive-current-commit-version)
         new-version-str	(vec->str new-version)]
     (when-not silent?
       (println (c/blue "[NEW RELEASE] Set new version"))
       (println "new version:" (c/magenta new-version-str)))
     (r/update-version new-version-str)
+    (when gh-action?
+      (sh (format "echo \"version=%s\" >> \"$GITHUB_OUTPUT\"" new-version-str)))
     (when write-report?
       (println (c/magenta "REPORT NOT IMPLEMENTED YET!")))))
 
