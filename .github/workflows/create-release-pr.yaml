@@ -60,7 +60,7 @@ jobs:
       # Set the version for the release
       - name: Update Version
         id: update_version
-        run: bb release --only-update-version
+        run: bb release --only-update-version --gh-action
         env:
           GITHUB_TOKEN: ${{ github.token }}
       # Add and commit the new version
@@ -71,6 +71,7 @@ jobs:
           git checkout -b release-${{ steps.update_version.outputs.version }}
           git add .
           git commit -m 'chore: create new release ${{ steps.update_version.outputs.version }}' --no-verify
+          git push origin release-${{ steps.update_version.outputs.version }}
       # - name: Commit Release Changes
       #   uses: EndBug/add-and-commit@v9
       #   with:
