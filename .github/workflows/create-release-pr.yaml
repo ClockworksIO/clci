@@ -76,7 +76,7 @@ jobs:
       #   with:
       #     message: 'chore: new release'
       #     new_branch: 'release-${{ steps.update_version.outputs.version }}'
-      Create a PR for the new release
+      # Create a PR for the new release
       - name: Create Release PR
         id: create-pull-request 
         uses: peter-evans/create-pull-request@v4
