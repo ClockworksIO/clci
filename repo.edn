@@ -1,5 +1,5 @@
 {:scm
  {:type :git,
-  :url "git@github.com:superman/example.git",
-  :provider {:name :github, :repo "example", :owner "superman"}},
+  :url "git@github.com:ClockworksIO/clci.git",
+  :provider {:name :github, :repo "clci", :owner "ClockworksIO"}},
  :projects [{:root "", :version "0.0.0"}]}
