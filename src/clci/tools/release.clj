@@ -149,10 +149,10 @@
 ;;   in the `repo.edn` config. Please set the version one step before executing
 ;;   this release step using the _--only-update-version_ option!
 (defmethod release-impl :only-release [_ opts]
-  (let [pre-release?    (:pre-release opts)
-        draft?  				(:draft opts)
-        silent?         (:silent opts)
-        write-report?   (:report opts)
+  (let [pre-release?    (:pre-release opts false)
+        draft?  				(:draft opts false)
+        silent?         (:silent opts false)
+        write-report?   (:report opts false)
         repo-conf   		(r/read-repo)
         repo        		(get-in repo-conf [:scm :provider :repo])
         owner       		(get-in repo-conf [:scm :provider :owner])
@@ -162,27 +162,6 @@
     (gh/create-release {:owner owner :repo repo :tag version-str :draft draft? :pre-release pre-release?})
     (when write-report?
       (println (c/magenta "REPORT NOT IMPLEMENTED YET!")))))
-
-
-;; (defn- release-impl
-;;   "Implementation of release."
-;;   [opts]
-;;   (let [pre-release?    (:pre-release opts)
-;;         draft?  				(:draft opts)
-;;         silent?         (:silent opts)
-;;         write-report?   (:report opts)
-;;         repo-conf   		(r/read-repo)
-;;         repo        		(get-in repo-conf [:scm :github :repo])
-;;         owner       		(get-in repo-conf [:scm :github :owner])
-;;         new-version 		(sv/derive-current-commit-version)
-;;         new-version-str	(sv/vec->str new-version)]
-;;     (when-not silent?
-;;       (println (c/blue "[NEW RELEASE]") (c/magenta new-version-str))
-;;       (println "new version:" (c/magenta new-version-str)))
-;;     (r/update-version new-version-str)
-;;     (gh/create-release {:owner owner :repo repo :tag new-version-str :draft draft? :pre-release pre-release?})
-;;     (when write-report?
-;;       (println (c/magenta "REPORT NOT IMPLEMENTED YET!")))))
 
 
 (defn release!
