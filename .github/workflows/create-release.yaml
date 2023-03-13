@@ -1,8 +1,9 @@
-name: Create Release PR 
+name: Create Release 
 on:
   pull_request:
     types: [opened]
-    branches: master
+    branches: 
+      - master
 
 jobs:
   create_release:
