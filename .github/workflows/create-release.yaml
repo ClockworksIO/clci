@@ -43,19 +43,6 @@ jobs:
           # List all files containing dependencies:
           key: cljdeps-${{ hashFiles('deps.edn', 'bb.edn') }}
           restore-keys: cljdeps-
-      # # Approve the PR
-      # - name: Approve Pull Request
-      #   uses: juliangruber/approve-pull-request-action@v2.0.0
-      #   with:
-      #     github-token: ${{ secrets.GITHUB_TOKEN }}
-      #     number: ${{ github.event.number }}
-      # # Merge the PR
-      # - name: Merge Pull Request
-      #   uses: juliangruber/merge-pull-request-action@v1
-      #   with:
-      #     github-token: ${{ secrets.GITHUB_TOKEN }}
-      #     number: ${{ github.event.number }}
-      #     method: rebase # merge squash rebase
       # Create the actual release
       - name: create release
         run: |

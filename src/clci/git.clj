@@ -21,6 +21,14 @@
       str/trim))
 
 
+(defn- parse-commit-msg
+  [msg-v]
+  (loop [head   (first msg-v)
+         tail   (rest msg-v)
+         state  :init
+         result {}]))
+
+
 (defn commits-on-branch-since
   "Get all commits using git cli.
   Reads the git log using the oneline format. Optionally takes
@@ -42,21 +50,25 @@
                               :date    (get v 1)
                               :author  (get v 2)
                               :subject (get v 3)
-                              :files   (subvec v 4)})
+                              :body    (get v 4)
+                              :files   (get v 5)})
+         ;; split entries on linebreak and sanitize whitespace
+         splitter (comp (partial into []) #(remove str/blank? %) str/split-lines)
          ;; git shell command used to get the log in the format required
          cmd (str/join
                " "
-               ["git log --format=\"%n%n%n%H%n%ai%n%ae%n%s\""
+               ["git log --format=\"%n!-M-!%H%n%ai%n%ae!-S-!%s!-B-!%b!-F-!\""
                 "--name-only"
                 (when-not with-tags "--decorate-refs-exclude=refs/tags")
                 (format "--first-parent %s" branch)
                 (when since (format "%s..HEAD" since))])]
      (as-> (shell {:out :string} cmd) $
            (:out $)
-           (str/split $ #"\n\n\n")
+           (str/split $ #"!-M-!")
            (remove str/blank? $)
-           (map
-             (comp commit-col->map (partial into []) #(remove str/blank? %) str/split-lines)
-             $)))))
+           (map #(str/split % #"(!-S-!)|(!-B-!)|(!-F-!)") $)
+           (map (fn [[head subject body changes]]
+                  (commit-col->map (apply conj [(splitter head) subject body (splitter changes)])))
+                $)))))
 
 

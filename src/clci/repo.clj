@@ -2,6 +2,7 @@
   "This module provides methods to read and update the repo.edn file."
   (:require
     [clci.semver :as sv]
+    [clci.util :as u]
     [clojure.edn :as edn]
     [clojure.pprint :refer [pprint]]
     [clojure.spec.alpha :as s]))
@@ -169,12 +170,39 @@
                   (with-scm-provider (:scm-provider opts) (:scm-repo-name opts) (:scm-repo-owner opts)))})
 
 
+(s/def :clci.repo.scm/type valid-scm)
+(s/def :clci.repo.scm/url string?)
+(s/def :clci.repo.scm.provider/name valid-scm-provider)
+(s/def :clci.repo.scm.provider/repo string?)
+(s/def :clci.repo.scm.provider/owner string?)
+
+
+(s/def :clci.repo.scm/provider
+  (s/keys :req-un [:clci.repo.scm.provider/name
+                   :clci.repo.scm.provider/repo
+                   :clci.repo.scm.provider/owner]))
+
+
+(s/def :clci.repo/scm
+  (s/keys :req-un [:clci.repo.scm/type
+                   :clci.repo.scm/url]))
+
+
+(s/def :clci.repo.project/root string?)
+(s/def :clci.repo.project/key keyword?)
+(s/def :clci.repo.project/version string?)
+(s/def :clci.repo/project (s/keys :req-un []))
+
+(s/def :clci.repo/projects (s/coll-of :clci.repo/project))
+
+(s/def :clci.repo/repo (s/keys :req-un [:clci.repo/scm :clci.repo/projects]))
+
 
 ;; (s/def ::initial-version string?)
-(s/def ::scm some?)
-(s/def ::scm-provider some?)
-(s/def ::scm-repo-name string?)
-(s/def ::scm-repo-owner string?)
+;; (s/def ::scm some?)
+;; (s/def ::scm-provider some?)
+;; (s/def ::scm-repo-name string?)
+;; (s/def ::scm-repo-owner string?)
 
 
 ;; (s/fdef repo-base
@@ -184,11 +212,15 @@
 
 (defn update-version
   "Update the version in the repo.edn file.
-  Takes the `version` as string."
-  [version]
-  (as-> (read-repo) $
-        (assoc-in $ [:projects 0 :version] version)
-        (pretty-spit! "repo.edn" $)))
+  Takes the `version` as string and the project identifier.
+  If only the version is supplied, the function assumes the repo has only a single project."
+
+  [version project-key]
+  (let [repo     (read-repo)
+        idx      (u/find-first-index (:projects repo) #(= (get % :key) project-key))
+        project  (get-in repo [:projects idx])]
+    (->> (assoc-in repo [:projects idx] (assoc project :version version))
+         (pretty-spit! "repo.edn"))))
 
 
 
@@ -200,3 +232,42 @@
   "TODO: combine with utils from monorepo!"
   []
   ["src"])
+
+
+(defn single-project?
+  "Test if the repository contains more than a single project.
+  This is the case when more than one entry exists in the repo.edn :projects field."
+  []
+  (= (count (-> (read-repo) :projects)) 1))
+
+
+(defn get-projects
+  "Get all projects."
+  []
+  (-> (read-repo) :projects))
+
+
+(defn- get-project-impl
+  "Get a project by a specific attribute - implementation."
+  [k v repo]
+  (case k
+    :key (u/find-first (fn [p] (= v (:key p))) (:projects repo))
+    :release-prefix (u/find-first (fn [p] (= v (:release-prefix p))) (:projects repo))))
+
+
+(defn- get-project
+  "Get a project by a specific attribute."
+  [k v repo]
+  (get-project-impl k v repo))
+
+
+(defn get-project-by-key
+  "Get a project by its key."
+  ([key] (get-project :key key (read-repo)))
+  ([key repo] (get-project :key key repo)))
+
+
+(defn get-project-by-release-prefix
+  "Get a project by its release-prefix."
+  ([prefix] (get-project :release-prefix prefix (read-repo)))
+  ([prefix repo] (get-project :release-prefix prefix repo)))

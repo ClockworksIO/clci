@@ -1,7 +1,7 @@
 (ns clci.semver-test
   "This module provides tests for the semantic versioning module."
   (:require
-    [clci.semver :refer [valid-version-tag? major minor patch pre-release]]
+    [clci.semver :refer [valid-version-tag? major minor patch pre-release newer?]]
     [clojure.test :refer [deftest testing is]]))
 
 
@@ -39,3 +39,13 @@
     (is (pre-release "2.2.77-next3.345") "next3.345")))
 
 
+(deftest compare-versions
+  (testing "Test the `newer?` predicate."
+    (is (newer? "1.2.3" "1.0.0"))
+    (is (newer? "1.12.3" "3.4.1"))
+    (is (newer? "0.1.0" "0.0.0"))
+    (is (newer? "1.3.3" "1.3.2"))
+    (is (newer? "1.5.3" "1.4.12"))
+    (is (newer? "12.24.342" "1.0.0"))
+    (is (newer? "51.0.0" "1.2.3"))
+    (is (not (newer? "1.2.3" "1.2.5")))))

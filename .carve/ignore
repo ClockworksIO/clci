@@ -47,3 +47,8 @@ clci.repo/add-task
 clci.repo/valid-scm
 clci.repo/valid-scm-provider
 clci.tools.release/get-release-tags
+clci.github/get-release-by-tag-name
+clci.git/get-tags
+clci.git/parse-commit-msg
+clci.repo/get-project-by-key
+clci.conventional-commit/parse-only-valid
