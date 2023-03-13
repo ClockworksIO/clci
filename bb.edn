@@ -47,7 +47,7 @@
   {:doc "Handle the documentation of the project.",
    :task (exec 'clci.tools.core/docs!)},
   release
-  {:doc "Build the specified target. One of [clean|uberjar|static]",
+  {:doc "Create a new release.",
    :task (exec 'clci.tools.core/release!)},
   nrepl
   {:doc "Run a nREPL server on localhost.",
