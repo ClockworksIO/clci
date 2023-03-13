@@ -68,7 +68,7 @@ jobs:
         uses: peter-evans/create-pull-request@v4
         with:
           base: 'master'
-          branch: 'release-${{ steps.update_version.outputs.version }}'
+          branch: 'release-${{ steps.update-version.outputs.version }}'
           delete-branch: false
           #commit-message: 'chore: create new release ${{ steps.update_version.outputs.version }}'
           title: '[RELEASE] Create a new Release'
