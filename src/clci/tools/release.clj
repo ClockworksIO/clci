@@ -2,7 +2,7 @@
   "This module provides tools to create releases."
   (:require
     [babashka.cli :as cli]
-    [babashka.process :refer [shell]]
+    ;; [babashka.process :refer [shell]]
     [clci.conventional-commit :as cc]
     [clci.gh.core :as gh]
     [clci.git :as git]
@@ -135,8 +135,10 @@
       (println "new version:" (c/magenta new-version-str)))
     (r/update-version new-version-str)
     (when gh-action?
-      (println (format "echo 'version=%s' >> $GITHUB_OUTPUT" new-version-str))
-      (shell {:out :string} (format "echo \"version=%s\" >> $GITHUB_OUTPUT" new-version-str)))
+      ;; (println (format "echo 'version=%s' >> $GITHUB_OUTPUT" new-version-str))
+      (spit (System/getenv "GITHUB_OUTPUT") (format "version=%s\n" new-version-str) :append true)
+      ;; (shell {:out :string} (format "echo \"version=%s\" >> $GITHUB_OUTPUT" new-version-str))
+      )
     (when write-report?
       (println (c/magenta "REPORT NOT IMPLEMENTED YET!")))))
 
