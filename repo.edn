@@ -2,4 +2,4 @@
  {:type :git,
   :url "git@github.com:ClockworksIO/clci.git",
   :provider {:name :github, :repo "clci", :owner "ClockworksIO"}},
- :projects [{:root "", :version "0.13.14"}]}
+ :projects [{:root "", :version "0.13.15"}]}
