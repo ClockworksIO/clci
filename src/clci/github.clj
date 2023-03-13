@@ -1,7 +1,14 @@
-(ns clci.gh.core
+(ns clci.github
   "This module provides several functions to interact with Github
 	using the official Github REST API.
-  This module contains code based on https://github.com/borkdude/gh-release-artifact"
+   
+  **Info**: The module is intended as a raw and low level implementation to interact with Github.
+    There is probably a high level implementation of the task you would like to achieve (i.e.
+    get information about a specific release). Please have a look first if such a high level
+    implementation exists! They are commonly a better place to start i.e. because they support
+    more than one SCM provider platform.
+  
+  **note**: This module contains code based on https://github.com/borkdude/gh-release-artifact."
   (:require
     [babashka.http-client :as http]
     [cheshire.core :as cheshire]
@@ -72,6 +79,16 @@
                  (with-headers {}))
        :body
        (cheshire/parse-string true))))
+
+
+(defn get-release-by-tag-name
+  "Get a specific release.
+  Takes the name of the `owner`, the name of the `repo` and the name of the `tag` of the release."
+  [owner repo tag]
+  (-> (http/get (path (release-endpoint owner repo) "tags" tag)
+                (with-headers {}))
+      :body
+      (cheshire/parse-string true)))
 
 
 (defn get-latest-release

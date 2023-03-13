@@ -23,7 +23,8 @@
                                                        :git/sha "6f0f3bf"}
              io.github.matthewdowney/linesofcode-bb   {:git/tag "v0.0.2" 
                                                        :git/sha "12e4f52"}
-             cheshire/cheshire                        {:mvn/version "5.11.0"}}
+             cheshire/cheshire                        {:mvn/version "5.11.0"}
+             org.clojure/test.check                   {:mvn/version "1.1.1"}}
 
  :aliases
  {:format				   {:deps 	{mvxcvi/cljstyle                       {:mvn/version "0.15.0"}}}
