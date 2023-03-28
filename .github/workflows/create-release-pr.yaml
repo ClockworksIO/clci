@@ -68,8 +68,8 @@ jobs:
           git config user.email '7tupel@users.noreply.github.com'
           git checkout -b release-${{ steps.timestamp.outputs.time }}
           git add .
-          git commit -m 'release: ${{ steps.update-version.outputs.version }}' --no-verify
-          git push origin release-${{ steps.update-version.outputs.version }}
+          git commit -m 'release: ${{ steps.timestamp.outputs.time }}' --no-verify
+          git push origin release-${{ steps.timestamp.outputs.time }}
       - name: Create Release PR
         id: create-pull-request 
         uses: devops-infra/action-pull-request@v0.5.5
