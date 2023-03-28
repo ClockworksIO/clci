@@ -24,9 +24,11 @@
 (spec/def ::version #(re-matches sv/semver-re %))
 (spec/def ::name string?) ; TODO: should follow the `<prefix> - <semver>` format
 (spec/def ::tag string?) ; TODO: should follow the `<prefix> - <semver>` format
+(spec/def ::draft? boolean?)
+(spec/def ::pre-release? boolean?)
 (spec/def ::commit (spec/keys :req-un [::hash]))
 
-(spec/def ::release (spec/keys :req-un [::version ::commit ::name ::tag]))
+(spec/def ::release (spec/keys :req-un [::version ::commit ::name ::tag ::draft? ::pre-release?]))
 
 
 
@@ -147,7 +149,31 @@
   (as-> releases $
         (filter #(and (false? (:prerelease %)) (false? (:draft %))) $)
         (group-by (fn [r] (identify-release-prefix (:name r))) $)
-        (map-on-map-values $ (fn [releases] (last (sort-by :published_at releases))))))
+        (map-on-map-values $ (fn [releases] (reverse (sort-by :published_at releases))))))
+
+
+(defn gh-release->release
+  "Takes a `gh-release` map as returned from the GH API and a `gh-tag` map as returned from the GH API
+   and returns a release map in the format used by clci."
+  [gh-release gh-tag]
+  {:commit        {:hash (:sha gh-tag)}
+   :tag           (or (:tag_name gh-release) "0.0.0")
+   :name          (or (:name gh-release) "0.0.0")
+   :version       (or (release-name->version (:name gh-release)) "0.0.0")
+   :draft?        (:draft gh-release)
+   :pre-release?  (:prerelease gh-release)
+   :published     (:published_at gh-release)})
+
+
+(defn reduce-to-last-release
+  "Takes a map of `grouped-releases` where the value to each (release-prefix) key
+   is a collection of releases ordered latest to oldest. Reduces the map to only
+   have the latest release for each project.
+   Returns a map in the format `<prefix> : <latest-release>`"
+  [grouped-releases]
+  (map-on-map-values
+    grouped-releases
+    (fn [releases] (first releases))))
 
 
 (defn- get-latest-releases
@@ -158,13 +184,17 @@
    **Warning**: Only supports Github Releases at this time!"
   [repo]
   (let [scm-owner       (get-in repo [:scm :provider :owner])
-        scm-repo        (get-in repo [:scm :provider :repo])
-        all-releases    (gh/list-releases scm-owner scm-repo)]
+        scm-repo        (get-in repo [:scm :provider :repo])]
     (case (get-in repo [:scm :provider :name])
       ;; scm == github
-      :github (group-gh-releases-by-prefix all-releases)
+      :github (let [all-releases    (gh/list-releases scm-owner scm-repo)]
+                (-> all-releases
+                    group-gh-releases-by-prefix
+                    reduce-to-last-release
+                    (map-on-map-values (fn [gh-release] (gh-release->release gh-release (gh/get-tag scm-owner scm-repo (:tag_name gh-release)))))))
       ;; otherwise - not supported
       (ex-info "Only Github is supported as SCM provider!" {}))))
+
 
 
 (defn get-latest-release
@@ -180,10 +210,7 @@
                    owner     (get-in repo [:scm :provider :owner])
                    release 	(gh/get-latest-release owner repo-name)
                    tag       (gh/get-tag owner repo-name (:tag_name release))]
-               {:commit  {:hash (:sha tag)}
-                :tag     (or (:tag_name release) "0.0.0")
-                :name    (or (:name release) "0.0.0")
-                :version (or (release-name->version (:name release)) "0.0.0")})
+               (gh-release->release release tag))
      (ex-info "Only Github is supported as SCM provider!" {})))
   ([repo project-key]
    (case (get-in repo [:scm :provider :name])
@@ -214,15 +241,14 @@
    the SCM/Release platform and creates new releases for each of them."
   []
   (let [repo 								(rp/read-repo)
-        all-latest-releases (get-latest-releases repo)
+        all-latest-releases (dissoc (get-latest-releases repo) :no-valid-prefix)
         to-be-released 			(prepare-new-releases-impl repo all-latest-releases)]
     ;; scm == github
     (case (get-in repo [:scm :provider :name])
       :github (let [repo-name (get-in repo [:scm :provider :repo])
                     owner     (get-in repo [:scm :provider :owner])]
-                (doseq [r to-be-released]
-                  (println "would create release: " r)
-                  (gh/create-release {:owner owner :repo repo :tag (str (release-prefix (:version r))) :draft false :pre-release false})
+                (doseq [[_ project] to-be-released]
+                  (gh/create-release {:owner owner :repo repo-name :tag (str (release-prefix project) (:version project)) :draft false :pre-release false})
                   ;; TODO: add options to set as draft or pre-release
                   )
                 (ex-info "Only Github is supported as SCM provider for Releases!" {})))))

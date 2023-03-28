@@ -322,7 +322,9 @@
     (let [derived-versions (rel/derive-current-commit-all-versions-impl
                              (rel/amend-commit-log example-commits-many-projects)
                              projects-example-many)
-          grouped-releases (rel/group-gh-releases-by-prefix gh-latest-releases-example-resp)
+          grouped-releases (-> gh-latest-releases-example-resp
+                               (rel/group-gh-releases-by-prefix)
+                               (rel/reduce-to-last-release))
           mk-fake-project  (fn [version] {:version version})]
       (is (rel/new-release-required?
             (mk-fake-project (get derived-versions :pwa))
@@ -339,7 +341,9 @@
 (deftest prepare-new-releases
   (testing "Testing to derive which releases should be created for the repo based on changes."
     (let [projects              (-> projects-example-many)
-          fake-releases         (rel/group-gh-releases-by-prefix gh-latest-releases-example-resp)
+          fake-releases         (-> gh-latest-releases-example-resp
+                                    (rel/group-gh-releases-by-prefix)
+                                    (rel/reduce-to-last-release))
           derived-versions      (rel/derive-current-commit-all-versions-impl
                                   (rel/amend-commit-log example-commits-many-projects)
                                   projects-example-many)
