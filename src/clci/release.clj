@@ -251,7 +251,7 @@
         latest-release       (get-latest-release repo)
         ;; get a git log of all commits since the latest release and amend it with the commit
         ;; message ast
-        amended-commit-log   (amend-commit-log (git/commits-on-branch-since {:since (:commit latest-release)}))
+        amended-commit-log   (amend-commit-log (git/commits-on-branch-since {:since (get-in latest-release [:commit :hash])}))
         ;; get the project, the version information is required
         project              (first (rp/get-projects))]
     ;; using all information we collected we can now calculate the new version
