@@ -12,14 +12,15 @@
    :git/tag "v0.3.5",
    :git/sha "6f0f3bf"},
   io.github.matthewdowney/linesofcode-bb
-  {:git/tag "v0.0.2", :git/sha "12e4f52"}},
+  {:git/tag "v0.0.2", :git/sha "12e4f52"}
+  com.widdindustries/cljc.java-time {:mvn/version "0.1.21"}
+  org.clojure/core.match {:mvn/version "1.0.1"}},
  :tasks
  {carve
   {:doc "Remove unused vars.", :task (exec 'clci.tools.core/carve!)},
   clci
   {:doc "Run clci.",
-   :requires ([clci.core :as clci]),
-   :task (exec 'clci/clci)},
+   :task (exec 'clci.core/-main)},
   test
   {:extra-paths ["test"],
    :extra-deps
@@ -50,10 +51,6 @@
   release
   {:doc "Create a new release.",
    :task (exec 'clci.tools.core/release!)},
-  build
-  {:doc "Build the specified target. One of [clean|uberjar|static]",
-   :requires ([build :as b]),
-   :task (apply b/build *command-line-args*)},
   lint
   {:doc "Run kondo to lint the code. Fail on errors.",
    :task (exec 'clci.tools.core/lint)}}}

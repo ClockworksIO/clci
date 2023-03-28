@@ -52,3 +52,4 @@ clci.git/get-tags
 clci.git/parse-commit-msg
 clci.repo/get-project-by-key
 clci.conventional-commit/parse-only-valid
+clci.repo/get-product-by-key

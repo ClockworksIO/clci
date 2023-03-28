@@ -46,7 +46,7 @@
       (println (c/blue "[NEW RELEASE] Set new version"))
       (println "new versions:")
       (doseq [[key version] new-versions]
-        (println (c/magenta (format "%s for project %s" version key)))))
+        (println (c/magenta (format "%s for product %s" version key)))))
     (doseq [[key version] new-versions]
       (r/update-version version key))
     (when gh-action?

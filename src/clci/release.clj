@@ -6,6 +6,7 @@
     [clci.github :as gh]
     [clci.repo :as rp]
     [clci.semver :as sv]
+    [clci.util :refer [str-split-last map-on-map-values any]]
     [clojure.spec.alpha :as spec]
     [clojure.string :as str]
     [miner.strgen :as sg]))
@@ -32,44 +33,11 @@
 
 
 
-(defn map-on-map-values
-  "Apply the given function `f` on all values of the map `m`."
-  [m f]
-  (reduce (fn [altered-map [k v]] (assoc altered-map k (f v))) {} m))
-
-
-;; Taken from https://blog.mrhaki.com/2020/04/clojure-goodness-checking-predicate-for.html
-(defn- any
-  "Test if the given predicate `pred` is true for at least one element of `coll`."
-  [pred coll]
-  ((comp boolean some) pred coll))
-
-
-;; (defn no-prefix?
-;;   "Tests if the given `project` does not use a release prefix."
-;;   [project]
-;;   (:no-release-prefix project))
-
-
 (defn release-prefix
-  "Get the release prefix of the specified `project`."
-  [project]
-  (str (:release-prefix project)  "-"))
+  "Get the release prefix of the specified `product`."
+  [product]
+  (str (:release-prefix product)  "-"))
 
-
-(defn str-split-first
-  "Split the given string `s` using the regex `re` on the first occurence of `re`.
-   See: https://stackoverflow.com/a/31146456/5841420"
-  [re s]
-  (clojure.string/split s re 2))
-
-
-(defn str-split-last
-  "Split the given string `s` using the regex `re` on the last occurence of `re`.
-   See: https://stackoverflow.com/a/31146456/5841420"
-  [re s]
-  (let [pattern (re-pattern (str re "(?!.*" re ")"))]
-    (str-split-first pattern s)))
 
 
 (defn inc-version
@@ -108,11 +76,11 @@
 
 
 (defn new-release-required?
-  "Predicate to test if the given `project` requires a new release.
-   Takes the latest release of the project `latest-release` and compares
+  "Predicate to test if the given `product` requires a new release.
+   Takes the latest release of the product `latest-release` and compares
    version numbers (SemVer)."
-  [project latest-release]
-  (sv/newer? (:version project) (:version latest-release)))
+  [product latest-release]
+  (sv/newer? (:version product) (:version latest-release)))
 
 
 (defn identify-release-prefix
@@ -168,7 +136,7 @@
 (defn reduce-to-last-release
   "Takes a map of `grouped-releases` where the value to each (release-prefix) key
    is a collection of releases ordered latest to oldest. Reduces the map to only
-   have the latest release for each project.
+   have the latest release for each product.
    Returns a map in the format `<prefix> : <latest-release>`"
   [grouped-releases]
   (map-on-map-values
@@ -177,7 +145,7 @@
 
 
 (defn- get-latest-releases
-  "Get the latest release for each project.
+  "Get the latest release for each product.
    Takes the `repo` config and returns a map where the keys are the prefix of the release (string) and
    The value is the latest release with this prefix. Releases with no or invalid prefix are grouped
    under the `:no-valid-prefix` key.
@@ -198,12 +166,12 @@
 
 
 (defn get-latest-release
-  "Get the latest release of the project.
-   Takes the `repo` configuration and optionally a `project-key` to get the latest release
-   for a specific project. The project-key is required if more than one project is present!"
+  "Get the latest release of the product.
+   Takes the `repo` configuration and optionally a `product-key` to get the latest release
+   for a specific product. The product-key is required if more than one project is present!"
   ([repo]
-   (when-not (rp/single-project?)
-     (ex-info "Getting the latest release requires a specific project key if the repo hast more than one project!" {}))
+   (when-not (rp/single-product?)
+     (ex-info "Getting the latest release requires a specific product key if the repo hast more than one product!" {}))
    (case (get-in repo [:scm :provider :name])
      ;; scm == github
      :github (let [repo-name (get-in repo [:scm :provider :repo])
@@ -212,24 +180,24 @@
                    tag       (gh/get-tag owner repo-name (:tag_name release))]
                (gh-release->release release tag))
      (ex-info "Only Github is supported as SCM provider!" {})))
-  ([repo project-key]
+  ([repo product-key]
    (case (get-in repo [:scm :provider :name])
      :github (ex-info "Not implemented yet!" {})
      (ex-info "Only Github is supported as SCM provider!" {}))))
 
 
 (defn prepare-new-releases-impl
-  "Calculate which projects need a new release and prepare all data required to create
+  "Calculate which products need a new release and prepare all data required to create
    a new release."
   [repo latest-releases]
   (as-> latest-releases $
         (filter
           (fn [[prefix release]]
-            (when-let  [project (rp/get-project-by-release-prefix prefix repo)]
-              (new-release-required? project release)))
+            (when-let  [product (rp/get-product-by-release-prefix prefix repo)]
+              (new-release-required? product release)))
           $)
         (keys $)
-        (map (fn [prefix] [prefix (rp/get-project-by-release-prefix prefix repo)]) $)
+        (map (fn [prefix] [prefix (rp/get-product-by-release-prefix prefix repo)]) $)
         (into (hash-map) $))
   ;; TODO: use new version info not the old release info!
   )
@@ -237,7 +205,7 @@
 
 (defn create-releases
   "Create all releases.
-   Identifies the projects that where changed (new version) since the last release found on
+   Identifies the products that where changed (new version) since the last release found on
    the SCM/Release platform and creates new releases for each of them."
   []
   (let [repo 								(rp/read-repo)
@@ -247,30 +215,30 @@
     (case (get-in repo [:scm :provider :name])
       :github (let [repo-name (get-in repo [:scm :provider :repo])
                     owner     (get-in repo [:scm :provider :owner])]
-                (doseq [[_ project] to-be-released]
-                  (gh/create-release {:owner owner :repo repo-name :tag (str (release-prefix project) (:version project)) :draft false :pre-release false})
+                (doseq [[_ product] to-be-released]
+                  (gh/create-release {:owner owner :repo repo-name :tag (str (release-prefix product) (:version product)) :draft false :pre-release false})
                   ;; TODO: add options to set as draft or pre-release
                   )
                 (ex-info "Only Github is supported as SCM provider for Releases!" {})))))
 
 
 
-(defn derive-current-commit-version-single-project-impl
-  "Implementation of `clci.tools.release/derive-current-commit-version-single-project`.
+(defn derive-current-commit-version-single-product-impl
+  "Implementation of `clci.tools.release/derive-current-commit-version-single-product`.
    Takes a collection `amended-commit-log` with the amended commit history since the last
-   release and the `project` from the repositorie's repo.edn configuration."
-  [amended-commit-log project]
+   release and the `product` from the repositorie's repo.edn configuration."
+  [amended-commit-log product]
   (let [version-increments (->> amended-commit-log (map (comp derive-version-increment :ast)) (remove nil?))]
-    {(:key project)
+    {(:key product)
      (->> version-increments
           (reduce (fn [acc v-incr]
                     (inc-version acc v-incr))
-                  (sv/version-str->vec (:version project)))
+                  (sv/version-str->vec (:version product)))
           (sv/version-vec->str))}))
 
 
-(defn derive-current-commit-version-single-project
-  "Derive the version of the current commit for a single project repository."
+(defn derive-current-commit-version-single-product
+  "Derive the version of the current commit for a single product repository."
   []
   (let [repo                 (rp/read-repo)
         ;; get the last release using the gh api
@@ -278,30 +246,30 @@
         ;; get a git log of all commits since the latest release and amend it with the commit
         ;; message ast
         amended-commit-log   (amend-commit-log (git/commits-on-branch-since {:since (get-in latest-release [:commit :hash])}))
-        ;; get the project, the version information is required
-        project              (first (rp/get-projects))]
+        ;; get the product, the version information is required
+        product              (first (rp/get-products))]
     ;; using all information we collected we can now calculate the new version
-    (derive-current-commit-version-single-project-impl amended-commit-log project)))
+    (derive-current-commit-version-single-product-impl amended-commit-log product)))
 
 
-(defn affected-projects
-  "Tests which of the projects are affected by the commit.
-   Does so by checking if the changes happened in the root of each project.
-   Takes an amended `commit` and the `projects` of the repo. "
-  [commit projects]
-  (->> projects
-       (map (fn [proj]
-              (when (any (fn [f] (fs/starts-with? f (:root proj))) (:files commit))
-                [(:key proj) (derive-version-increment (:ast commit))])))
+(defn affected-products
+  "Tests which of the products are affected by the commit.
+   Does so by checking if the changes happened in the root of each product.
+   Takes an amended `commit` and the `products` of the repo. "
+  [commit products]
+  (->> products
+       (map (fn [prod]
+              (when (any (fn [f] (fs/starts-with? f (:root prod))) (:files commit))
+                [(:key prod) (derive-version-increment (:ast commit))])))
        (remove nil?)))
 
 
 (defn derive-current-commit-all-versions-impl
-  "Implementation to caculate the version of all projects based on the commit history.
+  "Implementation to caculate the version of all products based on the commit history.
    Takes a collection `amended-commit-log` with the amended commit history since the last
-   release, the `projects` from the repositories repo.edn configuration."
-  [amended-commit-log projects]
-  (let [version-increments  (map (fn [commit] (affected-projects commit projects)) amended-commit-log)
+   release, the `products` from the repositories repo.edn configuration."
+  [amended-commit-log products]
+  (let [version-increments  (map (fn [commit] (affected-products commit products)) amended-commit-log)
         with-update         (fn [acc increments]
                               (reduce
                                 (fn [a [key v-inc]] (assoc a key (inc-version (get a key) v-inc)))
@@ -309,7 +277,7 @@
     (->
       (loop [head (first version-increments)
              tail (rest version-increments)
-             acc  (into (sorted-map) (map (fn [p] [(:key p) (sv/version-str->vec (:version p))]) projects))]
+             acc  (into (sorted-map) (map (fn [p] [(:key p) (sv/version-str->vec (:version p))]) products))]
         (if (empty? tail)
           acc
           (recur (first tail) (rest tail) (with-update acc head))))
@@ -318,16 +286,16 @@
 
 
 (defn derive-current-commit-all-versions
-  "Caculate the version of all projects based on the commit history."
+  "Caculate the version of all products based on the commit history."
   []
   (let [repo 									(rp/read-repo)
-        ;; get the last release using the gh api, that is the latest of any project releases!
+        ;; get the last release using the gh api, that is the latest of any product releases!
         latest-release        (get-latest-release repo)
         ;; we need the version as an easy to manipulate datastructure, not just as string
         ;; last-release-version  (tf-release-version latest-release)
         commit-log            (amend-commit-log (git/commits-on-branch-since {:since (:commit latest-release)}))
-        projects              (rp/get-projects)]
-    (derive-current-commit-all-versions-impl commit-log projects)))
+        products              (rp/get-products)]
+    (derive-current-commit-all-versions-impl commit-log products)))
 
 
 (defn derive-current-commit-version
@@ -335,8 +303,8 @@
   Uses the latest release that exists and the git log which must follow the conventional commits
   specification. Depending on the type of the commit the new version will be calculated
   following the semantic versioning specs.
-  Takes into account if the repo has a single project or many."
+  Takes into account if the repo has a single product or many."
   []
-  (if (rp/single-project?)
-    (derive-current-commit-version-single-project)
+  (if (rp/single-product?)
+    (derive-current-commit-version-single-product)
     (derive-current-commit-all-versions)))
