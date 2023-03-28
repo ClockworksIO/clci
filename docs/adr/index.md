@@ -21,3 +21,4 @@ The full specification as defined by `io.clockworks` can be found as a copy in [
 - [ADR011 - Find Outdated Dependencies](./adr011-antq.md)
 - [ADR012 - Test Coverage](./adr012-cloverage.md)
 - [ADR013 - Automated Releases](./adr013-automated_releases.md)
+- [ADR014 - Workflows and Actions](./adr014-workflows.md)

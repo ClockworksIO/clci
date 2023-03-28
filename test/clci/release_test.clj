@@ -46,15 +46,15 @@
           :gen #(sg/string-generator commit-author-re)))
 
 
-(def projects-example-many
-  "Example repo.edn project configuration, for a repo with multiple projects."
+(def products-example-many
+  "Example repo.edn configuration, for a repo with multiple products."
   [{:root "pwa/" :key :pwa :release-prefix "pwa" :version "0.0.0"}
    {:root "backend/" :key :backend :release-prefix "kuchen" :version "0.0.0"}
    {:root "common" :key :common :release-prefix "common" :version "0.3.0"}])
 
 
-(def example-commits-many-projects
-  "Example commits, oldest to newest, for a repo with multiple projects."
+(def example-commits-many-products
+  "Example commits, oldest to newest, for a repo with multiple products."
   [{:hash (gen/generate (sg/string-generator commit-hash-re)),
     :date (gen/generate (sg/string-generator rfc3339-datetime-re)),
     :author (gen/generate (sg/string-generator commit-author-re)),
@@ -129,9 +129,9 @@
 
 
 (def fake-latest-releases-many
-  "Fake latest releases for a repo with multiple projects."
+  "Fake latest releases for a repo with multiple products."
   [{:key    :pwa
-    :commit (get-in example-commits-many-projects [0 :hash])
+    :commit (get-in example-commits-many-products [0 :hash])
     :tag     "0.0.0"
     :name    "0.0.0"}
    {:key    :backend
@@ -139,25 +139,25 @@
     :tag     "0.0.0"
     :name    "0.0.0"}
    {:key    :common
-    :commit (get-in example-commits-many-projects [0 :hash])
+    :commit (get-in example-commits-many-products [0 :hash])
     :tag     "0.0.0"
     :name    "0.3.0"}])
 
 
 (comment
-  "Expected versions using the many-projects example:"
+  "Expected versions using the many-products example:"
   {:pwa     "0.2.1"
    :backend "0.1.1"
    :common  "0.3.0"})
 
 
-(def projects-example-single
-  "Example repo.edn project configuration for a single project repo."
+(def products-example-single
+  "Example repo.edn configuration for a single product repo."
   [{:root "" :key :app :release-prefix "app" :version "1.41.2-alpha"}])
 
 
-(def example-commits-single-project
-  "Example commits, oldest to newest, for a repo with a single project."
+(def example-commits-single-product
+  "Example commits, oldest to newest, for a repo with a single product."
   [{:hash (gen/generate (sg/string-generator commit-hash-re)),
     :date (gen/generate (sg/string-generator rfc3339-datetime-re)),
     :author (gen/generate (sg/string-generator commit-author-re)),
@@ -208,15 +208,15 @@
 
 
 (def fake-latest-releases-single
-  "Fake latest releases for a repo with a single project."
+  "Fake latest releases for a repo with a single product."
   [{:key    :app
-    :commit (get-in example-commits-single-project [0 :hash])
+    :commit (get-in example-commits-single-product [0 :hash])
     :tag     "0.0.0"
     :name    "0.0.0"}])
 
 
 (comment
-  "Expected versions using the single-project example:"
+  "Expected versions using the single-product example:"
   {:app     "2.2.1"})
 
 
@@ -261,43 +261,43 @@
     (is (= "1.2.4" (rel/release-name->version "some-very-long-prefix-release-1.2.4")))))
 
 
-(deftest affected-projects-many-projects
-  (testing "Testing helper function which projects are affected by a commit - many projects."
-    (let [amended-commit-log (rel/amend-commit-log example-commits-many-projects)]
-      (is (let [result (rel/affected-projects (nth amended-commit-log 0) projects-example-many)]
+(deftest affected-products-many-products
+  (testing "Testing helper function which products are affected by a commit - many products."
+    (let [amended-commit-log (rel/amend-commit-log example-commits-many-products)]
+      (is (let [result (rel/affected-products (nth amended-commit-log 0) products-example-many)]
             (empty? result)))
-      (is (let [result (rel/affected-projects (nth amended-commit-log 1) projects-example-many)]
+      (is (let [result (rel/affected-products (nth amended-commit-log 1) products-example-many)]
             (in? result '(:pwa :minor))))
-      (is (let [result (rel/affected-projects (nth amended-commit-log 2) projects-example-many)]
+      (is (let [result (rel/affected-products (nth amended-commit-log 2) products-example-many)]
             (and
               (in? result '(:pwa :minor))
               (not-in? result '(:backend :minor)))))
-      (is (let [result (rel/affected-projects (nth amended-commit-log 3) projects-example-many)]
+      (is (let [result (rel/affected-products (nth amended-commit-log 3) products-example-many)]
             (and
               (in? result '(:backend :minor))
               (not-in? result '(:pwa :minor)))))
-      (is (let [result (rel/affected-projects (nth amended-commit-log 4) projects-example-many)]
+      (is (let [result (rel/affected-products (nth amended-commit-log 4) products-example-many)]
             (empty? result)))
-      (is (let [result (rel/affected-projects (nth amended-commit-log 5) projects-example-many)]
+      (is (let [result (rel/affected-products (nth amended-commit-log 5) products-example-many)]
             (and
               (in? result '(:pwa :patch))
               (in? result '(:backend :patch))))))))
 
 
-(deftest derive-versions-many-projects
-  (testing "Testing to derive the current versions of app projects based on the commit log - many projects."
+(deftest derive-versions-many-products
+  (testing "Testing to derive the current versions of app products based on the commit log - many products."
     (let [derived-versions (rel/derive-current-commit-all-versions-impl
-                             (rel/amend-commit-log example-commits-many-projects)
-                             projects-example-many)]
+                             (rel/amend-commit-log example-commits-many-products)
+                             products-example-many)]
       (is (= "0.2.1" (:pwa derived-versions)))
       (is (= "0.1.1" (:backend derived-versions)))
       (is (= "0.3.0" (:common derived-versions))))))
 
 
 
-(deftest commit-version-increment-single-project
-  (testing "Testing helper function how a commit increments a version - single project."
-    (let [amended-commit-log (rel/amend-commit-log example-commits-single-project)]
+(deftest commit-version-increment-single-product
+  (testing "Testing helper function how a commit increments a version - single product."
+    (let [amended-commit-log (rel/amend-commit-log example-commits-single-product)]
       (is (nil? (rel/derive-version-increment (-> amended-commit-log (nth 0) :ast))))
       (is (=
             (rel/derive-version-increment (-> amended-commit-log (nth 1) :ast))
@@ -309,47 +309,47 @@
             (= result :patch))))))
 
 
-(deftest derive-versions-single-project
-  (testing "Testing to derive the current versions of app projects based on the commit log - single project."
-    (let [derived-version (rel/derive-current-commit-version-single-project-impl
-                            (rel/amend-commit-log example-commits-single-project)
-                            (first projects-example-single))]
+(deftest derive-versions-single-product
+  (testing "Testing to derive the current versions of app products based on the commit log - single product."
+    (let [derived-version (rel/derive-current-commit-version-single-product-impl
+                            (rel/amend-commit-log example-commits-single-product)
+                            (first products-example-single))]
       (is (= "2.2.1" (:app derived-version))))))
 
 
 (deftest new-release-required?
   (testing "Testing if a new release is required based on the derived version and latest release."
     (let [derived-versions (rel/derive-current-commit-all-versions-impl
-                             (rel/amend-commit-log example-commits-many-projects)
-                             projects-example-many)
+                             (rel/amend-commit-log example-commits-many-products)
+                             products-example-many)
           grouped-releases (-> gh-latest-releases-example-resp
                                (rel/group-gh-releases-by-prefix)
                                (rel/reduce-to-last-release))
-          mk-fake-project  (fn [version] {:version version})]
+          mk-fake-product  (fn [version] {:version version})]
       (is (rel/new-release-required?
-            (mk-fake-project (get derived-versions :pwa))
+            (mk-fake-product (get derived-versions :pwa))
             {:version (get-in grouped-releases ["pwa" :version])}))
       (is (rel/new-release-required?
-            (mk-fake-project (get derived-versions :backend))
+            (mk-fake-product (get derived-versions :backend))
             {:version (get-in grouped-releases ["kuchen" :version])}))
       (is (not
             (rel/new-release-required?
-              (mk-fake-project (get derived-versions :common))
+              (mk-fake-product (get derived-versions :common))
               {:version (get-in grouped-releases ["common" :version])}))))))
 
 
 (deftest prepare-new-releases
   (testing "Testing to derive which releases should be created for the repo based on changes."
-    (let [projects              (-> projects-example-many)
+    (let [products              (-> products-example-many)
           fake-releases         (-> gh-latest-releases-example-resp
                                     (rel/group-gh-releases-by-prefix)
                                     (rel/reduce-to-last-release))
           derived-versions      (rel/derive-current-commit-all-versions-impl
-                                  (rel/amend-commit-log example-commits-many-projects)
-                                  projects-example-many)
-          fake-repo             {:projects (map (fn [p]
+                                  (rel/amend-commit-log example-commits-many-products)
+                                  products-example-many)
+          fake-repo             {:products (map (fn [p]
                                                   (assoc p :version (get derived-versions (:key p))))
-                                                projects)}
+                                                products)}
           result                (into (hash-map) (rel/prepare-new-releases-impl fake-repo fake-releases))]
 
       (is (contains? result "pwa"))

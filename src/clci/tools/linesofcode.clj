@@ -41,3 +41,5 @@
   (cond
     (:help opts) 	(print-help)
     :else 			 	(lines-of-code-impl opts)))
+
+

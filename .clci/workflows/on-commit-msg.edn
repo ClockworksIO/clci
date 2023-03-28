@@ -1,0 +1,9 @@
+{:name          "Commit Message"
+ :key           :on-git-commit-message
+ :description   "Run when a commit message is written."
+ :trigger       [:git/commit-msg]
+ :disabled?     false
+ :jobs
+ [{:ref     :lint-commit-msg
+   :action  clci.action/create-random-integer-action}
+  ]}

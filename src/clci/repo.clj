@@ -2,30 +2,11 @@
   "This module provides methods to read and update the repo.edn file."
   (:require
     [clci.semver :as sv]
-    [clci.util :as u]
+    [clci.util :as u :refer [slurp-edn pretty-spit!]]
     [clojure.edn :as edn]
     [clojure.pprint :refer [pprint]]
     [clojure.spec.alpha :as s]))
 
-
-;;
-;; Generic Utilities to work with project (edn) files ;;
-;;
-
-(defn pretty-spit!
-  "Write a clojure datastructure in an edn text file.
-  Takes the `path` of the file and ther `data`. 
-  **warning**: Will override the file's contents!"
-  [path data]
-  (binding [*print-namespace-maps* false]
-    (pprint data (clojure.java.io/writer path))))
-
-
-(defn- slurp-edn
-  "Read an edn file and parse the content as clojure datastructure."
-  [path]
-  (-> (slurp path)
-      (edn/read-string)))
 
 
 ;;
@@ -146,8 +127,8 @@
   (assoc base :provider (scm-provider-conf provider repo-name repo-owner)))
 
 
-(defn with-single-project
-  "Add the basic project configuration for a single project at the
+(defn with-single-product
+  "Add the basic product configuration for a single product at the
   repositories root to the base.
   Takes the repo `base`, map."
   [base & {:keys [initial-version] :or {initial-version "0.0.0-semver"}}]
@@ -157,7 +138,7 @@
         "The initial version must follow the semantic versioning specification."
         {:reason :invalid-initial-version})))
   (assoc base
-         :projects
+         :products
          [(cond-> {:root ""}
             (some? initial-version) (assoc :version initial-version))]))
 
@@ -188,14 +169,14 @@
                    :clci.repo.scm/url]))
 
 
-(s/def :clci.repo.project/root string?)
-(s/def :clci.repo.project/key keyword?)
-(s/def :clci.repo.project/version string?)
-(s/def :clci.repo/project (s/keys :req-un []))
+(s/def :clci.repo.product/root string?)
+(s/def :clci.repo.product/key keyword?)
+(s/def :clci.repo.product/version string?)
+(s/def :clci.repo/product (s/keys :req-un []))
 
-(s/def :clci.repo/projects (s/coll-of :clci.repo/project))
+(s/def :clci.repo/products (s/coll-of :clci.repo/product))
 
-(s/def :clci.repo/repo (s/keys :req-un [:clci.repo/scm :clci.repo/projects]))
+(s/def :clci.repo/repo (s/keys :req-un [:clci.repo/scm :clci.repo/products]))
 
 
 ;; (s/def ::initial-version string?)
@@ -212,14 +193,14 @@
 
 (defn update-version
   "Update the version in the repo.edn file.
-  Takes the `version` as string and the project identifier.
-  If only the version is supplied, the function assumes the repo has only a single project."
+  Takes the `version` as string and the product identifier.
+  If only the version is supplied, the function assumes the repo has only a single product."
 
-  [version project-key]
+  [version product-key]
   (let [repo     (read-repo)
-        idx      (u/find-first-index (:projects repo) #(= (get % :key) project-key))
-        project  (get-in repo [:projects idx])]
-    (->> (assoc-in repo [:projects idx] (assoc project :version version))
+        idx      (u/find-first-index (:products repo) #(= (get % :key) product-key))
+        product  (get-in repo [:products idx])]
+    (->> (assoc-in repo [:products idx] (assoc product :version version))
          (pretty-spit! "repo.edn"))))
 
 
@@ -234,40 +215,40 @@
   ["src"])
 
 
-(defn single-project?
-  "Test if the repository contains more than a single project.
-  This is the case when more than one entry exists in the repo.edn :projects field."
+(defn single-product?
+  "Test if the repository contains more than a single product.
+  This is the case when more than one entry exists in the repo.edn :products field."
   []
-  (= (count (-> (read-repo) :projects)) 1))
+  (= (count (-> (read-repo) :products)) 1))
 
 
-(defn get-projects
-  "Get all projects."
+(defn get-products
+  "Get all products."
   []
-  (-> (read-repo) :projects))
+  (-> (read-repo) :products))
 
 
-(defn- get-project-impl
-  "Get a project by a specific attribute - implementation."
+(defn- get-product-impl
+  "Get a product by a specific attribute - implementation."
   [k v repo]
   (case k
-    :key (u/find-first (fn [p] (= v (:key p))) (:projects repo))
-    :release-prefix (u/find-first (fn [p] (= v (:release-prefix p))) (:projects repo))))
+    :key (u/find-first (fn [p] (= v (:key p))) (:products repo))
+    :release-prefix (u/find-first (fn [p] (= v (:release-prefix p))) (:products repo))))
 
 
-(defn- get-project
-  "Get a project by a specific attribute."
+(defn- get-product
+  "Get a product by a specific attribute."
   [k v repo]
-  (get-project-impl k v repo))
+  (get-product-impl k v repo))
 
 
-(defn get-project-by-key
-  "Get a project by its key."
-  ([key] (get-project :key key (read-repo)))
-  ([key repo] (get-project :key key repo)))
+(defn get-product-by-key
+  "Get a product by its key."
+  ([key] (get-product :key key (read-repo)))
+  ([key repo] (get-product :key key repo)))
 
 
-(defn get-project-by-release-prefix
-  "Get a project by its release-prefix."
-  ([prefix] (get-project :release-prefix prefix (read-repo)))
-  ([prefix repo] (get-project :release-prefix prefix repo)))
+(defn get-product-by-release-prefix
+  "Get a product by its release-prefix."
+  ([prefix] (get-product :release-prefix prefix (read-repo)))
+  ([prefix repo] (get-product :release-prefix prefix repo)))

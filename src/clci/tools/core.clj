@@ -2,15 +2,21 @@
   "This modules exposes an api of several tools that can be used
   directly from a bb task in a project's codebase."
   (:require
+    [babashka.cli :refer [parse-opts]]
+    [clci.actions :refer [lines-of-code-action]]
+    [clci.repo :refer [get-paths]]
     [clci.tools.antq :as aq]
     [clci.tools.carve :as carve]
     [clci.tools.cloverage :as cov]
     [clci.tools.format :as fmt]
     [clci.tools.ghooks :as gh]
-    [clci.tools.linesofcode :as loc]
+    [clci.tools.impl :refer [lines-of-code-action-text-reporter lines-of-code-action-edn-reporter]]
     [clci.tools.linter :as linter]
     [clci.tools.mkdocs :as mkdocs]
-    [clci.tools.release :as rel]))
+    [clci.tools.release :as rel]
+    [clci.workflow.runner :refer [run-job]]
+    [clojure.core.match :refer [match]]
+    [clojure.string :as str]))
 
 
 (defn lint
@@ -43,10 +49,67 @@
   (fmt/format! opts))
 
 
-(defn lines-of-code
-  "Get the lines of code of the project."
-  [opts]
-  (loc/lines-of-code opts))
+(defn- print-help-lines-of-code
+  "Print the help of the lines-of-code job."
+  []
+  (println
+    (str/trim
+      "
+Usage: clci run job lines-of-code <options>
+
+Options:
+  --paths       Vector of all paths to be analyzed.
+                Defaults to `repo.get-paths`.
+  --edn         Return lines of code analysis in edn format.
+        
+")))
+
+
+(defn- lines-of-code
+  "Get the lines of code of the repo."
+  [_]
+  (let [spec   {:paths   {:desc         "Paths to consider."
+                          :coerce       (fn [s]
+                                          (if-let [matches (re-matches #"\[((((.*)\/([^\/\"]*))+),?)+\]" s)]
+                                            (-> matches
+                                                second
+                                                (str/split #","))
+                                            ""))
+                          :default      (get-paths)}
+                :edn     {:desc     "Return lines of code analysis in edn format."
+                          :coerce   :boolean
+                          :default  false}
+                :help    {:desc     "Print help."
+                          :coerce   :boolean
+                          :default  false}}
+        opts   (parse-opts *command-line-args* {:spec spec})
+        workflow-key :lines-of-code]
+    (match [(:help opts) (:edn opts)]
+      ;; print help
+      [true _]
+      (print-help-lines-of-code)
+      ;; run the workflow, return report in edn format
+      [_ true]
+      (run-job
+        lines-of-code-action
+        "Lines of Code"
+        workflow-key
+        {:paths (:paths opts)}
+        (lines-of-code-action-edn-reporter workflow-key))
+      ;; run the workflow, write report in text form to `stdout`
+      :else
+      (print (run-job
+               lines-of-code-action
+               "Lines of Code"
+               workflow-key
+               {:paths (:paths opts)}
+               (lines-of-code-action-text-reporter workflow-key))))))
+
+
+(def lines-of-code-job
+  "A job to get the lines of code."
+  {:fn          lines-of-code
+   :description "Get the lines of code."})
 
 
 (defn outdated-deps
@@ -56,7 +119,7 @@
 
 
 (defn test-coverage
-  "Get the test coverage of the project's code."
+  "Get the test coverage of the repo's code."
   [opts]
   (cov/cloverage opts))
 
