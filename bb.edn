@@ -29,16 +29,10 @@
    :task (exec 'cognitect.test-runner.api/test),
    :exec-args {:dirs ["test"], :patterns [".*-test$"]},
    :org.babashka/cli {:coerce {:nses [:symbol], :vars [:symbol]}}},
-  lines-of-code
-  {:doc "Get the lines of code in the project.",
-   :task (exec 'clci.tools.core/lines-of-code)},
   semver
   {:doc "semver test",
    :requires ([clci.semver :as sv]),
    :task sv/derive-current-commit-version},
-  format
-  {:doc "Run the formatter to format the project's clojure code.",
-   :task (exec 'clci.tools.core/format!)},
   outdated
   {:doc "Run find outdated dependencies.",
    :task (exec 'clci.tools.core/outdated-deps)},

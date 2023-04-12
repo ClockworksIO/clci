@@ -72,3 +72,9 @@
                 $)))))
 
 
+(defn staged-files
+  "Get a collection of all changed files staged for the next commit."
+  []
+  (-> (shell {:out :string} "git --no-pager diff --name-only --no-color --cached --diff-filter=ACM")
+      :out
+      str/split-lines))

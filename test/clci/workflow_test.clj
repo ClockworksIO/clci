@@ -1,7 +1,7 @@
 (ns clci.workflow-test
   "This module provides tests for the `git` module."
   (:require
-    [clci.actions :as actions]
+    [clci.actions.core :as actions]
     [clci.util :as u]
     [clci.workflow.reporter :refer [default-reporter]]
     [clci.workflow.runner :refer [get-job-history job-output? get-job-output-value derive-inputs run-trigger-impl]]
@@ -30,7 +30,7 @@
   {:name          "Example Workflow"
    :key           :example-workflow
    :description   "Some blah blah blah."
-   :trigger       [:git/commit-msg :manual]
+   :trigger       [:git-commit-msg :manual]
    :disabled?     false
    :jobs
    [{:ref     :a-random-int
@@ -115,15 +115,17 @@
 (deftest run-single-example-workflow
   (testing "Run a single example workflow with a manual trigger."
     (let [run-result  (run-trigger-impl :manual example-workflows default-reporter {:debug? false})
+          run-log     (:log run-result)
           history     (->> run-result
+                           :log
                            :example-workflow
                            (u/find-first (fn [m] (= :clci.workflow.runner/finished (:msg-type m))))
                            :history)]
-      (pprint run-result)
-      (is (contains? run-result (:key example-workflow)))
-      (is (log-has-message-with-type (get run-result :example-workflow) :clci.workflow.runner/workflow-start))
-      (is (not (log-has-message-with-type (get run-result :example-workflow) :clci.workflow.runner/error)))
-      (is (not (log-has-message-with-type (get run-result :example-workflow) :clci.workflow.runner/failure)))
+      ;; (pprint run-result)
+      (is (contains? run-log (:key example-workflow)))
+      (is (log-has-message-with-type (get run-log :example-workflow) :clci.workflow.runner/workflow-start))
+      (is (not (log-has-message-with-type (get run-log :example-workflow) :clci.workflow.runner/error)))
+      (is (not (log-has-message-with-type (get run-log :example-workflow) :clci.workflow.runner/failure)))
       (is (= (get-in history [0 :outputs :number])
              (get-in history [1 :context :job :inputs :number])))
       (is (= (inc (get-in history [0 :outputs :number] 0))

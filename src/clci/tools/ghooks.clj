@@ -4,12 +4,8 @@
   (:require
     [babashka.cli :as cli]
     [babashka.fs :as fs]
-    [babashka.process :refer [shell sh]]
-    [clci.conventional-commit :refer [valid-commit-msg?]]
+    [babashka.process :refer [shell]]
     [clci.term :as c]
-    [clci.tools.carve :refer [carve!]]
-    [clci.tools.format :refer [format!]]
-    [clci.tools.linter :refer [lint]]
     [clojure.string :as str]))
 
 
@@ -19,7 +15,7 @@
   (format "#!/bin/sh
 # Installed by babashka task on %s
 
-bb hooks --%s" (java.util.Date.) hook))
+bb clci run trigger git-%s --verbose" (java.util.Date.) hook))
 
 
 (defn spit-hook
@@ -54,11 +50,9 @@ bb hooks --%s" (java.util.Date.) hook))
 
 
 (def cli-options
-  ""
+  "Options available to use with the git-hook tool."
   {:spec
    {:install			{:coerce :boolean :desc "Install git hooks (pre-commit, commit-msg)."}
-    :pre-commit  	{:coerce :boolean :desc "Run the pre-commit hook function."}
-    :commit-msg  	{:coerce :boolean :desc "Run the commit-msg hook function."}
     :help   			{:coerce :boolean :desc "Show help."}}})
 
 
@@ -78,30 +72,6 @@ bb hooks --%s" (java.util.Date.) hook))
   (spit-hook "commit-msg"))
 
 
-;; Git 'pre-commit' hook.
-(defmethod hook-impl :pre-commit [& _]
-  (println (c/blue "[pre-commit hook]"))
-  (let [files (changed-files)]
-    (format! {:fix true})
-    (lint {})
-    (carve! {:check true :report true})
-    (doseq [file files]
-      (sh (format "git add %s" file)))))
-
-
-;; Git 'commit-msg' hook.
-;; Takes the commit message and validates it conforms to the Conventional Commit specification
-(defmethod hook-impl :commit-msg [& _]
-  (let [commit-msg (slurp ".git/COMMIT_EDITMSG")
-        msg-valid? (true? (valid-commit-msg? commit-msg))]
-    (if msg-valid?
-      (println (c/green "\u2713") " commit message follows the Conventional Commit specification")
-      (do
-        (println (c/red "\u2A2F") " commit message does NOT follow the Conventional Commit specification")
-        (println (c/red "Abort commit!"))
-        (System/exit -1)))))
-
-
 ;; Default handler to catch invalid arguments, print help
 (defmethod hook-impl :default [& _]
   (print-help))
@@ -113,6 +83,4 @@ bb hooks --%s" (java.util.Date.) hook))
   [opts]
   (cond
     (:install opts) (hook-impl :install)
-    (:pre-commit opts) (hook-impl :pre-commit)
-    (:commit-msg opts) (hook-impl :commit-msg)
     :else (hook-impl :help)))

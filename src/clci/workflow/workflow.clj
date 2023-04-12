@@ -22,9 +22,11 @@
 ;; A description of what the workflow does
 (s/def :clci.workflow/description string?)
 
+(s/def :clci.workflow.trigger/ident #{:git-commit-msg :git-pre-commit :manual})
+
 
 ;; The trigger that starts the workflow
-(s/def :clci.workflow/trigger (s/coll-of #{:git/commit-msg :git/pre-commit :manual}))
+(s/def :clci.workflow/trigger (s/coll-of :clci.workflow.trigger/ident))
 
 
 (s/def :clci.workflow.filter/ident seq?)
@@ -117,12 +119,32 @@
   "./.clci/workflows")
 
 
+(defn- resolve-job-action
+  "Resolve the action of the given `job`.
+   Test if the action of the job is a symbol and if true, resolve the symbol and replace the symbol
+   with the resolved data."
+  [job]
+  (if (symbol? (:action job))
+    (assoc job :action @(requiring-resolve (:action job)))
+    job))
+
+
+(defn resolve-workflow-action
+  ""
+  [workflow]
+  (assoc
+    workflow
+    :jobs
+    (mapv resolve-job-action (:jobs workflow))))
+
+
 (defn get-workflows
   "Get all workflows defined in repo.edn."
   []
   (if (fs/exists? workflow-dir-path)
     (->> (fs/list-dir workflow-dir-path "*.edn")
-         (map (comp slurp-edn #(format "%s/%s" workflow-dir-path %) fs/file-name)))
+         (map (comp slurp-edn #(format "%s/%s" workflow-dir-path %) fs/file-name))
+         (map resolve-workflow-action))
     []))
 
 
@@ -145,21 +167,32 @@
 
 (defn workflow-successful?
   "Test if the workflow did run without failure.
-   Takes the full `runner-log` and the `workflow-key` of the workflow.
+   Takes either
+   - the log of a single workflow run as vector of events
+   or
+   - the full `runner-log` and the `workflow-key` of the workflow.
    Returns true if if the workflow did run without a failure, false else."
-  [runner-log workflow-key]
-  (as-> runner-log $
-        (get $ workflow-key '())
-        (find-first (fn [m] (= :clci.workflow.runner/finished (:msg-type m))) $)
-        (some? $)))
+  ([single-log]
+   (as-> single-log $
+         (find-first (fn [m] (= :clci.workflow.runner/finished (:msg-type m))) $)
+         (some? $)))
+  ([runner-log workflow-key]
+   (as-> runner-log $
+         (get $ workflow-key '())
+         (find-first (fn [m] (= :clci.workflow.runner/finished (:msg-type m))) $)
+         (some? $))))
 
 
 (defn get-workflow-history
   "Get only the final history for a workflow run.
    Takes the full `runner-log` and the `workflow-key` of the workflow.
-   Returns nil if no such workflow exists or the workflow did not run successfully."
+   Returns nil if no such workflow exists."
   [runner-log workflow-key]
   (as-> runner-log $
         (get $ workflow-key '())
-        (find-first (fn [m] (= :clci.workflow.runner/finished (:msg-type m))) $)
+        (find-first (fn [m]
+                      (or
+                        (= :clci.workflow.runner/finished (:msg-type m))
+                        (= :clci.workflow.runner/failure (:msg-type m))))
+                    $)
         (:history $)))

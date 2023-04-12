@@ -14,12 +14,31 @@
 
 ;; (require '[clci.actions])
 
+(def ^:private lock (Object.))
+
+
+(defn- serialized-require
+  [& args]
+  (locking lock
+    (apply require args)))
+
+
+(defn req-resolve
+  [sym]
+  (if (qualified-symbol? sym)
+    (or (resolve sym)
+        (do (-> sym namespace symbol serialized-require)
+            (resolve sym)))
+    (throw (IllegalArgumentException. (str "Not a qualified symbol: " sym)))))
+
+
 (def foo
   (-> (wfl/get-workflows)
       first
       :jobs
       first
       :action
+
 
       ;; type
       ;; symbol
@@ -29,32 +48,22 @@
       ))
 
 
+foo
+
 (symbol (namespace foo))
 
-(ns-resolve (symbol (namespace foo)) (symbol (name foo)))
+@(req-resolve foo)
 
 
-(deref (resolve 'clci.actions/create-random-integer-action))
+;; @(req-resolve 'clci.actions/create-random-integer-action)
+
+;; (ns-resolve (symbol (namespace foo)) (symbol (name foo)))
 
 
-;; (var-get (requiring-resolve 'clci.actions/create-random-integer-action))
+;; (deref (resolve 'clci.actions/create-random-integer-action))
 
 
-(re-matches #"\[^(.*)\/([^\/\"]*)\]" "[/foo/bar]")
-
-(re-matches #"\[(\"((.*)\/([^\/\"]*))+\")+\]" "[\"foo/bar\"]")
+;; ;; (var-get (requiring-resolve 'clci.actions/create-random-integer-action))
 
 
-(-> (re-matches #"\[((\"((.*)\/([^\/\"]*))+\"),?)+\]" "[\"src/\"]")
-    second
-    (str/split #","))
-
-
-(-> (re-matches #"\[((((.*)\/([^\/\"]*))+),?)+\]" "[src/,foo/]")
-    second
-    (str/split #","))
-
-
-(re-matches #"\[((\"((.*)\/([^\/\"]*))+\"),?)+\]" "[\"foo/bar\",\"src\"]")
-
-(re-matches #"^(.*)\/([^\/\"]*)" "/foo/bar")
+(re-matches #"!job.[a-zA-Z0-9\-]+" (or (namespace :error) ""))

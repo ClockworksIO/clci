@@ -7,6 +7,9 @@
 - Put git hooks in clci
   - right now every project requires to implement lots of boilerplate code
 
+- Security Scanning
+  - https://trivy.dev/
+
 ## Tools
 - [cljfmt](https://github.com/weavejester/cljfmt) - Format Clojure code, as a replacement for [cljstyle](https://github.com/greglook/cljstyle)
 - [carve](https://github.com/borkdude/carve) - Remove unused Clojure vars
