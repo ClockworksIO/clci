@@ -2,9 +2,6 @@
   (:require
     [clci.util :refer [any find-first]]
     [clci.workflow.reporter :refer [default-reporter]]
-    ;; [babashka.fs :as fs]
-    ;; [clci.actions :as actions]
-    ;; [clci.repo :as rp]
     [clci.workflow.workflow :refer [find-workflows-by-trigger remove-disabled-workflows get-workflows valid-workflow?]]
     [cljc.java-time.local-date :as ld]
     [clojure.core.async :as a]
@@ -38,7 +35,7 @@
   [v]
   (and
     (keyword? v)
-    (some? (re-matches #"!job.[a-zA-Z0-9\-]+" (namespace v)))))
+    (some? (re-matches #"!job.[a-zA-Z0-9\-]+" (or (namespace v) "")))))
 
 
 (defn get-job-history
@@ -96,7 +93,7 @@
         inital-state            (create-runner-state workflow)
 
         ;; test if the workflow was completly executed
-        completed?          (fn [s] (>= (:current-job-idx s) (:total-jobs s)))
+        completed?          (fn [s] (and (not (:failure s)) (>= (:current-job-idx s) (:total-jobs s))))
         ;; test if there was a failure during workflow execution
         failure?            (fn [s] (:failure s))
         ;; get the job that has to be run next
@@ -128,7 +125,6 @@
       (try
         (loop [state    inital-state]
           (let [job   (get-job state)]
-
             (cond
               ;; runner finished
               (completed? state)
@@ -150,9 +146,10 @@
               ;; continue with next job
               :else
               (recur
-                (-> state
-                    (update-in [:history] conj (run-job job (derive-job-context job state)))
-                    (update :current-job-idx inc))))))
+                (as-> state $
+                      (update-in $ [:history] conj (run-job job (derive-job-context job state)))
+                      (update $ :current-job-idx inc)
+                      (assoc $ :failure (-> $ :history last :failure)))))))
         (catch Exception ex
           (a/>!! ch {:msg-type        ::error
                      :key             (:key workflow)
@@ -204,19 +201,23 @@
     ;; relevant-workflows
     (cond
       (empty? relevant-workflows)
-      (throw (ex-info (format "No workflows found for trigger %s" trigger) {:type :no-workflow-found-for-trigger}))
+      (throw (ex-info (format "No workflows found for trigger %s" trigger) {:reason :no-workflow-found-for-trigger}))
 
       (any #(not (valid-workflow? %)) workflows)
-      (throw (ex-info "Some workflows do not follow the correct specs!" {:type :workflows-not-spec-conform}))
+      (throw (ex-info "Some workflows do not follow the correct specs!" {:reason :workflows-not-spec-conform}))
 
       :else
-      (reporter (run-workflows relevant-workflows trigger opts)))))
+      (let [report    (reporter (run-workflows relevant-workflows trigger opts))]
+        (if (:failure? report)
+          (throw (ex-info "At least one workflow finished with a failure!" {:reason :workflow-failure
+                                                                            :log    (:log report)}))
+          report)))))
 
 
 (defn valid-trigger?
   "Test if the given `trigger` is a valid trigger."
   [trigger]
-  (s/valid? :clci.workflow/trigger trigger))
+  (s/valid? :clci.workflow.trigger/ident trigger))
 
 
 (defn run-trigger

@@ -5,26 +5,79 @@
     [babashka.cli :as cli]
     [babashka.fs :as fs]
     [clci.repo :as rp]
-    [clci.term :refer [yellow blue red]]
+    [clci.term :refer [yellow blue red green]]
     [clci.tools.core :as tools]
     [clci.util :refer [pretty-spit!]]
     [clci.workflow.runner :refer [valid-trigger? run-trigger]]
+    [clci.workflow.workflow :refer [workflow-successful?]]
+    [clojure.pprint :refer [pprint]]
     [clojure.string :as str]))
+
+
+(defn- print-workflow-job-history
+  [key history]
+  (let [job-failed? (fn [story] (:failure story))]
+    (println "")
+    (println "Job log for Workflow " (yellow (name key)) ":")
+    (doseq [story history]
+      (println (format "Job %s %s" (get-in story [:context :job :ref]) (if (job-failed? story) (red "failed") (green "successful")))))
+    (println "")))
 
 
 
 (defn run-workflow-trigger
   "Run all workflows started by the given trigger."
   [args]
-  (let [trigger (get-in args [:opts :trigger])]
+  (let [trigger   (get-in args [:opts :trigger])
+        verbose?  (get-in args [:opts :verbose])
+        debug?    (get-in args [:opts :debug])]
     (if (valid-trigger? trigger)
-      (run-trigger trigger)
+      (try
+        (let [report (run-trigger trigger)]
+          (cond
+            ;; with verbose logging show a summary of all workflows and their jobs
+            verbose?
+            (doseq [[key log] (:log report)]
+              (println "Running workflow" (yellow (name key)) (green "successful \u2713"))
+              (print-workflow-job-history key (:history (last log))))
+            ;; with debugging show the full runner report
+            debug?
+            (doseq [[key log] (:log report)]
+              (println "Running workflow" (yellow (name key)) (green "successful \u2713"))
+              (println "Full log of workflow " (yellow (name key)))
+              (pprint log))))
+        (catch clojure.lang.ExceptionInfo exinf
+          (case (:reason (ex-data exinf))
+            :no-workflow-found-for-trigger
+            (println (yellow "No workflow found for trigger ") (blue trigger))
+            :workflows-not-spec-conform
+            (println (red "\u2A2F Workflow does not conform to spec! "))
+            :workflow-failure
+            (when (or verbose? debug?)
+              (println (yellow "At least one workflow failed:"))
+              (doseq [[key log] (:log (ex-data exinf))]
+                (if (workflow-successful? log)
+                  (println "Running workflow" (yellow (name key)) (green "successful \u2713"))
+                  (do
+                    (println "Running workflow" (yellow (name key)) (red "not successful \u2A2F"))
+                    (when verbose?
+                      (print-workflow-job-history key (:history (last log))))
+                    (when debug?
+                      (println "Full log of workflow " (yellow (name key)))
+                      (pprint log)))))))
+          (System/exit 1))
+        (catch Exception e
+          (println (red "Unknown Error"))
+          (println (yellow (.getMessage e)))
+          (System/exit 1)))
       (println (yellow trigger) (red "is not a valid trigger!")))))
 
 
 (def build-in-jobs
   "All jobs  build-in to clci."
-  {"lines-of-code" tools/lines-of-code-job})
+  {"lines-of-code"  tools/lines-of-code-job
+   "format"         tools/format-clojure-job
+   "lint"           tools/lint-clojure-job})
 
 
 ;; TODO: only a stubb
@@ -92,7 +145,10 @@
   Show a useful error message to the user."
   [err]
   (case (:reason (ex-data err))
-    :invalid-initial-version (println (red "\u2A2F") " The initial version must follow the Semantic Versioning Specification!")))
+    :invalid-initial-version (println (red "\u2A2F") " The initial version must follow the Semantic Versioning Specification!")
+    :no-workflow-found-for-trigger (println (yellow "No workflow found for the trigger"))
+    :workflows-not-spec-conform (println (red "Some workflows do not conform to spec!") err)
+    (println (red "unkwnon error") "\n" err)))
 
 
 (defn print-help
@@ -103,10 +159,15 @@
       "
 Usage: clci <subcommand> <options>
 
-install                       Install clci in this repository
-run trigger <trigger>         Run the given <trigger> to execute the relevant workflows.
-run job <job> [options...]    Run the Job <job> with optional arguments [options].
-list jobs                     List all available jobs.
+install                                 Install clci in this repository
+       
+run trigger <trigger> [options...]      Run the given <trigger> to execute the relevant workflows.
+  available options:
+       --verbose                        Set to write a full log of failed workflows to stdout.
+       
+run job <job> [options...]              Run the Job <job> with optional arguments [options].
+
+list jobs                               List all available jobs.
 ")))
 
 
@@ -126,7 +187,14 @@ list jobs                     List all available jobs.
          :initial-version {:coerce :string :desc "Optional version used to set for the product. Only applicable in combination with the `--single-repo` option."}}}
        {:cmds ["run" "trigger"]
         :fn run-workflow-trigger
-        :args->opts [:trigger]}
+        :args->opts [:trigger]
+        :spec {:trigger {:coerce :keyword
+                         :required true
+                         :desc "Specify the trigger."}
+               :verbose {:coerce :boolean
+                         :desc  "Set to show a summary of the workflow execution."}
+               :debug   {:coerce :boolean
+                         :desc  "Set to show the full log of all workflows."}}}
        {:cmds ["run" "job"]
         :fn run-job
         :args->opts [:job]}

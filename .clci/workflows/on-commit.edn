@@ -1,9 +1,23 @@
-{:name          "Example Workflow"
-   :key           :lint-on-git-commit-msg
-   :description   "Some blah blah blah."
-   :trigger       [:git/commit-msg]
-   :disabled?     false
-   :jobs
-   [{:ref     :lint-commit-msg
-     :action  actions/conventional-commit-linter-action
-     :inputs  nil}]}
+{:name          "Git Pre-Commit"
+ :key           :on-git-pre-commit
+ :description   "Run automations when the git pre-commit hooks is triggered."
+ :trigger       [:git-pre-commit]
+ :disabled?     false
+ :jobs
+ [{:ref     :staged-files
+   :action  clci.actions.core/git-staged-files-action
+   :inputs  {}}
+  {:ref     :format-clojure-files
+   :action  clci.actions.core/format-clj-action
+   :inputs  {:fix true}}
+  {:ref     :lint-clojure-files
+   :action  clci.actions.core/lint-clj-action
+   :inputs  {:fail-level  :error
+             :paths       ["src"]}}
+  {:ref     :carve
+   :action  clci.actions.core/clj-carve-action
+   :inputs  {:paths       ["src"]
+             :no-fail      true}}
+  {:ref     :re-add-files
+   :action  clci.actions.core/git-add-files-action
+   :inputs  {:files :!job.staged-files/staged}}]}

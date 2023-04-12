@@ -3,14 +3,14 @@
   directly from a bb task in a project's codebase."
   (:require
     [babashka.cli :refer [parse-opts]]
-    [clci.actions :refer [lines-of-code-action]]
+    [clci.actions.core :refer [lines-of-code-action format-clj-action lint-clj-action]]
+    [clci.actions.impl :refer [lines-of-code-action-text-reporter lines-of-code-action-edn-reporter format-clj-action-reporter lint-clj-action-reporter]]
     [clci.repo :refer [get-paths]]
+    [clci.term :refer [red]]
     [clci.tools.antq :as aq]
     [clci.tools.carve :as carve]
     [clci.tools.cloverage :as cov]
-    [clci.tools.format :as fmt]
     [clci.tools.ghooks :as gh]
-    [clci.tools.impl :refer [lines-of-code-action-text-reporter lines-of-code-action-edn-reporter]]
     [clci.tools.linter :as linter]
     [clci.tools.mkdocs :as mkdocs]
     [clci.tools.release :as rel]
@@ -43,10 +43,17 @@
   (gh/hook opts))
 
 
-(defn format!
-  "Run the formatter on all Clojure files."
-  [opts]
-  (fmt/format! opts))
+(defn- coerce-paths
+  "Coerce a string argument into a vector of paths.
+   I.e. `[\"src/\",\"test/\"]`"
+  [s]
+  (if (vector? s)
+    s
+    (if-let [matches (re-matches #"\[((((.*)\/([^\/\"]*))+),?)+\]" s)]
+      (-> matches
+          second
+          (str/split #","))
+      "")))
 
 
 (defn- print-help-lines-of-code
@@ -69,12 +76,7 @@ Options:
   "Get the lines of code of the repo."
   [_]
   (let [spec   {:paths   {:desc         "Paths to consider."
-                          :coerce       (fn [s]
-                                          (if-let [matches (re-matches #"\[((((.*)\/([^\/\"]*))+),?)+\]" s)]
-                                            (-> matches
-                                                second
-                                                (str/split #","))
-                                            ""))
+                          :coerce       coerce-paths
                           :default      (get-paths)}
                 :edn     {:desc     "Return lines of code analysis in edn format."
                           :coerce   :boolean
@@ -104,6 +106,114 @@ Options:
                workflow-key
                {:paths (:paths opts)}
                (lines-of-code-action-text-reporter workflow-key))))))
+
+
+
+(defn- print-help-format-code
+  "Print the help of the format-clojure job."
+  []
+  (println
+    (str/trim
+      "
+Usage: clci run job format <options>
+
+Options:
+  --fix         Set as true to format all Clojure source files in place.
+                Defaults to false.
+  --no-fail     Set as true to not return a non zero exit code on job failure.
+        
+")))
+
+
+(defn- format-clojure
+  ""
+  [_]
+  (let [spec   {:fix   {:coerce :boolean
+                        :default      false}
+                :no-fail {:coerce   :boolean
+                          :default  false}
+                :help    {:desc     "Print help."
+                          :coerce   :boolean
+                          :default  false}}
+        opts   (parse-opts *command-line-args* {:spec spec})
+        workflow-key :format-code]
+    (cond
+      (:help opts)
+      (print-help-format-code)
+      :else
+      (let [report  (run-job
+                      format-clj-action
+                      "Format Clojure source code"
+                      workflow-key
+                      {:check (not (get opts :fix))
+                       :fix   (get opts :fix false)
+                       :no-fail (get opts :no-fail false)}
+                      (format-clj-action-reporter workflow-key))]
+        (if (and (:failure? report) (not (:no-fail opts)))
+          (ex-info "" {})
+          (println (:report report)))))))
+
+
+(defn- print-help-lint-code
+  "Print the help of the lint-clojure job."
+  []
+  (println
+    (str/trim
+      "
+Usage: clci run job lint <options>
+
+Options:
+  --fail-level    Set the level what issues cause the linter to fail. 
+                  One of `#{:warning :error :none}`. Defaults to :error
+  --paths         Vector of all paths to be analyzed by the linter.
+                  Defaults to 'src'.
+        
+")))
+
+
+(defn- lint-clojure
+  ""
+  [_]
+  (let [spec   {:fail-level   {:coerce    :keyword
+                               :default   :error}
+                :paths {:coerce   coerce-paths
+                        :default  ["src"]}
+                :help    {:desc     "Print help."
+                          :coerce   :boolean
+                          :default  false}}
+        opts   (parse-opts *command-line-args* {:spec spec})
+        workflow-key :lint-code]
+    (println "OO" opts)
+    (cond
+      (:help opts)
+      (print-help-lint-code)
+      :else
+      (let [_ (println "run action as job...")
+            report  (run-job
+                      lint-clj-action
+                      "Lint Clojure source code"
+                      workflow-key
+                      {:fail-level  (get opts :fail-level)
+                       :paths       (get opts :paths)}
+                      (lint-clj-action-reporter workflow-key))]
+        (if (:failure? report)
+          (do
+            (println (red "Linter failed"))
+            (println (:report report))
+            (System/exit 1))
+          (println (:report report)))))))
+
+
+(def format-clojure-job
+  "A job to run the Clojure source file formatter."
+  {:fn format-clojure
+   :description "Format all Clojure source files."})
+
+
+(def lint-clojure-job
+  "A job to run kondo and lint Clojure sources."
+  {:fn lint-clojure
+   :description "Lint Clojure source files."})
 
 
 (def lines-of-code-job
