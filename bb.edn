@@ -33,18 +33,10 @@
   {:doc "semver test",
    :requires ([clci.semver :as sv]),
    :task sv/derive-current-commit-version},
-  outdated
-  {:doc "Run find outdated dependencies.",
-   :task (exec 'clci.tools.core/outdated-deps)},
-  hooks
-  {:doc "Git hook related commands.",
-   :task (exec 'clci.tools.core/git-hooks)},
   docs
   {:doc "Handle the documentation of the project.",
    :task (exec 'clci.tools.core/docs!)},
   release
   {:doc "Create a new release.",
    :task (exec 'clci.tools.core/release!)},
-  lint
-  {:doc "Run kondo to lint the code. Fail on errors.",
-   :task (exec 'clci.tools.core/lint)}}}
+}}

@@ -152,3 +152,21 @@
                                    :required      true}}
    :outputs         {:report  {:type          :string
                                :description   "Report of carve. Sequence of maps describing the problems."}}})
+
+
+(def antq-action
+  "Action to run antq on a CLojure product."
+  {:name            "Antq"
+   :key             :lint-clj-code
+   :description     "Run antq in a Clojure product."
+   :scopes          [:repository]
+   :impure?         true
+   :fn              impl/antq-action-impl
+   :inputs          {:check    {:type          :boolean
+                                :description   "Set if the Action should check the dependencies without automatically updating them."}
+                     :upgrade  {:type          :boolean
+                                :description   "Set if the Action should automatically upgrade the dependencies."}
+                     :edn      {:type          :boolean
+                                :description   "Set to report the found issues in edn format."}}
+   :outputs         {:report  {:type          :string
+                               :description   "Report of antq."}}})

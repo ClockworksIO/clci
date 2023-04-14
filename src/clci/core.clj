@@ -77,7 +77,8 @@
   "All jobs  build-in to clci."
   {"lines-of-code"  tools/lines-of-code-job
    "format"         tools/format-clojure-job
-   "lint"           tools/lint-clojure-job})
+   "lint"           tools/lint-clojure-job
+   "outdated"       tools/outdated-job})
 
 
 ;; TODO: only a stubb
@@ -159,11 +160,14 @@
       "
 Usage: clci <subcommand> <options>
 
-install                                 Install clci in this repository
+install                                 Install clci in this repository.
+       
+setup git-hooks [options...]            Setup git hooks to trigger clci workflows.
        
 run trigger <trigger> [options...]      Run the given <trigger> to execute the relevant workflows.
   available options:
-       --verbose                        Set to write a full log of failed workflows to stdout.
+  --verbose                             Set to write a log of the triggered workflows to stdout.
+  --debug                               Set to write extensive logging about the triggered workflows to stdout.
        
 run job <job> [options...]              Run the Job <job> with optional arguments [options].
 
@@ -200,6 +204,12 @@ list jobs                               List all available jobs.
         :args->opts [:job]}
        {:cmds ["list" "jobs"]
         :fn list-jobs}
+       {:cmds ["setup" "git-hooks"]
+        :fn   tools/setup-git-hooks
+        :spec {:pre-commit     {:coerce :boolean :desc "Set to create a hook for a pre-commit workflow."}
+               :commit-msg     {:coerce :boolean :desc "Set to create a hook for a commit-msg workflow."}}}
+       {:cmds ["release"]
+        :fn tools/release!}
        {:cmds []
         :fn (fn [{:keys [opts]}]
               (if (:version opts)

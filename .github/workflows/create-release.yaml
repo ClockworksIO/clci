@@ -49,6 +49,6 @@ jobs:
           git fetch --all
           git checkout master
           git pull origin master
-          bb release --only-release
+          bb clci release --create-releases
         env:
           GITHUB_TOKEN: ${{ github.token }}

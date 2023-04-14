@@ -2,7 +2,6 @@
   "This module provides various helping funtions to work with git hooks.
   **Note**: Some of this code is based on https://blaster.ai/blog/posts/manage-git-hooks-w-babashka.html"
   (:require
-    [babashka.cli :as cli]
     [babashka.fs :as fs]
     [babashka.process :refer [shell]]
     [clci.term :as c]
@@ -48,39 +47,3 @@ bb clci run trigger git-%s --verbose" (java.util.Date.) hook))
     (let [extension (last (str/split s #"\."))]
       (extensions extension))))
 
-
-(def cli-options
-  "Options available to use with the git-hook tool."
-  {:spec
-   {:install			{:coerce :boolean :desc "Install git hooks (pre-commit, commit-msg)."}
-    :help   			{:coerce :boolean :desc "Show help."}}})
-
-
-(defn- print-help
-  "Print help for the git hook task."
-  []
-  (println "Run a git hook.\n")
-  (println (cli/format-opts cli-options)))
-
-
-(defmulti hook-impl (fn [& args] (first args)))
-
-
-;; Build the documentation
-(defmethod hook-impl :install [& _]
-  (spit-hook "pre-commit")
-  (spit-hook "commit-msg"))
-
-
-;; Default handler to catch invalid arguments, print help
-(defmethod hook-impl :default [& _]
-  (print-help))
-
-
-(defn hook
-  "Implementation wrapper of the git hooks."
-  {:org.babashka/cli cli-options}
-  [opts]
-  (cond
-    (:install opts) (hook-impl :install)
-    :else (hook-impl :help)))

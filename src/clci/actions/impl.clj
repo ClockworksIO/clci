@@ -185,9 +185,51 @@
                               with-out-str
                               edn/read-string)
           failure?        (seq report)]
-      {:outputs {:report report
-                 :foo failure?}
+      {:outputs {:report report}
        :failure (and failure? (not no-fail?))})
+    (catch Exception _
+      {:outputs {}
+       :failure true})))
+
+
+(defn antq-action-text-reporter
+  "A Reporter for the outdated / antq ad-hoc Action.
+   Wrapps the output of antq and returns the report as text."
+  [workflow-key]
+  (fn [runner-log]
+    {:failure? (not (workflow-successful? runner-log workflow-key))
+     :log      runner-log
+     :report   (-> (get-workflow-history runner-log workflow-key)
+                   (get-in [0 :outputs :report]))}))
+
+
+(defn antq-action-edn-reporter
+  "A Reporter for the outdated / antq ad-hoc Action.
+   Wrapps the output of antq and returns the result as clojrue data."
+  [workflow-key]
+  (fn [runner-log]
+    {:failure? (not (workflow-successful? runner-log workflow-key))
+     :log      runner-log
+     :report   (-> (get-workflow-history runner-log workflow-key)
+                   (get-in [0 :outputs :report])
+                   edn/read-string)}))
+
+
+(defn antq-action-impl
+  ""
+  [ctx]
+  (try
+    (let [upgrade?      (get-in ctx [:job :inputs :upgrade] false)
+          report-fmt    (if (get-in ctx [:job :inputs :edn] false)
+                          "edn"
+                          "table")
+          command       (if upgrade?
+                          (format "clojure -M:outdated -m antq.core --upgrade --force --download --reporter=%s" report-fmt)
+                          (format "clojure -M:outdated -m antq.core --reporter=%s" report-fmt))
+          report          (-> (sh {:out :string :err :string} command)
+                              :out)]
+      {:outputs {:report report}
+       :failure false})
     (catch Exception _
       {:outputs {}
        :failure true})))
