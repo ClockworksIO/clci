@@ -191,7 +191,7 @@
 ;;   :ret map?
 ;; )
 
-(defn update-version
+(defn update-product-version
   "Update the version in the repo.edn file.
   Takes the `version` as string and the product identifier.
   If only the version is supplied, the function assumes the repo has only a single product."

@@ -58,7 +58,7 @@ jobs:
       # Set the version for the release
       - name: Update Version
         id: update-version
-        run: bb release --only-update-version --gh-action
+        run: bb clci release --update-version
         env:
           GITHUB_TOKEN: ${{ github.token }}
       # Add and commit the new version

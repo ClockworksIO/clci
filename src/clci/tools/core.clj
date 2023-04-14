@@ -1,46 +1,19 @@
 (ns clci.tools.core
-  "This modules exposes an api of several tools that can be used
-  directly from a bb task in a project's codebase."
+  "This modules exposes tools to run on a repo."
   (:require
     [babashka.cli :refer [parse-opts]]
-    [clci.actions.core :refer [lines-of-code-action format-clj-action lint-clj-action]]
-    [clci.actions.impl :refer [lines-of-code-action-text-reporter lines-of-code-action-edn-reporter format-clj-action-reporter lint-clj-action-reporter]]
-    [clci.repo :refer [get-paths]]
-    [clci.term :refer [red]]
-    [clci.tools.antq :as aq]
+    [clci.actions.core :refer [lines-of-code-action format-clj-action lint-clj-action antq-action]]
+    [clci.actions.impl :refer [lines-of-code-action-text-reporter lines-of-code-action-edn-reporter format-clj-action-reporter lint-clj-action-reporter antq-action-text-reporter antq-action-edn-reporter]]
+    [clci.release :as rel]
+    [clci.repo :refer [get-paths update-product-version]]
+    [clci.term :refer [red blue magenta]]
     [clci.tools.carve :as carve]
-    [clci.tools.cloverage :as cov]
+    ;; [clci.tools.cloverage :as cov]
     [clci.tools.ghooks :as gh]
-    [clci.tools.linter :as linter]
     [clci.tools.mkdocs :as mkdocs]
-    [clci.tools.release :as rel]
     [clci.workflow.runner :refer [run-job]]
     [clojure.core.match :refer [match]]
     [clojure.string :as str]))
-
-
-(defn lint
-  "Lint the code."
-  [opts]
-  (linter/lint opts))
-
-
-(defn carve!
-  "Find and optionally remove unused vars from the codebase."
-  [opts]
-  (carve/carve! opts))
-
-
-(defn docs!
-  "Build a documentation with mkdocs."
-  [opts]
-  (mkdocs/docs! opts))
-
-
-(defn git-hooks
-  "Run a git hook."
-  [opts]
-  (gh/hook opts))
 
 
 (defn- coerce-paths
@@ -56,6 +29,35 @@
       "")))
 
 
+(defn- print-help-setup-git-hooks
+  "Print the help of the setup git hooks task."
+  []
+  (println
+    (str/trim
+      "
+Usage: clci setup git-hooks <options>
+
+Options:
+  --pre-commit    Set to trigger workflows with the `:git-pre-commit` trigger.
+  --commit-msg    Set to trigger workflows with the `:git-commit-msg` trigger.
+  --help          Print help.
+        
+")))
+
+
+(defn setup-git-hooks
+  "Setup git hooks to trigger clci workflows."
+  [args]
+  (let [pre-commit?   (get-in args [:opts :pre-commit])
+        commit-msg?  (get-in args [:opts :commit-msg])]
+    (cond
+      ;; print help
+      (get-in args [:opts :help]) (print-help-setup-git-hooks)
+      ;; setup 
+      pre-commit? (gh/spit-hook "pre-commit")
+      commit-msg? (gh/spit-hook "commit-msg"))))
+
+
 (defn- print-help-lines-of-code
   "Print the help of the lines-of-code job."
   []
@@ -68,6 +70,7 @@ Options:
   --paths       Vector of all paths to be analyzed.
                 Defaults to `repo.get-paths`.
   --edn         Return lines of code analysis in edn format.
+  --help        Print help.
         
 ")))
 
@@ -121,12 +124,13 @@ Options:
   --fix         Set as true to format all Clojure source files in place.
                 Defaults to false.
   --no-fail     Set as true to not return a non zero exit code on job failure.
+  --help        Print help.
         
 ")))
 
 
 (defn- format-clojure
-  ""
+  "Format Clojure Code."
   [_]
   (let [spec   {:fix   {:coerce :boolean
                         :default      false}
@@ -167,6 +171,7 @@ Options:
                   One of `#{:warning :error :none}`. Defaults to :error
   --paths         Vector of all paths to be analyzed by the linter.
                   Defaults to 'src'.
+  --help          Print help.
         
 ")))
 
@@ -183,13 +188,11 @@ Options:
                           :default  false}}
         opts   (parse-opts *command-line-args* {:spec spec})
         workflow-key :lint-code]
-    (println "OO" opts)
     (cond
       (:help opts)
       (print-help-lint-code)
       :else
-      (let [_ (println "run action as job...")
-            report  (run-job
+      (let [report  (run-job
                       lint-clj-action
                       "Lint Clojure source code"
                       workflow-key
@@ -202,6 +205,109 @@ Options:
             (println (:report report))
             (System/exit 1))
           (println (:report report)))))))
+
+
+(defn- print-help-release!
+  "Print the help of the release tool."
+  []
+  (println
+    (str/trim
+      "
+Usage: clci release <options>
+
+Options:
+  --update-version    Set if you would like to update the version of all products. 
+  --create-releases   Set to create releases for all products.
+  --draft             Set if you would like to mark the new release as draft.
+  --pre-release       Set if you would like to mark the new release as pre-release.
+  --help              Print help.
+  
+")))
+
+
+(defn release!
+  "Create a new release."
+  [_]
+  (let [spec   {:update-version   {:coerce :boolean :default true :desc "Set if you would like to update the version of all products."}
+                :create-releases  {:coerce :boolean :Default false :desc "Set to create releases for all products."}
+                :draft            {:coerce :boolean :desc "Set if you would like to mark the new release as draft."}
+                :pre-release      {:coerce :boolean :desc "Set if you would like to mark the new release as pre-release."}
+                :help             {:coerce   :boolean
+                                   :desc     "Print help."
+                                   :default  false}}
+        opts   (parse-opts *command-line-args* {:spec spec})]
+    (cond
+      ;; print help
+      (:help opts)
+      (print-help-release!)
+      ;; update product versions
+      (:update-version opts)
+      (let [new-versions    (rel/derive-current-commit-version)]
+        (println (blue "[NEW RELEASES] - Set new versions for products:"))
+        (doseq [[key version] new-versions]
+          (println (magenta (format "%s for product %s" version key)))
+          (update-product-version version key)))
+      ;; create new releases
+      (:create-releases opts)
+      (do
+        (println (blue "[NEW RELEASES] - Create Releases"))
+        (rel/create-releases))
+      ;; fallback to printing the help
+      :else
+      (print-help-release!))))
+
+
+(defn- print-help-outdated
+  "Print the help of the outdated tool."
+  []
+  (println
+    (str/trim
+      "
+Usage: clci outdated <options>
+
+Options:
+  --check       Set if the Action should check the dependencies without automatically updating them.
+  --upgrade     Set if the Action should automatically upgrade the dependencies.
+  --edn         Set to report the found issues in edn format.
+  --help        Print help.
+  
+")))
+
+
+(defn- outdated
+  "Check for outdated dependencies ad-hoc job implementation."
+  [_]
+  (let [spec   {:check    {:coerce :boolean :default true :desc "Set if the Action should check the dependencies without automatically updating them."}
+                :upgrade  {:coerce :boolean :default false :desc "Set if the Action should automatically upgrade the dependencies."}
+                :edn      {:coerce :boolean :default false :desc "Set to report the found issues in edn format."}
+                :help             {:coerce   :boolean
+                                   :desc     "Print help."
+                                   :default  false}}
+        opts   (parse-opts *command-line-args* {:spec spec})
+        workflow-key :outdated-deps
+        reporter (if (:edn opts)
+                   (antq-action-edn-reporter workflow-key)
+                   (antq-action-text-reporter workflow-key))]
+    (cond
+      ;; print help
+      (:help opts)
+      (print-help-outdated)
+      ;; run antq
+      (or (:check opts) (:upgrade opts))
+      (let [report  (run-job
+                      antq-action
+                      "Find outdated dependencies"
+                      workflow-key
+                      {:check     (:check opts)
+                       :upgrade   (:upgrade opts)
+                       :edn       (:edn opts)}
+                      reporter)]
+        (if (:failure? report)
+          (ex-info "" {})
+          (println (:report report))))
+      ;; fallback to printing the help
+      :else
+      (print-help-outdated))))
 
 
 (def format-clojure-job
@@ -222,19 +328,26 @@ Options:
    :description "Get the lines of code."})
 
 
-(defn outdated-deps
-  "Find outdated dependencies."
+(def outdated-job
+  "A job to find outdated dependencies."
+  {:fn          outdated
+   :description "Find outdated dependencies."})
+
+
+;; TODO: not working yet
+;; (defn test-coverage
+;;   "Get the test coverage of the repo's code."
+;;   [opts]
+;;   (cov/cloverage opts))
+
+
+(defn carve!
+  "Find and optionally remove unused vars from the codebase."
   [opts]
-  (aq/find-outdated-dependencies opts))
+  (carve/carve! opts))
 
 
-(defn test-coverage
-  "Get the test coverage of the repo's code."
+(defn docs!
+  "Build a documentation with mkdocs."
   [opts]
-  (cov/cloverage opts))
-
-
-(defn release!
-  "Create a new release."
-  [opts]
-  (rel/release! opts))
+  (mkdocs/docs! opts))
