@@ -6,7 +6,7 @@
     [clci.github :as gh]
     [clci.repo :as rp]
     [clci.semver :as sv]
-    [clci.util :refer [str-split-last map-on-map-values any]]
+    [clci.util.core :refer [str-split-last map-on-map-values any]]
     [clojure.spec.alpha :as spec]
     [clojure.string :as str]
     [miner.strgen :as sg]))

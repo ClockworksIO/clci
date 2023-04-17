@@ -3,7 +3,7 @@
     [babashka.fs :as fs]
     ;; [clci.actions :as actions]
     ;; [clci.repo :as rp]
-    [clci.util :refer [any find-first slurp-edn]]
+    [clci.util.core :refer [find-first slurp-edn]]
     [clci.workflow.action]
     ;; [cljc.java-time.local-date :as ld]
     ;; [clojure.core.async :as a]

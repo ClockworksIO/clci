@@ -2,7 +2,7 @@
   "This module provides tests for the `git` module."
   (:require
     [clci.actions.core :as actions]
-    [clci.util :as u]
+    [clci.util.core :as u]
     [clci.workflow.reporter :refer [default-reporter]]
     [clci.workflow.runner :refer [get-job-history job-output? get-job-output-value derive-inputs run-trigger-impl]]
     [clci.workflow.workflow :refer [valid-workflow? find-workflows-by-trigger remove-disabled-workflows]]

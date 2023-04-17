@@ -1,6 +1,6 @@
 (ns clci.workflow.reporter
   (:require
-    [clci.util :refer [any]]
+    [clci.util.core :refer [any]]
     [clci.workflow.workflow :refer [get-workflow-history workflow-successful?]]
     [clojure.pprint :refer [pprint]]))
 

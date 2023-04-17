@@ -4,7 +4,7 @@
   org.babashka/cli {:mvn/version "0.6.46"},
   com.velisco/strgen {:mvn/version "0.2.4"}
   io.github.babashka/instaparse.bb
-  {:git/sha "2bdd8726d197abfbe3d943d2c3af547f296a2190"},
+  {:git/sha "15fc62057162e794b1bb2297c90885c669bb744d"},
   io.github.clj-kondo/clj-kondo-bb
   {:git/tag "v2023.01.20", :git/sha "adfc7df"},
   io.github.borkdude/carve

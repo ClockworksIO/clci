@@ -170,3 +170,16 @@
                                 :description   "Set to report the found issues in edn format."}}
    :outputs         {:report  {:type          :string
                                :description   "Report of antq."}}})
+
+
+(def update-changelog-action
+  "Action to update the changelog."
+  {:name            "Update Changelog"
+   :key             :update-changelog
+   :description     "Update the changelog based on the commit history."
+   :scopes          [:repository]
+   :impure?         true
+   :fn              impl/update-changelog-action-impl
+   :inputs          {:release  {:type         :string
+                                :description  "Optional release name to use to update the changelog."}}
+   :outputs         {}})

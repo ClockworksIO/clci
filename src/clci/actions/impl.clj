@@ -4,8 +4,11 @@
   (:require
     [babashka.process :refer [sh]]
     [carve.api :as api]
+    [clci.changelog :refer [update-changelog!]]
     [clci.conventional-commit :refer [valid-commit-msg?]]
-    [clci.git :refer [staged-files]]
+    [clci.git :refer [staged-files current-branch-name commits-on-branch-since]]
+    [clci.release :refer [get-latest-release amend-commit-log]]
+    [clci.repo :refer [read-repo]]
     [clci.workflow.workflow :refer [get-workflow-history workflow-successful?]]
     [clj-kondo.core :as clj-kondo]
     [clojure.edn :as edn]
@@ -216,7 +219,7 @@
 
 
 (defn antq-action-impl
-  ""
+  "Implementation of the antq-action to run antq."
   [ctx]
   (try
     (let [upgrade?      (get-in ctx [:job :inputs :upgrade] false)
@@ -229,6 +232,27 @@
           report          (-> (sh {:out :string :err :string} command)
                               :out)]
       {:outputs {:report report}
+       :failure false})
+    (catch Exception _
+      {:outputs {}
+       :failure true})))
+
+
+(defn update-changelog-action-impl
+  "Implementation of the update-changelog action."
+  [ctx]
+  (try
+    (let [release-name                  (get-in ctx [:job :inputs :release])
+          new-release                   (if release-name
+                                          {:tag       (get-in ctx [:job :inputs :release])
+                                           :published (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (java.util.Date.))}
+                                          nil)
+          repo                          (read-repo)
+          latest-release                (get-latest-release repo)
+          commits-since-release         (commits-on-branch-since {:since (get-in latest-release [:commit :hash]) :branch (current-branch-name)})
+          amended-commits-since-release (amend-commit-log commits-since-release)]
+      (update-changelog! amended-commits-since-release new-release)
+      {:outputs {}
        :failure false})
     (catch Exception _
       {:outputs {}
