@@ -1,6 +1,6 @@
 (ns clci.workflow.runner
   (:require
-    [clci.util :refer [any find-first]]
+    [clci.util.core :refer [any find-first]]
     [clci.workflow.reporter :refer [default-reporter]]
     [clci.workflow.workflow :refer [find-workflows-by-trigger remove-disabled-workflows get-workflows valid-workflow?]]
     [cljc.java-time.local-date :as ld]

@@ -7,7 +7,7 @@
     [clci.repo :as rp]
     [clci.term :refer [yellow blue red green]]
     [clci.tools.core :as tools]
-    [clci.util :refer [pretty-spit!]]
+    [clci.util.core :refer [pretty-spit!]]
     [clci.workflow.runner :refer [valid-trigger? run-trigger]]
     [clci.workflow.workflow :refer [workflow-successful?]]
     [clojure.pprint :refer [pprint]]
@@ -75,10 +75,11 @@
 
 (def build-in-jobs
   "All jobs  build-in to clci."
-  {"lines-of-code"  tools/lines-of-code-job
-   "format"         tools/format-clojure-job
-   "lint"           tools/lint-clojure-job
-   "outdated"       tools/outdated-job})
+  {"lines-of-code"      tools/lines-of-code-job
+   "format"             tools/format-clojure-job
+   "lint"               tools/lint-clojure-job
+   "outdated"           tools/outdated-job
+   "update-changelog"   tools/update-changelog-job})
 
 
 ;; TODO: only a stubb

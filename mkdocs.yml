@@ -59,5 +59,6 @@ nav:
       - 'ADR012 - Test Coverave': './adr/adr012-cloverage.md'
       - 'ADR013 - Automated Releases': './adr/adr013-automated_releases.md'
       - 'ADR014 - Workflows and Actions': './adr/adr014-workflows.md'
+      - 'ADR015 - Changelog': './adr/adr015-changelog.md'
   - Docs:
     - 'Overview': './docs.md'

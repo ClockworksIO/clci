@@ -1,10 +1,9 @@
 (ns clci.repo
   "This module provides methods to read and update the repo.edn file."
   (:require
+    [babashka.fs :as fs]
     [clci.semver :as sv]
-    [clci.util :as u :refer [slurp-edn pretty-spit!]]
-    [clojure.edn :as edn]
-    [clojure.pprint :refer [pprint]]
+    [clci.util.core :as u :refer [slurp-edn pretty-spit! any]]
     [clojure.spec.alpha :as s]))
 
 
@@ -203,6 +202,48 @@
     (->> (assoc-in repo [:products idx] (assoc product :version version))
          (pretty-spit! "repo.edn"))))
 
+
+(defn affected-products
+  "Tests which of the products are affected by the commit.
+   Does so by checking if the changes happened in the root of each product.
+   Takes an amended `commit` and the `products` of the repo.
+   Returns a collection of product keys that are affected by the commit."
+  [commit products]
+  (if (= (count products) 1)
+    (list (-> products first :key))
+    (->> products
+         (map (fn [prod]
+                (when (any (fn [f] (fs/starts-with? f (:root prod))) (:files commit))
+                  (:key prod))))
+         (remove nil?))))
+
+
+(defn product-affected-by-commit?
+  "Test if the given `product` is affected by the given `commit`."
+  [commit product]
+  (some? (some #{(:key product)} (affected-products commit (list product)))))
+
+
+(defn group-and-filter-commits-by-product
+  "Create a map which products are affected by which commit.
+   Takes the `commit-log` and `all-products` from the repo config. Maps over
+   all commit log entries and tests which products are affected by each commit.
+   Builds and returns a map where the keys are product keys and the value to
+   each key is a list with all commits that are relevant to that product.
+   
+   !!! info
+   
+       You should provide a collection of commits limited back only to the
+       latest release."
+  [commit-log all-products]
+  (->> commit-log
+       (map
+         (fn [commit]
+           (into (hash-map)
+                 (map
+                   (fn [product] [product (list commit)])
+                   (affected-products commit all-products)))))
+       (apply (partial merge-with into))))
 
 
 ;;

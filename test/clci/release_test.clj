@@ -2,136 +2,16 @@
   "This module provides tests for release tool."
   (:require
     [clci.release :as rel]
-    [clci.repo :as rp]
-    [clojure.spec.alpha :as s]
-    [clojure.spec.gen.alpha :as gen]
-    [clojure.test :refer [deftest testing is]]
-    [miner.strgen :as sg]))
+    [clci.test-data :as datasets]
+    [clci.util.core :refer [in? not-in?]]
+    [clojure.test :refer [deftest testing is]]))
 
-
-(defn in?
-  "true if coll contains elm."
-  [coll elm]
-  (some #(= elm %) coll))
-
-
-(defn not-in?
-  "true if coll does not contain elm."
-  [coll elm]
-  (not (in? coll elm)))
-
-
-(def commit-hash-re #"[0-9a-f]{5,40}")
-
-
-(s/def ::commit-hash
-  (s/spec
-    (s/and string? #(re-matches commit-hash-re %))
-    :gen #(sg/string-generator commit-hash-re)))
-
-
-(def rfc3339-datetime-re #"(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}(\.\d+)?(Z|([\+-]\d{2}:\d{2}))?)")
-
-
-(s/def ::commit-date
-  (s/spec (s/and string? #(re-matches rfc3339-datetime-re %))
-          :gen #(sg/string-generator rfc3339-datetime-re)))
-
-
-(def commit-author-re #"[0-9a-fA-Z]{5,35}@[0-9a-fA-Z]{5,35}\.[a-z]{2,5}")
-
-
-(s/def ::commit-author
-  (s/spec (s/and string? #(re-matches commit-author-re %))
-          :gen #(sg/string-generator commit-author-re)))
-
-
-(def products-example-many
-  "Example repo.edn configuration, for a repo with multiple products."
-  [{:root "pwa/" :key :pwa :release-prefix "pwa" :version "0.0.0"}
-   {:root "backend/" :key :backend :release-prefix "kuchen" :version "0.0.0"}
-   {:root "common" :key :common :release-prefix "common" :version "0.3.0"}])
-
-
-(def example-commits-many-products
-  "Example commits, oldest to newest, for a repo with multiple products."
-  [{:hash (gen/generate (sg/string-generator commit-hash-re)),
-    :date (gen/generate (sg/string-generator rfc3339-datetime-re)),
-    :author (gen/generate (sg/string-generator commit-author-re)),
-    :subject "chore: inital commit",
-    :body ""
-    :files
-    ["README.md"
-     ".gitignore"
-     "LICENSE"]}
-   ;; 1
-   {:hash (gen/generate (sg/string-generator commit-hash-re)),
-    :date (gen/generate (sg/string-generator rfc3339-datetime-re)),
-    :author (gen/generate (sg/string-generator commit-author-re)),
-    :subject "feat: adding support for green lightsabers",
-    :body ""
-    :files
-    ["pwa/src/core.cljs"
-     "pwa/Readme.md"
-     "pwa/deps.edn"]}
-   ;; 2
-   {:hash (gen/generate (sg/string-generator commit-hash-re)),
-    :date (gen/generate (sg/string-generator rfc3339-datetime-re)),
-    :author (gen/generate (sg/string-generator commit-author-re)),
-    :subject "feat: adding support for pink lightsabers",
-    :body ""
-    :files
-    ["pwa/src/core.cljs"
-     "pwa/src/colors.cljs"]}
-   ;; 3
-   {:hash (gen/generate (sg/string-generator commit-hash-re)),
-    :date (gen/generate (sg/string-generator rfc3339-datetime-re)),
-    :author (gen/generate (sg/string-generator commit-author-re)),
-    :subject "feat: support blasters in backend",
-    :body ""
-    :files
-    ["backend/src/core.clj"
-     "backend/.gitignore"]}
-   ;; 4
-   {:hash (gen/generate (sg/string-generator commit-hash-re)),
-    :date (gen/generate (sg/string-generator rfc3339-datetime-re)),
-    :author (gen/generate (sg/string-generator commit-author-re)),
-    :subject "ci: create the build pipeline",
-    :body ""
-    :files
-    [".github/workflows/ci.yaml"
-     "docs/index.md"
-     ".gitignore"]}
-   ;; 5
-   {:hash (gen/generate (sg/string-generator commit-hash-re)),
-    :date (gen/generate (sg/string-generator rfc3339-datetime-re)),
-    :author (gen/generate (sg/string-generator commit-author-re)),
-    :subject "fix: remove a bug",
-    :body ""
-    :files
-    ["backend/src/core.clj"
-     "pwa/src/core.cljs"
-     ".gitignore"
-     "docs/index.md"
-     "docs/assets/image.png"]}
-   ;; 5
-   {:hash (gen/generate (sg/string-generator commit-hash-re)),
-    :date (gen/generate (sg/string-generator rfc3339-datetime-re)),
-    :author (gen/generate (sg/string-generator commit-author-re)),
-    :subject "fix: remove a bug",
-    :body ""
-    :files
-    ["backend/src/core.clj"
-     "pwa/src/core.cljs"
-     ".gitignore"
-     "docs/index.md"
-     "docs/assets/image.png"]}])
 
 
 (def fake-latest-releases-many
   "Fake latest releases for a repo with multiple products."
   [{:key    :pwa
-    :commit (get-in example-commits-many-products [0 :hash])
+    :commit (get-in datasets/raw-commits-dataset-1 [0 :hash])
     :tag     "0.0.0"
     :name    "0.0.0"}
    {:key    :backend
@@ -139,84 +19,30 @@
     :tag     "0.0.0"
     :name    "0.0.0"}
    {:key    :common
-    :commit (get-in example-commits-many-products [0 :hash])
+    :commit (get-in datasets/raw-commits-dataset-1 [0 :hash])
     :tag     "0.0.0"
     :name    "0.3.0"}])
 
 
 (comment
-  "Expected versions using the many-products example:"
+  "Expected versions for the example with many products using the
+   _product-dataset-1_ and _raw-commits-dataset-1_:"
   {:pwa     "0.2.1"
    :backend "0.1.1"
    :common  "0.3.0"})
 
 
-(def products-example-single
-  "Example repo.edn configuration for a single product repo."
-  [{:root "" :key :app :release-prefix "app" :version "1.41.2-alpha"}])
-
-
-(def example-commits-single-product
-  "Example commits, oldest to newest, for a repo with a single product."
-  [{:hash (gen/generate (sg/string-generator commit-hash-re)),
-    :date (gen/generate (sg/string-generator rfc3339-datetime-re)),
-    :author (gen/generate (sg/string-generator commit-author-re)),
-    :subject "chore: inital commit",
-    :body ""
-    :files
-    ["README.md"
-     ".gitignore"
-     "LICENSE"]}
-   ;; 1
-   {:hash (gen/generate (sg/string-generator commit-hash-re)),
-    :date (gen/generate (sg/string-generator rfc3339-datetime-re)),
-    :author (gen/generate (sg/string-generator commit-author-re)),
-    :subject "docs: prepare docs",
-    :body "BREAKING CHANGE: this commit will break everything"
-    :files
-    ["mkdocs.yml"
-     "docs/index.md"
-     "docs/assets/logo.png"]}
-   ;; 2
-   {:hash (gen/generate (sg/string-generator commit-hash-re)),
-    :date (gen/generate (sg/string-generator rfc3339-datetime-re)),
-    :author (gen/generate (sg/string-generator commit-author-re)),
-    :subject "feat: implement awesome feature #EXAMPLE-123",
-    :body ""
-    :files
-    ["src/example/core.clj"
-     "docs/index.md"
-     "docs/assets/logo.png"]}
-   ;; 3
-   {:hash (gen/generate (sg/string-generator commit-hash-re)),
-    :date (gen/generate (sg/string-generator rfc3339-datetime-re)),
-    :author (gen/generate (sg/string-generator commit-author-re)),
-    :subject "feat: implement another feature #EXAMPLE-124",
-    :body ""
-    :files
-    ["src/example/utils.clj"
-     "assets/img.png"]}
-   ;; 4
-   {:hash (gen/generate (sg/string-generator commit-hash-re)),
-    :date (gen/generate (sg/string-generator rfc3339-datetime-re)),
-    :author (gen/generate (sg/string-generator commit-author-re)),
-    :subject "fix: implement another feature #EXAMPLE-124",
-    :body ""
-    :files
-    ["src/example/utils.clj"
-     "assets/img.png"]}])
-
-
 (def fake-latest-releases-single
   "Fake latest releases for a repo with a single product."
   [{:key    :app
-    :commit (get-in example-commits-single-product [0 :hash])
+    :commit (get-in datasets/raw-commits-dataset-2 [0 :hash])
     :tag     "0.0.0"
     :name    "0.0.0"}])
 
 
 (comment
-  "Expected versions using the single-product example:"
+  "Expected versions using the single-product using the
+   _product-dataset-2_ and _raw-commits-dataset-2_:"
   {:app     "2.2.1"})
 
 
@@ -263,22 +89,22 @@
 
 (deftest affected-products-many-products
   (testing "Testing helper function which products are affected by a commit - many products."
-    (let [amended-commit-log (rel/amend-commit-log example-commits-many-products)]
-      (is (let [result (rel/affected-products (nth amended-commit-log 0) products-example-many)]
+    (let [amended-commit-log (rel/amend-commit-log datasets/raw-commits-dataset-1)]
+      (is (let [result (rel/affected-products (nth amended-commit-log 0) datasets/product-dataset-1)]
             (empty? result)))
-      (is (let [result (rel/affected-products (nth amended-commit-log 1) products-example-many)]
+      (is (let [result (rel/affected-products (nth amended-commit-log 1) datasets/product-dataset-1)]
             (in? result '(:pwa :minor))))
-      (is (let [result (rel/affected-products (nth amended-commit-log 2) products-example-many)]
+      (is (let [result (rel/affected-products (nth amended-commit-log 2) datasets/product-dataset-1)]
             (and
               (in? result '(:pwa :minor))
               (not-in? result '(:backend :minor)))))
-      (is (let [result (rel/affected-products (nth amended-commit-log 3) products-example-many)]
+      (is (let [result (rel/affected-products (nth amended-commit-log 3) datasets/product-dataset-1)]
             (and
               (in? result '(:backend :minor))
               (not-in? result '(:pwa :minor)))))
-      (is (let [result (rel/affected-products (nth amended-commit-log 4) products-example-many)]
+      (is (let [result (rel/affected-products (nth amended-commit-log 4) datasets/product-dataset-1)]
             (empty? result)))
-      (is (let [result (rel/affected-products (nth amended-commit-log 5) products-example-many)]
+      (is (let [result (rel/affected-products (nth amended-commit-log 5) datasets/product-dataset-1)]
             (and
               (in? result '(:pwa :patch))
               (in? result '(:backend :patch))))))))
@@ -287,8 +113,8 @@
 (deftest derive-versions-many-products
   (testing "Testing to derive the current versions of app products based on the commit log - many products."
     (let [derived-versions (rel/derive-current-commit-all-versions-impl
-                             (rel/amend-commit-log example-commits-many-products)
-                             products-example-many)]
+                             (rel/amend-commit-log datasets/raw-commits-dataset-1)
+                             datasets/product-dataset-1)]
       (is (= "0.2.1" (:pwa derived-versions)))
       (is (= "0.1.1" (:backend derived-versions)))
       (is (= "0.3.0" (:common derived-versions))))))
@@ -297,7 +123,7 @@
 
 (deftest commit-version-increment-single-product
   (testing "Testing helper function how a commit increments a version - single product."
-    (let [amended-commit-log (rel/amend-commit-log example-commits-single-product)]
+    (let [amended-commit-log (rel/amend-commit-log datasets/raw-commits-dataset-2)]
       (is (nil? (rel/derive-version-increment (-> amended-commit-log (nth 0) :ast))))
       (is (=
             (rel/derive-version-increment (-> amended-commit-log (nth 1) :ast))
@@ -312,16 +138,16 @@
 (deftest derive-versions-single-product
   (testing "Testing to derive the current versions of app products based on the commit log - single product."
     (let [derived-version (rel/derive-current-commit-version-single-product-impl
-                            (rel/amend-commit-log example-commits-single-product)
-                            (first products-example-single))]
+                            (rel/amend-commit-log datasets/raw-commits-dataset-2)
+                            (first datasets/product-dataset-2))]
       (is (= "2.2.1" (:app derived-version))))))
 
 
 (deftest new-release-required?
   (testing "Testing if a new release is required based on the derived version and latest release."
     (let [derived-versions (rel/derive-current-commit-all-versions-impl
-                             (rel/amend-commit-log example-commits-many-products)
-                             products-example-many)
+                             (rel/amend-commit-log datasets/raw-commits-dataset-1)
+                             datasets/product-dataset-1)
           grouped-releases (-> gh-latest-releases-example-resp
                                (rel/group-gh-releases-by-prefix)
                                (rel/reduce-to-last-release))
@@ -340,13 +166,13 @@
 
 (deftest prepare-new-releases
   (testing "Testing to derive which releases should be created for the repo based on changes."
-    (let [products              (-> products-example-many)
+    (let [products              (-> datasets/product-dataset-1)
           fake-releases         (-> gh-latest-releases-example-resp
                                     (rel/group-gh-releases-by-prefix)
                                     (rel/reduce-to-last-release))
           derived-versions      (rel/derive-current-commit-all-versions-impl
-                                  (rel/amend-commit-log example-commits-many-products)
-                                  products-example-many)
+                                  (rel/amend-commit-log datasets/raw-commits-dataset-1)
+                                  datasets/product-dataset-1)
           fake-repo             {:products (map (fn [p]
                                                   (assoc p :version (get derived-versions (:key p))))
                                                 products)}

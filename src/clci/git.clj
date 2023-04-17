@@ -21,12 +21,12 @@
       str/trim))
 
 
-(defn- parse-commit-msg
-  [msg-v]
-  (loop [head   (first msg-v)
-         tail   (rest msg-v)
-         state  :init
-         result {}]))
+(defn current-branch-name
+  "Get the name of the current branch."
+  []
+  (->
+    (shell {:out :string} "git rev-parse --abbrev-ref HEAD")
+    :out))
 
 
 (defn commits-on-branch-since

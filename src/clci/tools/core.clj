@@ -2,7 +2,7 @@
   "This modules exposes tools to run on a repo."
   (:require
     [babashka.cli :refer [parse-opts]]
-    [clci.actions.core :refer [lines-of-code-action format-clj-action lint-clj-action antq-action]]
+    [clci.actions.core :refer [lines-of-code-action format-clj-action lint-clj-action antq-action update-changelog-action]]
     [clci.actions.impl :refer [lines-of-code-action-text-reporter lines-of-code-action-edn-reporter format-clj-action-reporter lint-clj-action-reporter antq-action-text-reporter antq-action-edn-reporter]]
     [clci.release :as rel]
     [clci.repo :refer [get-paths update-product-version]]
@@ -11,6 +11,7 @@
     ;; [clci.tools.cloverage :as cov]
     [clci.tools.ghooks :as gh]
     [clci.tools.mkdocs :as mkdocs]
+    [clci.workflow.reporter :refer [default-reporter]]
     [clci.workflow.runner :refer [run-job]]
     [clojure.core.match :refer [match]]
     [clojure.string :as str]))
@@ -310,6 +311,50 @@ Options:
       (print-help-outdated))))
 
 
+(defn- print-help-update-changelog
+  "Print the help of the update-changelog tool."
+  []
+  (println
+    (str/trim
+      "
+Usage: clci update-changelog <options>
+
+Options:
+  --release     Optional release name to use to create a new release section.
+  --help        Print help.
+  
+")))
+
+
+(defn- update-changelog
+  "Update the changelog."
+  [_]
+  (let [spec   {:release          {:coerce   :string
+                                   :desc     "Optional release name used to update the changelog with a release."
+                                   :default  nil}
+                :help             {:coerce   :boolean
+                                   :desc     "Print help."
+                                   :default  false}}
+        opts   (parse-opts *command-line-args* {:spec spec})
+        workflow-key :update-changelog
+        reporter default-reporter]
+    (cond
+      ;; print help
+      (:help opts)
+      (print-help-update-changelog)
+      ;; run changelog update
+      :else
+      (let [report  (run-job
+                      update-changelog-action
+                      "Update the Changelog"
+                      workflow-key
+                      {:release     (:release opts)}
+                      reporter)]
+        (if (:failure? report)
+          (ex-info "" {})
+          (println (:report report)))))))
+
+
 (def format-clojure-job
   "A job to run the Clojure source file formatter."
   {:fn format-clojure
@@ -332,6 +377,12 @@ Options:
   "A job to find outdated dependencies."
   {:fn          outdated
    :description "Find outdated dependencies."})
+
+
+(def update-changelog-job
+  "A job to update the changelog."
+  {:fn          update-changelog
+   :description "Update the changelog."})
 
 
 ;; TODO: not working yet
