@@ -229,7 +229,7 @@ Options:
 (defn release!
   "Create a new release."
   [_]
-  (let [spec   {:update-version   {:coerce :boolean :default true :desc "Set if you would like to update the version of all products."}
+  (let [spec   {:update-version   {:coerce :boolean :default false :desc "Set if you would like to update the version of all products."}
                 :create-releases  {:coerce :boolean :Default false :desc "Set to create releases for all products."}
                 :draft            {:coerce :boolean :desc "Set if you would like to mark the new release as draft."}
                 :pre-release      {:coerce :boolean :desc "Set if you would like to mark the new release as pre-release."}
