@@ -162,3 +162,9 @@
        ```"
   [& colls]
   (apply = (map frequencies colls)))
+
+
+(defn not-blank-str?
+  "Predicate to test if the given string `s` is not blank."
+  [s]
+  (and (string? s) (not (str/blank? s))))

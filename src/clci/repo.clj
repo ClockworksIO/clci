@@ -3,7 +3,7 @@
   (:require
     [babashka.fs :as fs]
     [clci.semver :as sv]
-    [clci.util.core :as u :refer [slurp-edn pretty-spit! any]]
+    [clci.util.core :as u :refer [slurp-edn pretty-spit! any not-blank-str?]]
     [clojure.spec.alpha :as s]))
 
 
@@ -171,7 +171,10 @@
 (s/def :clci.repo.product/root string?)
 (s/def :clci.repo.product/key keyword?)
 (s/def :clci.repo.product/version string?)
-(s/def :clci.repo/product (s/keys :req-un []))
+(s/def :clci.repo.product/release-prefix not-blank-str?)
+(s/def :clci.repo/product (s/keys :req-un [:clci.repo.product/root
+                                           :clci.repo.product/key
+                                           :clci.repo.product/version]))
 
 (s/def :clci.repo/products (s/coll-of :clci.repo/product))
 

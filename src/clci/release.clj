@@ -308,3 +308,78 @@
   (if (rp/single-product?)
     (derive-current-commit-version-single-product)
     (derive-current-commit-all-versions)))
+
+
+(defn get-latest-release
+  "Get the latest release of the product.
+   Takes the `repo` configuration and optionally a `product-key` to get the latest release
+   for a specific product. The product-key is required if more than one project is present!"
+  ([repo]
+   (when-not (rp/single-product?)
+     (ex-info "Getting the latest release requires a specific product key if the repo hast more than one product!" {}))
+   (case (get-in repo [:scm :provider :name])
+     ;; scm == github
+     :github (let [repo-name (get-in repo [:scm :provider :repo])
+                   owner     (get-in repo [:scm :provider :owner])
+                   release  (gh/get-latest-release owner repo-name)
+                   tag       (gh/get-tag owner repo-name (:tag_name release))]
+               (gh-release->release release tag))
+     (ex-info "Only Github is supported as SCM provider!" {})))
+  ([repo product-key]
+   (case (get-in repo [:scm :provider :name])
+     :github (ex-info "Not implemented yet!" {})
+     (ex-info "Only Github is supported as SCM provider!" {}))))
+
+
+(defn- get-product-latest-release
+  "Get the latest release of the product.
+   Takes the `scm` configuration of the repo and the `product` for which the latest
+   should be fetched.
+   Checks if the SCM provider in the repo configuration is supported by the release
+   mechanism, if not an Exception is thrown.
+   
+   !!! warning
+       
+       This function may send requests over network to the SCM provider's API!
+  "
+  [scm product]
+  (case (get-in scm [:provider :name])
+    ;; scm provider is Github
+    :github   (let [repo-name       (get-in repo [:scm :provider :repo])
+                    owner           (get-in repo [:scm :provider :owner])
+                    product-prefix  (:release-prefix product)
+                    latest-tag      (str product-prefix "-" "latest")
+                    release         (gh/get-release-by-tag-name owner repo-name latest-tag)])
+    ;; unsupported scm provider
+    (ex-info "Only Github is supported as SCM provider!" {})
+    ))
+
+
+(defn- prepare-release-single-product
+  ""
+  [set-version update-changelog?]
+  (let [repo                 (rp/read-repo)
+        ;; get the last release using the gh api
+        latest-release       (get-product-latest-release 
+                               (get-in repo [:scm :provider :name])
+                               (get-in repo [:products 0 :release-prefix]))]))
+
+
+(defn- prepare-release-all-products
+  ""
+  [set-version update-changelog?])
+
+
+(defn prepare-release!
+  "Prepare a new release.
+   Calculates the new versions of the products and updates the repo.edn configuration
+   with the new version numbers."
+  [{:keys [set-version update-changelog?] :or {set-version true update-changelog? false}}]
+  (cond
+    (rp/single-product?)  (prepare-release-single-product set-version update-changelog?)
+    :else                 (prepare-release-all-products set-version update-changelog?)))
+
+
+(defn create-release!
+  ""
+  [])
