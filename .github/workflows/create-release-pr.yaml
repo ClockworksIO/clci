@@ -58,7 +58,7 @@ jobs:
       # Set the version for the release
       - name: Update Version
         id: update-version
-        run: bb clci release --update-version
+        run: bb clci release --prepare
         env:
           GITHUB_TOKEN: ${{ github.token }}
       # Update Changelog for the release

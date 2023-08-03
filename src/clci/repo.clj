@@ -168,6 +168,18 @@
                    :clci.repo.scm/url]))
 
 
+(def semver-tracking-options
+  "All available options how semantic versioning is applied on the products in the repository."
+  #{:distinct :combined})
+
+
+(s/def :clci.repo.semver/tracking semver-tracking-options)
+
+
+(s/def :clci.repo/semver
+  (s/keys :opt-un [:clci.repo.semver/tracking]))
+
+
 (s/def :clci.repo.product/root string?)
 (s/def :clci.repo.product/key keyword?)
 (s/def :clci.repo.product/version string?)

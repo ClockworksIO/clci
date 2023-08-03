@@ -13,6 +13,18 @@
       str/split-lines))
 
 
+(defn delete-tag
+  "Delte a tag.
+   Takes a `tag` to be deleted and an optional `delete-remote?` flag. If the flag is true
+   the tag will also be deleted in the remote repository."
+  ([tag] (delete-tag tag true))
+  ([tag delete-remote?]
+   (->
+     (shell {:out :string} (format "git tag -d %s" tag)))
+   (when delete-remote?
+     (shell {:out :string} (format "git push origin :refs/tags/%s" tag)))))
+
+
 (defn current-commit
   "Get the current commit on the current branch."
   []

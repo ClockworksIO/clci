@@ -217,7 +217,7 @@ Options:
 Usage: clci release <options>
 
 Options:
-  --update-version    Set if you would like to update the version of all products. 
+  --prepare           Set if you would like to prepare a release by updating the version of all products.
   --create-releases   Set to create releases for all products.
   --draft             Set if you would like to mark the new release as draft.
   --pre-release       Set if you would like to mark the new release as pre-release.
@@ -229,7 +229,7 @@ Options:
 (defn release!
   "Create a new release."
   [_]
-  (let [spec   {:update-version   {:coerce :boolean :default false :desc "Set if you would like to update the version of all products."}
+  (let [spec   {:prepare          {:coerce :boolean :default false :desc "Set if you would like to prepare a release by updating the version of all products."}
                 :create-releases  {:coerce :boolean :Default false :desc "Set to create releases for all products."}
                 :draft            {:coerce :boolean :desc "Set if you would like to mark the new release as draft."}
                 :pre-release      {:coerce :boolean :desc "Set if you would like to mark the new release as pre-release."}
@@ -242,7 +242,7 @@ Options:
       (:help opts)
       (print-help-release!)
       ;; update product versions
-      (:update-version opts)
+      (:prepare opts)
       (let [new-versions    (rel/derive-current-commit-version)]
         (println (blue "[NEW RELEASES] - Set new versions for products:"))
         (doseq [[key version] new-versions]
