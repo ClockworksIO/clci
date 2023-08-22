@@ -3,7 +3,7 @@
   (:require
     [babashka.fs :as fs]
     [clci.semver :as sv]
-    [clci.util.core :as u :refer [slurp-edn pretty-spit! any]]
+    [clci.util.core :as u :refer [slurp-edn pretty-spit! any not-blank-str?]]
     [clojure.spec.alpha :as s]))
 
 
@@ -183,7 +183,14 @@
 (s/def :clci.repo.product/root string?)
 (s/def :clci.repo.product/key keyword?)
 (s/def :clci.repo.product/version string?)
-(s/def :clci.repo/product (s/keys :req-un []))
+(s/def :clci.repo.product/release-prefix not-blank-str?)
+
+
+(s/def :clci.repo/product
+  (s/keys :req-un [:clci.repo.product/root
+                   :clci.repo.product/key
+                   :clci.repo.product/version]))
+
 
 (s/def :clci.repo/products (s/coll-of :clci.repo/product))
 
@@ -273,6 +280,12 @@
   This is the case when more than one entry exists in the repo.edn :products field."
   []
   (= (count (-> (read-repo) :products)) 1))
+
+
+(defn combined-release-tracking?
+  "Test if the repository uses combined release tracking."
+  []
+  (= (-> (read-repo) (get-in [:semver :tracking])) :combined))
 
 
 (defn get-products
