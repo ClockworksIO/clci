@@ -1,0 +1,16 @@
+{:name          "Manual Workflow"
+ :key           :on-trigger-wfl
+ :description   "Run some jobs on a manual trigger to test parts of clci that cannot easyly be tested with simple testcases."
+ :trigger       [:manual]
+ :disabled?     false
+ :jobs
+ [{:ref     :mk-random-integers
+   :scope   :product
+   :action  clci.actions.core/create-random-integer-action
+   :inputs  {:maximum 100}}
+  {:ref     :print-other-job-outputs
+   :scope   :repository
+   :action  clci.actions.core/verify-job-outputs
+   :inputs  {:random-integer-for-clci :!job.mk-random-integers.clci/number
+             :random-integer-for-not-existing :!job.mk-random-integers.unobtainium/number}}
+  ]}

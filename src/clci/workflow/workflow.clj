@@ -4,7 +4,7 @@
     ;; [clci.actions :as actions]
     ;; [clci.repo :as rp]
     [clci.util.core :refer [find-first slurp-edn]]
-    [clci.workflow.action]
+    [clci.workflow.action :refer [action-scopes]]
     ;; [cljc.java-time.local-date :as ld]
     ;; [clojure.core.async :as a]
     [clojure.spec.alpha :as s]))
@@ -39,6 +39,19 @@
 ;; Optional flag to disable the workflow
 (s/def :clci.workflow/disabled? boolean?)
 
+(s/def :clci.workflow.job.filter.products/product-filter map?)
+
+
+;; The optional filter to define products for a jow and how the job is applied on the product
+(s/def :clci.workflow.job.filter/products
+  (s/or
+    ;; job will be run for all products
+    :all  #(= :all %)
+    ;; job will be run for some products defined in a vector specified by their product key
+    :some (s/and vector? (s/every keyword?))
+    ;; specifically define
+    :specific (s/map-of keyword? :clci.workflow.job.filter.products/product-filter)))
+
 
 ;; An optional reference to the job within the workflow.
 ;; Required to access the output of a specific job in the workflow.
@@ -53,11 +66,22 @@
 (s/def :clci.workflow.job/inputs map?)
 
 
+;; The scope in which the job is run
+(s/def :clci.workflow.job/scope action-scopes)
+
+
+;; Optional filter for a job
+(s/def :clci.workflow.job/filter
+  (s/keys :req-un [:clci.workflow.job.filter/products]))
+
+
 ;; A job within a workflow
 (s/def :clci.workflow.job/ident
   (s/keys :req-un [:clci.workflow.job/action]
           :opt-un [:clci.workflow.job/ref
-                   :clci.workflow.job/inputs]))
+                   :clci.workflow.job/inputs
+                   :clci.workflow.job/scope
+                   :clci.workflow.job/filter]))
 
 
 ;; Collection with all jobs run in the workflow. Jobs are run in order top to bottom.

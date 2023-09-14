@@ -5,19 +5,24 @@
  :disabled?     false
  :jobs
  [{:ref     :staged-files
+   :scope   :repository
    :action  clci.actions.core/git-staged-files-action
    :inputs  {}}
   {:ref     :format-clojure-files
+   :scope   :product
    :action  clci.actions.core/format-clj-action
    :inputs  {:fix true}}
   {:ref     :lint-clojure-files
+   :scope   :product
    :action  clci.actions.core/lint-clj-action
    :inputs  {:fail-level  :error
              :paths       ["src"]}}
   {:ref     :carve
+   :scope   :product
    :action  clci.actions.core/clj-carve-action
    :inputs  {:paths       ["src"]
              :no-fail      true}}
   {:ref     :re-add-files
    :action  clci.actions.core/git-add-files-action
-   :inputs  {:files :!job.staged-files/staged}}]}
+   :inputs  {:files :!job.staged-files/staged}}
+  ]}

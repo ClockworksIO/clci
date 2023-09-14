@@ -76,6 +76,7 @@ Options:
 ")))
 
 
+;; TODO: UPDATE TO ALIGN WITH PRODUCT SCOPE ACTIONS/JOBS!
 (defn- lines-of-code
   "Get the lines of code of the repo."
   [_]
@@ -130,6 +131,7 @@ Options:
 ")))
 
 
+;; TODO: UPDATE TO ALIGN WITH PRODUCT SCOPE ACTIONS/JOBS!
 (defn- format-clojure
   "Format Clojure Code."
   [_]
@@ -177,6 +179,7 @@ Options:
 ")))
 
 
+;; TODO: UPDATE TO ALIGN WITH PRODUCT SCOPE ACTIONS/JOBS!
 (defn- lint-clojure
   ""
   [_]
@@ -275,6 +278,7 @@ Options:
 ")))
 
 
+;; TODO: UPDATE TO ALIGN WITH PRODUCT SCOPE ACTIONS/JOBS!
 (defn- outdated
   "Check for outdated dependencies ad-hoc job implementation."
   [_]

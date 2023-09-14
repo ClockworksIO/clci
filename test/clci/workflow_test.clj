@@ -4,9 +4,8 @@
     [clci.actions.core :as actions]
     [clci.util.core :as u]
     [clci.workflow.reporter :refer [default-reporter]]
-    [clci.workflow.runner :refer [get-job-history job-output? get-job-output-value derive-inputs run-trigger-impl]]
+    [clci.workflow.runner :refer [get-job-history repository-job-output? product-job-output? get-job-output-value derive-inputs run-trigger-impl]]
     [clci.workflow.workflow :refer [valid-workflow? find-workflows-by-trigger remove-disabled-workflows]]
-    [clojure.pprint :refer [pprint]]
     [clojure.test :refer [deftest testing is]]))
 
 
@@ -34,11 +33,31 @@
    :disabled?     false
    :jobs
    [{:ref     :a-random-int
+     :scope   :product
      :action  actions/create-random-integer-action
      :inputs  {:maximum 50}}
     {:ref     :increment-int
+     :scope   :product
      :action  actions/increment-integer-action
-     :inputs  {:number :!job.a-random-int/number}}]})
+     :inputs  {:number :!job.a-random-int.clci/number}}]})
+
+
+(def example-workflow-many-products
+  {:name          "Example Workflow with many products"
+   :key           :example-workflow
+   :description   "Some blah blah blah."
+   :trigger       [:git-commit-msg :manual]
+   :disabled?     false
+   :jobs
+   [{:ref     :a-random-int
+     :action  actions/create-random-integer-action
+     :inputs  {:maximum 50}
+     :scope   :product
+     :filter  {:products :all}}
+    {:ref     :increment-int
+     :scope   :product
+     :action  actions/increment-integer-action
+     :inputs  {:number :!job.a-random-int.clci/number}}]})
 
 
 (def example-workflows
@@ -57,6 +76,7 @@
 (deftest workflow-specs
   (testing "Test if workflows follow the spec. "
     (is (valid-workflow? example-workflow))
+    (is (valid-workflow? example-workflow-many-products))
     (is (not (valid-workflow? example-workflow-no-jobs)))))
 
 
@@ -83,11 +103,14 @@
 (deftest derive-job-inputs
   (testing "Run tests on the functions required to derive the input of a job."
     (is (= (get example-history 0) (get-job-history example-history :a-random-int)))
-    (is (job-output? :!job.some-job/an-output))
-    (is (job-output? :!job.a-random-int/number))
-    (is (not (job-output? :job.some-job/an-output)))
-    (is (not (job-output? 1)))
-    (is (not (job-output? :some/emaple)))
+    (is (repository-job-output? :!job.some-job/an-output))
+    (is (repository-job-output? :!job.a-random-int/number))
+    (is (not (product-job-output? :!job.a-random-int/number)))
+    (is (not (repository-job-output? :job.some-job/an-output)))
+    (is (not (repository-job-output? 1)))
+    (is (not (repository-job-output? :some/emaple)))
+    (is (product-job-output? :!job.a-random-int.some-product-key/number))
+    (is (not (repository-job-output? :!job.a-random-int.some-product-key/number)))
     (is (= (get-in example-history [0 :outputs :number]) (get-job-output-value example-history :a-random-int :number)))
     (is (= {:number (get-in example-history [0 :outputs :number])} (derive-inputs (get-in example-workflow [:jobs 1]) example-history)))))
 
@@ -121,14 +144,13 @@
                            :example-workflow
                            (u/find-first (fn [m] (= :clci.workflow.runner/finished (:msg-type m))))
                            :history)]
-      ;; (pprint run-result)
       (is (contains? run-log (:key example-workflow)))
       (is (log-has-message-with-type (get run-log :example-workflow) :clci.workflow.runner/workflow-start))
       (is (not (log-has-message-with-type (get run-log :example-workflow) :clci.workflow.runner/error)))
       (is (not (log-has-message-with-type (get run-log :example-workflow) :clci.workflow.runner/failure)))
-      (is (= (get-in history [0 :outputs :number])
+      (is (= (get-in history [0 :outputs :clci/number])
              (get-in history [1 :context :job :inputs :number])))
-      (is (= (inc (get-in history [0 :outputs :number] 0))
-             (get-in history [1 :outputs :number])))
+      (is (= (inc (get-in history [0 :outputs :clci/number] 0))
+             (get-in history [1 :outputs :clci/number])))
       (is (= (inc (get-in history [1 :context :job :inputs :number]))
-             (get-in history [1 :outputs :number]))))))
+             (get-in history [1 :outputs :clci/number]))))))

@@ -3,6 +3,11 @@
     [clojure.spec.alpha :as s]))
 
 
+(def action-scopes
+  "The scopes under which an action can run."
+  #{:repository :product})
+
+
 ;; Indicator if running the action caused a failure or not.
 ;; If a failure occured, it must contain information about the failure.
 (s/def :clci.action.result/failure
@@ -11,8 +16,22 @@
     :failure     some?))
 
 
+(s/def :clci.action.result.output.product/key keyword?)
+(s/def :clci.action.result.output.product/value any?)
+
+
+(s/def :clci.action.result.output/product
+  (s/keys :req-un [:clci.action.result.output.product/key
+                   :clci.action.result.output.product/value]))
+
+
 ;; A map with the outputs of the action.
-(s/def :clci.action.result/outputs map?)
+(s/def :clci.action.result/outputs
+  (s/map-of
+    keyword?
+    (s/or
+      :repository #(not (coll? %))
+      :product    (s/coll-of :clci.action.result.output/product))))
 
 
 ;; The result of an Action function.
@@ -34,7 +53,7 @@
 
 
 ;; The scope on which the Action can be applied on
-(s/def :clci.action/scopes (s/coll-of #{:repository :product}))
+(s/def :clci.action/scopes (s/coll-of action-scopes))
 
 
 ;; An indicator if the action has side effects

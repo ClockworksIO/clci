@@ -1,5 +1,6 @@
 (ns clci.workflow.runner
   (:require
+    [clci.repo :refer [get-products]]
     [clci.util.core :refer [any find-first]]
     [clci.workflow.reporter :refer [default-reporter]]
     [clci.workflow.workflow :refer [find-workflows-by-trigger remove-disabled-workflows get-workflows valid-workflow?]]
@@ -12,9 +13,10 @@
 
 (defn create-job-context
   "Create a new job context to run jobs in a workflow."
-  [{:keys [trigger]}]
+  [{:keys [trigger scope] :or {scope :repository}}]
   {:started-at   (ld/now)
-   :triggered-by  trigger})
+   :triggered-by  trigger
+   :scope         scope})
 
 
 (defn create-runner-state
@@ -27,15 +29,26 @@
    :history           []})
 
 
-(defn job-output?
+(defn repository-job-output?
   "Takes the input value `v` of a job and checks if the value is a named reference
-   to the output of another job.
+   to the output of another job run in scope `:repository`.
    A job output reference is a keyword following the format `:!job.[a-zA-Z\\-]/[a-zA-Z0-9\\-]`,
    i.e. :!job.job-ref/some-output"
   [v]
   (and
     (keyword? v)
-    (some? (re-matches #"!job.[a-zA-Z0-9\-]+" (or (namespace v) "")))))
+    (some? (re-matches #"!job\.[a-zA-Z0-9\-]+" (or (namespace v) "")))))
+
+
+(defn product-job-output?
+  "Takes the input value `v` of a job and checks if the value is a named reference
+   to the output of another job run in scope `:product`.
+   A job output reference is a keyword following the format `:!job.[a-zA-Z\\-].[a-zA-Z\\-]/[a-zA-Z0-9\\-]`,
+   i.e. :!job.job-ref.product-name/some-output"
+  [v]
+  (and
+    (keyword? v)
+    (some? (re-matches #"!job\.[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-]+" (or (namespace v) "")))))
 
 
 (defn get-job-history
@@ -47,11 +60,17 @@
 (defn get-job-output-value
   "Get the value of the output of a specific job.
    Takes the workflow's `history`, the `job-ref` of the job in question and the
-   `output-name` of which the value should be fetched."
-  [history job-ref output-name]
-  (-> (get-job-history history job-ref)
-      :outputs
-      (get output-name)))
+   `output-name` of which the value should be fetched. Optionally takes the `product`
+   of which the output should be used. This applies only when a Job's Action is executed
+   in scope `:product`."
+  ([history job-ref output-name]
+   (-> (get-job-history history job-ref)
+       :outputs
+       (get output-name)))
+  ([history job-ref output-name product]
+   (-> (get-job-history history job-ref)
+       :outputs
+       (get (keyword (name product) (name output-name))))))
 
 
 (defn derive-inputs
@@ -64,8 +83,15 @@
   (as-> (:inputs job) $
         (map
           (fn [[k v]]
-            (if (job-output? v)
+            (cond
+              ;; use output from another job in scope :repository
+              (repository-job-output? v)
               [k (get-job-output-value history (-> v (namespace) (str/split #"\.") (get 1) (keyword)) (-> v (name) (keyword)))]
+              ;; use output from another job in scope :product from a specific product
+              (product-job-output? v)
+              [k (get-job-output-value history (-> v (namespace) (str/split #"\.") (get 1) (keyword)) (-> v (name) (keyword)) (-> v (namespace) (str/split #"\.") (get 2) (keyword)))]
+              ;; constant value
+              :else
               [k v]))
           $)
         (into (hash-map) $)))
@@ -101,6 +127,7 @@
         ;; derive the execution context for the current job
         derive-job-context  (fn [job s]
                               (assoc initial-job-context
+                                     :scope  (get job :scope :repository)
                                      :job (-> (get-job s)
                                               (select-keys [:ref])
                                               (assoc :inputs (derive-inputs job (:history s))))))
@@ -111,14 +138,42 @@
                                            :key      (:key workflow)
                                            :job      job
                                            :context  context}))
-                              (let [result          ((get-in job [:action :fn]) context)
-                                    history-entry   {:context (select-keys context [:job :inputs])
-                                                     :outputs  (:outputs result)
-                                                     :failure (:failure result)}]
-                                (a/>!! ch {:msg-type      ::job-after-run
-                                           :key           (:key workflow)
-                                           :history-entry history-entry})
-                                history-entry))]
+                              ;; handle differently if this is a repository or a product job
+                              (case (:scope job)
+                                ;; repository level job
+                                :repository
+                                (let [result          ((get-in job [:action :fn]) context)
+                                      history-entry   {:context (select-keys context [:job :inputs])
+                                                       :outputs  (:outputs result)
+                                                       :failure (:failure result)}]
+                                  (a/>!! ch {:msg-type      ::job-after-run
+                                             :key           (:key workflow)
+                                             :history-entry history-entry})
+                                  history-entry)
+                                ;; product level job
+                                :product
+                                (let [;; run the job for each product and collect the results
+                                      results         (map (fn [product]
+                                                             [(:key product) (:ref job) ((get-in job [:action :fn]) (assoc context :product product))])
+                                                           (get-products))
+                                      ;; merge the outputs of all product job runs and change the keys of the
+                                      ;; output values by prefixing them with the product key
+                                      history-entries  {:context (select-keys context [:job :inputs])
+                                                        :outputs (->> results
+                                                                      (mapv (fn [[product-key job-ref result]]
+                                                                              (update-keys
+                                                                                (:outputs result)
+                                                                                (fn [k]
+                                                                                  (keyword (name product-key) (name k))))))
+                                                                      (apply merge))
+
+                                                        :failure (any true? (map (fn [[_ _ result]] (:failure result)) results))}]
+                                  (a/>!! ch {:msg-type      ::job-after-run
+                                             :key           (:key workflow)
+                                             :history-entry history-entries})
+                                  history-entries)
+                                ;; unknown, error
+                                (ex-info "Job scope is invalid!" {:scope (:scope job)})))]
     (a/thread
       (a/>!! ch {:msg-type      ::workflow-start
                  :key           (:key workflow)})
