@@ -33,7 +33,7 @@
    :scopes          [:repository :product]
    :impure?     		false
    :fn              (fn [ctx]
-                      {:outputs {:number (rand-int (get-in ctx [:job :inputs :maximum] (get-in random-integer-action-inputs [:maximum :default])))}
+                      {:outputs {:number (rand-int     (get-in ctx [:job :inputs :maximum] (get-in random-integer-action-inputs [:maximum :default])))}
                        :failure false})
    :inputs          random-integer-action-inputs
    :outputs         {:number  {:type        :integer
@@ -57,7 +57,23 @@
                                :description "The number created by the action."}}})
 
 
+(def verify-job-outputs
+  "Print the outputs of other workflow jobs.
+   **Important**: ONLY USED TO TEST clci itself!"
+  {:name            "Print Job Outputs"
+   :key             :print-inputs
+   :description     "Print the Outputs of the given Jobs. Useful Action for debugging."
+   :scopes          [:repository :product]
+   :impure?         false
+   :fn              (fn [ctx]
+                      {:outputs {:random-integer-for-clci  (get-in ctx [:job :inputs :random-integer-for-clci])}
+                       :failure false})
+   :inputs          {:random-integer-for-clci         {:type :integer}
+                     :random-integer-for-not-existing {:type :nil}}
+   :outputs         {}})
 
+
+;; TODO: UPDATE THIS FOR REPOSITORY-PRODUCT SCOPE TO WORK PROPERLY
 (def lines-of-code-action
   "An Action to count the lines of code in the specified Clojure files."
   {:name            "Lines of code"
@@ -104,7 +120,7 @@
   {:name            "Format Clojure Code"
    :key             :format-clj-code
    :description     "Run the `cljstyle` formatter on all Clojure source files."
-   :scopes          [:repository]
+   :scopes          [:product]
    :impure?         true
    :fn              impl/format-clj-action-impl
    :inputs          {:check   {:type          :boolean
@@ -117,24 +133,19 @@
                                :description   "Report of the formatter run."}}})
 
 
-
 (def lint-clj-action
   "Action to run the kondo linter on Clojure source code."
   {:name            "Lint Clojure Code"
    :key             :lint-clj-code
    :description     "Run kondo as linter on all Clojure source files."
-   :scopes          [:repository]
+   :scopes          [:product]
    :impure?         false
    :fn              impl/lint-clj-action-impl
    :inputs          {:fail-level  {:type          :keyword
                                    :required      true
-                                   :description   "Set the level what issues cause the linter to fail. One of `#{:warning :error :none}`"}
-                     :paths       {:type          :vector
-                                   :description   "Vector with src paths to be analyzed."
-                                   :required      true}}
+                                   :description   "Set the level what issues cause the linter to fail. One of `#{:warning :error :none}`"}}
    :outputs         {:report  {:type          :string
                                :description   "Report of the linter."}}})
-
 
 
 (def clj-carve-action
@@ -142,18 +153,16 @@
   {:name            "Carve"
    :key             :lint-clj-code
    :description     "Run carve in check mode on all Clojure source files."
-   :scopes          [:repository]
+   :scopes          [:product]
    :impure?         false
    :fn              impl/clj-carve-action-impl
    :inputs          {:no-fail  {:type          :boolean
-                                :description   "Set to true if the Action should not stop a workflow if carve finds any issues."}
-                     :paths       {:type          :vector
-                                   :description   "Vector with src paths to be analyzed."
-                                   :required      true}}
+                                :description   "Set to true if the Action should not stop a workflow if carve finds any issues."}}
    :outputs         {:report  {:type          :string
                                :description   "Report of carve. Sequence of maps describing the problems."}}})
 
 
+;; TODO: UPDATE THIS FOR REPOSITORY-PRODUCT SCOPE TO WORK PROPERLY
 (def antq-action
   "Action to run antq on a CLojure product."
   {:name            "Antq"
@@ -172,6 +181,7 @@
                                :description   "Report of antq."}}})
 
 
+;; TODO: UPDATE THIS FOR REPOSITORY-PRODUCT SCOPE TO WORK PROPERLY
 (def update-changelog-action
   "Action to update the changelog."
   {:name            "Update Changelog"

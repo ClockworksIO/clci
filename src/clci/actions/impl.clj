@@ -8,7 +8,8 @@
     [clci.conventional-commit :refer [valid-commit-msg?]]
     [clci.git :refer [staged-files current-branch-name commits-on-branch-since]]
     [clci.release :refer [get-latest-release amend-commit-log]]
-    [clci.repo :refer [read-repo]]
+    [clci.repo :refer [read-repo get-products]]
+    [clci.util.core :refer [any]]
     [clci.workflow.workflow :refer [get-workflow-history workflow-successful?]]
     [clj-kondo.core :as clj-kondo]
     [clojure.edn :as edn]
@@ -124,15 +125,19 @@
   "Format clojure files action impl."
   [ctx]
   (try
-    (let [fix?        (get-in ctx [:job :inputs :fix] false)
+    (let [product-dir (get-in ctx [:product :root])
+          fix?        (get-in ctx [:job :inputs :fix] false)
           no-fail?    (get-in ctx [:job :inputs :no-fail] false)
-          result      (if fix?
-                        (sh {:out :string :err :string} "clojure -M:format -m cljstyle.main fix")
-                        (sh {:out :string :err :string} "clojure -M:format -m cljstyle.main check"))
+          sh-opts     {:out :string :err :string :dir product-dir}
+          sh-cmd      (if fix?
+                        "clojure -M:format -m cljstyle.main fix"
+                        "clojure -M:format -m cljstyle.main check")
+          result      (sh sh-opts sh-cmd)
           failure?    (not= 0 (:exit result))
           report      (-> result :err str/split-lines)]
-      {:outputs {:report report}
-       :failure (and failure? (not no-fail?))})
+      {:outputs {:report (pr-str report)}
+       :scope   (:scope ctx)
+       :failure (if no-fail? false failure?)})
     (catch Exception _
       {:outputs {}
        :failure true})))
@@ -154,9 +159,9 @@
   "Lint clojure files action impl."
   [ctx]
   (try
-    (let [fail-level      (get-in ctx [:job :inputs :fail-level] :error)
-          paths           (get-in ctx [:job :inputs :paths] :error)
-          {:keys [summary] :as results} (clj-kondo/run! {:lint paths})
+    (let [product-dir     (get-in ctx [:product :root])
+          fail-level      (get-in ctx [:job :inputs :fail-level] :error)
+          {:keys [summary] :as results} (clj-kondo/run! {:lint [product-dir]})
           report          (with-out-str (clj-kondo/print! results))
           with-warnings?  (pos? (:warning summary))
           with-errors?    (pos? (:error summary))]
@@ -182,9 +187,9 @@
   "Run carve in check mode as action."
   [ctx]
   (try
-    (let [no-fail?        (get-in ctx [:job :inputs :no-fail] false)
-          paths           (get-in ctx [:job :inputs :paths] :error)
-          report          (-> (api/carve! {:paths paths :report {:format :edn} :dry-run true})
+    (let [product-dir     (get-in ctx [:product :root])
+          no-fail?        (get-in ctx [:job :inputs :no-fail] false)
+          report          (-> (api/carve! {:paths [product-dir] :report {:format :edn} :dry-run true})
                               with-out-str
                               edn/read-string)
           failure?        (seq report)]

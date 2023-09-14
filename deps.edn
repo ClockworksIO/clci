@@ -14,6 +14,7 @@
  
  :deps      {org.clojure/clojure                      {:mvn/version "1.11.1"}
              babashka/process                         {:mvn/version "0.4.16"}
+             org.babashka/cli {:mvn/version "0.6.46"},
              org.babashka/http-client                 {:mvn/version "0.1.4"}
              io.github.babashka/instaparse.bb         {:git/sha "15fc62057162e794b1bb2297c90885c669bb744d"}
              io.github.clj-kondo/clj-kondo-bb         {:git/tag "v2023.01.20" 
@@ -26,7 +27,8 @@
              cheshire/cheshire                        {:mvn/version "5.11.0"}
              org.clojure/test.check                   {:mvn/version "1.1.1"}
              com.widdindustries/cljc.java-time        {:mvn/version "0.1.21"}
-             org.clojure/core.match {:mvn/version "1.0.1"}}
+             org.clojure/core.match                   {:mvn/version "1.0.1"}
+             com.velisco/strgen                       {:mvn/version "0.2.4"}}
 
  :aliases
  {:format				   {:deps 	{mvxcvi/cljstyle                       {:mvn/version "0.15.0"}}}

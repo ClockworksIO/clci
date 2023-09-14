@@ -77,6 +77,7 @@
   (print-help))
 
 
+;; TODO: UPDATE TO ALIGN WITH PRODUCT SCOPE ACTIONS/JOBS!
 (defn carve!
   "Run carve to identify and optionally remove unused vars."
   {:org.babashka/cli cli-options}
