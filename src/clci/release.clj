@@ -1,12 +1,14 @@
 (ns clci.release
   (:require
     [babashka.fs :as fs]
+    [clci.changelog :as chl]
     [clci.conventional-commit :as cc]
     [clci.git :as git]
     [clci.github :as gh]
     [clci.repo :as rp]
     [clci.semver :as sv]
     [clci.util.core :refer [str-split-last map-on-map-values any]]
+    [clci.util.error :refer [fail! failure? fail-> fail->>]]
     [clojure.spec.alpha :as spec]
     [clojure.string :as str]
     [miner.strgen :as sg]))
@@ -22,7 +24,7 @@
     :gen #(sg/string-generator commit-hash-re)))
 
 
-(spec/def ::version #(re-matches sv/semver-re %))
+(spec/def ::version #(re-matches (re-pattern sv/semver-regex-pattern) %))
 (spec/def ::name string?) ; TODO: should follow the `<prefix> - <semver>` format
 (spec/def ::tag string?) ; TODO: should follow the `<prefix> - <semver>` format
 (spec/def ::draft? boolean?)
@@ -37,7 +39,6 @@
   "Get the release prefix of the specified `product`."
   [product]
   (str (:release-prefix product)  "-"))
-
 
 
 (defn inc-version
@@ -83,17 +84,19 @@
   (sv/newer? (:version product) (:version latest-release)))
 
 
+;; TODO: TEST THIS WITH LATEST CHANGES!!!
 (defn identify-release-prefix
   "Takes the name of a release and extracts the release prefix.
    The `name` of the release must be a string following the SemVer specification."
   [name]
   (let [parts (str-split-last #"-" name)]
     (cond
-      (and (= 1 (count parts)) (sv/valid-semver-str? (first parts))) :no-valid-prefix
-      (and (= 2 (count parts)) (sv/valid-semver-str? (get parts 1))) (first parts)
+      (and (= 1 (count parts)) (sv/valid-semver? (first parts))) :no-valid-prefix
+      (and (= 2 (count parts)) (sv/valid-semver? (get parts 1))) (first parts)
       :else :no-valid-prefix)))
 
 
+;; TODO: TEST THIS WITH LATEST CHANGES!!!
 (defn release-name->version
   "Get the version from a `release-name`. Expects the release-name to follow the
    <release-prefix>-<semver> schema!"
@@ -101,9 +104,9 @@
   (let [parts (str/split release-name #"-")]
     (cond
       ;; no release prefix found
-      (and (= (count parts) 1) (sv/valid-semver-str? (first parts))) (first parts)
+      (and (= (count parts) 1) (sv/valid-semver? (first parts))) (first parts)
       ;; found a release with prefix, does not use snapshot extension
-      (and (> (count parts) 1) (sv/valid-semver-str? (last parts))) (last parts)
+      (and (> (count parts) 1) (sv/valid-semver? (last parts))) (last parts)
       ;; might be a valid release with prefix and a semver snapshot extension or invalid
       :else nil)))
 
@@ -168,21 +171,38 @@
 (defn get-latest-release
   "Get the latest release of the product.
    Takes the `repo` configuration and optionally a `product-key` to get the latest release
-   for a specific product. The product-key is required if more than one project is present!"
+   for a specific product. The product-key is required if more than one project is present!
+   
+   !!!! DEPRECATED"
   ([repo]
-   (when-not (rp/single-product?)
-     (ex-info "Getting the latest release requires a specific product key if the repo hast more than one product!" {}))
+   (if (rp/single-product?)
+     (get-latest-release repo (get-in repo [:products 0]))
+     (ex-info "Getting the latest release requires a specific product key if the repo hast more than one product!" {})))
+  ;; ([repo]
+  ;;  (when-not (rp/single-product?)
+  ;;    (ex-info "Getting the latest release requires a specific product key if the repo hast more than one product!" {}))
+  ;;  (case (get-in repo [:scm :provider :name])
+  ;;    ;; scm == github
+  ;;    :github (let [repo-name  (get-in repo [:scm :provider :repo])
+  ;;                  owner      (get-in repo [:scm :provider :owner])
+  ;;                  product    (get-in repo [:products 0])
+  ;;                  ;release 	(gh/get-latest-release owner repo-name)
+  ;;                  last-release-name  (git/get-product-latest-release-name product)
+  ;;                  release   (gh/last-release-name owner repo last-release-name)
+  ;;                  tag       (gh/get-tag owner repo-name (:tag_name release))]
+  ;;              (gh-release->release release tag))
+  ;;    (ex-info "Only Github is supported as SCM provider!" {})))
+  ([repo product]
    (case (get-in repo [:scm :provider :name])
-     ;; scm == github
-     :github (let [repo-name (get-in repo [:scm :provider :repo])
-                   owner     (get-in repo [:scm :provider :owner])
-                   release 	(gh/get-latest-release owner repo-name)
+     :github (let [repo-name  (get-in repo [:scm :provider :repo])
+                   owner      (get-in repo [:scm :provider :owner])
+                   ;; product    (get-in repo [:products 0])
+                   ;; release   (gh/get-latest-release owner repo-name)
+                   last-release-name  (git/get-product-latest-release-name product)
+                   release   (gh/get-release-by-tag-name owner repo last-release-name)
                    tag       (gh/get-tag owner repo-name (:tag_name release))]
                (gh-release->release release tag))
-     (ex-info "Only Github is supported as SCM provider!" {})))
-  ([repo product-key]
-   (case (get-in repo [:scm :provider :name])
-     :github (ex-info "Not implemented yet!" {})
+     ;; unrecognized scm provider
      (ex-info "Only Github is supported as SCM provider!" {}))))
 
 
@@ -229,12 +249,11 @@
    release and the `product` from the repositorie's repo.edn configuration."
   [amended-commit-log product]
   (let [version-increments (->> amended-commit-log (map (comp derive-version-increment :ast)) (remove nil?))]
-    {(:key product)
-     (->> version-increments
-          (reduce (fn [acc v-incr]
-                    (inc-version acc v-incr))
-                  (sv/version-str->vec (:version product)))
-          (sv/version-vec->str))}))
+    (->> version-increments
+         (reduce (fn [acc v-incr]
+                   (inc-version acc v-incr))
+                 (sv/version-str->vec (:version product)))
+         (sv/version-vec->str))))
 
 
 (defn derive-current-commit-version-single-product
@@ -308,3 +327,96 @@
   (if (rp/single-product?)
     (derive-current-commit-version-single-product)
     (derive-current-commit-all-versions)))
+
+
+;; Get the latest release of a product
+;; Takes the `product` and the `scm` information to dispatch the correct
+;; scm provider implementation
+(defmulti get-product-latest-release (fn [_ scm] (get-in scm [:provider :name])))
+
+
+;; Get the latest release for SCM provider github
+;; !!! warning
+;;
+;;     Only works with a single product release or a combined release because the
+;;     github API can only provide a single release marked as _latest_.
+(defmethod get-product-latest-release :github [product scm]
+  (let [repo-name (get-in scm [:provider :repo])
+        owner     (get-in scm [:provider :owner])
+        ;; release   (gh/get-latest-release owner repo-name)
+        ;; tag       (gh/get-tag owner repo-name (:tag_name release))
+        last-release-name  (git/get-product-latest-release-name product)
+        release   (gh/get-release-by-tag-name owner repo-name last-release-name)
+        tag       (gh/get-tag owner repo-name (:tag_name release))]
+    (println "last release name: " last-release-name)
+    (println "last release: " (gh-release->release release tag))
+    (gh-release->release release tag)))
+
+
+;; Only github is supported at this time.
+;; Support for other SCM provider may follow in the future. Do you want to support
+;; another SCM provider? I'd love to receive a PR for this :)
+(defmethod get-product-latest-release :default [_ scm] (ex-info "Invalid SCM provider!" {:scm scm}))
+
+
+(defn- prepare-release-single-product
+  "Prepare a release - only for repos with a single product.
+   "
+  [set-version? update-changelog?]
+  (let [repo                 (rp/read-repo)
+        product              (get-in repo [:products 0])
+        latest-release       (get-product-latest-release product (:scm repo))
+        amended-commit-log   (amend-commit-log (git/commits-on-branch-since {:since (get-in latest-release [:commit :hash])}))
+        derived-version      (derive-current-commit-version-single-product-impl amended-commit-log product)]
+    (when set-version?
+      (rp/update-product-version derived-version (:key product)))
+    (when update-changelog?
+      (chl/update-changelog! amended-commit-log))
+    {:version derived-version
+     :amended-log amended-commit-log}))
+
+
+(defn- prepare-combined-release
+  "Prepare a release - for repos with multiple products but combined release tracking."
+  [_ _]
+  (ex-info "Not implemented yet!" {}))
+
+
+(defn- prepare-release-all-products
+  "Prepare a release for all products.
+   
+   NOT IMPLEMENTED YET! 
+   
+   Please see #111 for more information why this is not yet implemented."
+  [_ _]
+  (ex-info "Not implemented yet! See #111." {}))
+
+
+(defn prepare-release!
+  "Prepare a new release.
+   Calculates the new versions of the products and updates the repo.edn configuration
+   with the new version numbers.
+   Takes the following arguments:
+   | key                 | default | description                  |
+   | --------------------|---------|------------------------------|
+   | `update-version?`   | true    | When true, update the versions of the products in the repo.edn file.
+   | `update-changelog?` | false   | When true, update the Changelog file(s)."
+  [{:keys [update-version? update-changelog?] :or {update-version? true update-changelog? false}}]
+  (cond
+    (rp/single-product?)              (prepare-release-single-product update-version? update-changelog?)
+    (rp/combined-release-tracking?)   (prepare-combined-release update-version? update-changelog?)
+    :else                             (prepare-release-all-products update-version? update-changelog?)))
+
+
+(defn create-release!
+  ""
+  [])
+
+
+(comment
+  "Next steps:
+   [x] move function `get-product-latest-release` from git module here
+   [x] create function to fetch specific gh release")
+
+
+(prepare-release! {:update-version? true :update-changelog? true})

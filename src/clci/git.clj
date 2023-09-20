@@ -2,6 +2,8 @@
   "Various git tooling."
   (:require
     [babashka.process :refer [sh shell]]
+    [clci.constants :refer [latest-release-tag-suffix]]
+    [clci.semver :refer [semver-regex-pattern release-prefix-regex-pattern]]
     [clojure.string :as str]))
 
 
@@ -90,3 +92,79 @@
   (-> (shell {:out :string} "git --no-pager diff --name-only --no-color --cached --diff-filter=ACM")
       :out
       str/split-lines))
+
+
+(defn fetch-origin!
+  "Fetch all changes from git remote 'origin'.
+  Returns the output of the fetch as string on success.
+  Throws an exception if fetching from remote failed."
+  []
+  (-> (shell {:out :string} "git fetch origin")
+      :out))
+
+
+(defn derive-tag-name-for-latest-release
+  "Get the latest release tag for the given `product`."
+  [product]
+  (format "%s%s" (:release-prefix product) latest-release-tag-suffix))
+
+
+(defn get-commit-from-tag
+  "Get the commit sha where the given `tag-name` points to."
+  [tag-name]
+  (-> (shell {:out :string} (format "git rev-list -n 1 tags/%s" tag-name)) :out (str/trim)))
+
+
+(defn get-all-tags-of-commit
+  "Get all tags pointing to a commit.
+   Takes the `hash` of the commit and returns a vector with tag names."
+  [hash]
+  (-> (shell {:out :string} (format "git tag --points-at %s" hash)) :out (str/split-lines)))
+
+
+(def product {:root ".", :version "0.18.1", :key :clci, :release-prefix "clci"})
+
+
+;; (derive-tag-name-for-latest-release product)
+
+;; (get-commit-from-tag "clci-latest")
+
+;; (get-all-tags-of-commit "105c0326bd3ced3f626f077eb8a5e4a82ceeb1ef")
+
+
+(defn get-product-latest-release-name
+  "Get the name of the last released version of a product.
+   Takes the `product` as defined by the `:clci.repo/product` spec and
+   uses the git cli to get the latest released version of the product.
+   Returns a string with the product's latest release name.
+   Internally uses the convention that a `<release-prefix>-latest`
+   tag exisits for the latest release of a product to find the version of the
+   latest release tagged with this special tag.
+   
+  !!!! Example
+   
+      ```clojure
+      (def product {:root \".\", :version \"0.18.0\", 
+                    :key :clci, :release-prefix \"clci\"})
+      (get-product-latest-release-name product) ; -->  \"clci-0.18.1\"
+      ```
+   "
+  [product]
+  (->> product
+       derive-tag-name-for-latest-release
+       get-commit-from-tag
+       get-all-tags-of-commit
+       (filter (fn [tag]
+                 (and
+                   (some? (re-find (re-pattern semver-regex-pattern) tag))
+                   (some? (re-find (re-pattern release-prefix-regex-pattern) tag)))))
+       flatten
+       first))
+
+
+
+
+
+
+(get-product-latest-release-name product)
+

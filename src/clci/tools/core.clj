@@ -4,9 +4,10 @@
     [babashka.cli :refer [parse-opts]]
     [clci.actions.core :refer [lines-of-code-action format-clj-action lint-clj-action antq-action update-changelog-action]]
     [clci.actions.impl :refer [lines-of-code-action-text-reporter lines-of-code-action-edn-reporter format-clj-action-reporter lint-clj-action-reporter antq-action-text-reporter antq-action-edn-reporter]]
+    [clci.git :refer [fetch-origin!]]
     [clci.release :as rel]
     [clci.repo :refer [get-paths update-product-version]]
-    [clci.term :refer [red blue magenta]]
+    [clci.term :refer [red blue magenta green yellow]]
     [clci.tools.carve :as carve]
     ;; [clci.tools.cloverage :as cov]
     [clci.tools.ghooks :as gh]
@@ -14,6 +15,7 @@
     [clci.workflow.reporter :refer [default-reporter]]
     [clci.workflow.runner :refer [run-job]]
     [clojure.core.match :refer [match]]
+    [clojure.pprint :refer [pprint]]
     [clojure.string :as str]))
 
 
@@ -217,11 +219,14 @@ Options:
 Usage: clci release <options>
 
 Options:
-  --prepare           Set if you would like to prepare a release by updating the version of all products.
-  --create-releases   Set to create releases for all products.
-  --draft             Set if you would like to mark the new release as draft.
-  --pre-release       Set if you would like to mark the new release as pre-release.
-  --help              Print help.
+  --prepare                     Set if you would like to prepare a release by updating the version of all products.
+    --update-versions [true]    Set to update the product versions based on the git history.
+    --update-changelog [true]   Set to update the product changelogs from the git history.
+  --create-releases             Set to create releases for all products.
+    --draft                     Set if you would like to mark the new release as draft.
+    --pre-release               Set if you would like to mark the new release as pre-release.
+  --no-fetch                    Set to skip fetching the latest changes from the git remote origin. Not recommended!
+  --help                        Print help.
   
 ")))
 
@@ -230,9 +235,12 @@ Options:
   "Create a new release."
   [_]
   (let [spec   {:prepare          {:coerce :boolean :default false :desc "Set if you would like to prepare a release by updating the version of all products."}
-                :create-releases  {:coerce :boolean :Default false :desc "Set to create releases for all products."}
+                :update-version   {:coerce :boolean :default true :desc "Set in combination with `:prepare` to update the product versions based on the git history"}
+                :update-changelog {:coerce :boolean :default true :desc "Set in combination with `:prepare` to update the product changelogs from the git history."}
+                :create-releases  {:coerce :boolean :default false :desc "Set to create releases for all products."}
                 :draft            {:coerce :boolean :desc "Set if you would like to mark the new release as draft."}
                 :pre-release      {:coerce :boolean :desc "Set if you would like to mark the new release as pre-release."}
+                :no-fetch         {:coerce :boolean :default false :desc "Set to skip fetching latest changes from git remote. Not recommended."}
                 :help             {:coerce   :boolean
                                    :desc     "Print help."
                                    :default  false}}
@@ -243,11 +251,26 @@ Options:
       (print-help-release!)
       ;; update product versions
       (:prepare opts)
-      (let [new-versions    (rel/derive-current-commit-version)]
-        (println (blue "[NEW RELEASES] - Set new versions for products:"))
-        (doseq [[key version] new-versions]
-          (println (magenta (format "%s for product %s" version key)))
-          (update-product-version version key)))
+      (do
+        (println (blue "[PREPARE RELEASES]"))
+        (when-not (:no-fetch opts)
+          (print (yellow "Fetching git origin"))
+          (try
+            (fetch-origin!)
+            (print (green " \u2713\n"))
+            (catch Exception _
+              ;; (print (red "\u2A2F\n"))
+              (println (red "\u2A2F - Unable to fetch git origin."))
+              (System/exit 1))))
+        (let [report (rel/prepare-release! {:update-version? (:update-version opts)
+                                            :update-changelog? (:update-changelog opts)})]
+          (pprint report))
+        ;; (let [new-versions    (rel/derive-current-commit-version)]
+        ;;   (println (green "[NEW RELEASES] - Set new versions for products:"))
+        ;;   (doseq [[key version] new-versions]
+        ;;     (println (magenta (format "%s for product %s" version key)))
+        ;;     (update-product-version version key)))
+        )
       ;; create new releases
       (:create-releases opts)
       (do

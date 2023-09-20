@@ -130,8 +130,8 @@
   "Add the basic product configuration for a single product at the
   repositories root to the base.
   Takes the repo `base`, map."
-  [base & {:keys [initial-version] :or {initial-version "0.0.0-semver"}}]
-  (when-not (sv/valid-version-tag? initial-version)
+  [base & {:keys [initial-version] :or {initial-version "0.0.0"}}]
+  (when-not (sv/valid-semver? initial-version)
     (throw
       (ex-info
         "The initial version must follow the semantic versioning specification."

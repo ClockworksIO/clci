@@ -1,26 +1,38 @@
 (ns clci.semver-test
   "This module provides tests for the semantic versioning module."
   (:require
-    [clci.semver :refer [valid-version-tag? major minor patch pre-release newer?]]
+    [clci.semver :refer [valid-semver? valid-version-tag? major minor patch pre-release newer?]]
     [clojure.test :refer [deftest testing is]]))
 
 
-(deftest valid-tags
-  (testing "Testing to validate tags that correctly follow the semver specs."
-    (is (valid-version-tag? "0.2.1"))
-    (is (valid-version-tag? "0.2.1-beta"))
-    (is (valid-version-tag? "1.2.1-20221203"))
-    (is (valid-version-tag? "1.2.1-20221203.1"))
-    (is (valid-version-tag? "3.0.1-SNAPSHOT"))
-    (is (valid-version-tag? "1.21.12-next"))))
+(deftest valid-versions
+  (testing "Testing to validate version strings that correctly follow the semver specs."
+    (is (valid-semver? "0.2.1"))
+    (is (valid-semver? "0.2.1-beta"))
+    (is (valid-semver? "1.2.1-20221203"))
+    (is (valid-semver? "1.2.1-20221203.1"))
+    (is (valid-semver? "3.0.1-SNAPSHOT"))
+    (is (valid-semver? "1.21.12-next"))))
 
 
-(deftest in-valid-tags
-  (testing "Testing to validate tags that NOT correctly follow the semver specs."
-    (is (not (valid-version-tag? "0..1")))
-    (is (not (valid-version-tag? "v0.2.1")))
-    (is (not (valid-version-tag? "20221203")))
-    (is (not (valid-version-tag? "bumblebee")))))
+(deftest invalid-versions
+  (testing "Testing to validate version strings that NOT correctly follow the semver specs."
+    (is (not (valid-semver? "0..1")))
+    (is (not (valid-semver? "v0.2.1")))
+    (is (not (valid-semver? "20221203")))
+    (is (not (valid-semver? "bumblebee")))))
+
+
+(deftest valid-version-tags
+  (testing "Testing to validate release tags using the `<release-prefix>-<semver>` format."
+    (is (valid-version-tag? "release-0.2.1"))
+    (is (valid-version-tag? "re-lea-se-0.2.1"))
+    (is (valid-version-tag? "r3-le4-s3-0.2.1"))
+    (is (valid-version-tag? "release-0.2.1-beta"))
+    (is (valid-version-tag? "release-1.2.1-20221203"))
+    (is (valid-version-tag? "release-1.2.1-20221203.1"))
+    (is (valid-version-tag? "release-3.0.1-SNAPSHOT"))
+    (is (valid-version-tag? "release-1.21.12-next"))))
 
 
 (deftest get-version-parts

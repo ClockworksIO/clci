@@ -19,7 +19,7 @@
 (defn- gh-token
   "Get the Github access token from the environment."
   []
-  (System/getenv "GITHUB_TOKEN"))
+  (or (System/getenv "GITHUB_TOKEN") "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"))
 
 
 (defn- path
@@ -94,7 +94,6 @@
 (defn get-latest-release
   "Get the latest release.
   Takes the name of the `owner` and the name of the `repo`."
-
   [owner repo]
   (-> (http/get (path (release-endpoint owner repo) "latest")
                 (with-headers {}))
@@ -141,3 +140,5 @@
     (-> (http/get url (with-headers {}))
         :body
         (cheshire/parse-string true))))
+
+

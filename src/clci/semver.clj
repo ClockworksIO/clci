@@ -7,30 +7,35 @@
     [clojure.string :as str]))
 
 
-(def semver-re
-  "Regular Expression to match version strings following the
+(def semver-regex-pattern
+  "Regular Expression pattern to match version strings following the
   Semantic Versioning specification.
   See https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string."
-  #"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$")
+  "(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$")
+
+
+(def release-prefix-regex-pattern
+  "Regular Expression pattern to match the release prefix of a product."
+  "[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*")
 
 
 (defn valid-version-tag?
   "Predicate to test if the given `tag` contains a string that follows
   the semantic versioning convention."
   [tag]
-  (some? (re-matches semver-re tag)))
+  (some? (re-matches (re-pattern (str release-prefix-regex-pattern "-" semver-regex-pattern)) tag)))
 
 
-(defn valid-semver-str?
+(defn valid-semver?
   "Predicate to test if the given string `s` follows the SemVer specification."
   [s]
-  (some? (re-matches semver-re s)))
+  (some? (re-matches (re-pattern semver-regex-pattern) s)))
 
 
 (defn major
   "Get the major part of the version."
   [version]
-  (when (re-matches semver-re version)
+  (when (re-matches (re-pattern semver-regex-pattern) version)
     (-> (str/split version #"\.|-")
         (first)
         (Integer/parseInt))))
@@ -39,7 +44,7 @@
 (defn minor
   "Get the minor part of the version."
   [version]
-  (when (re-matches semver-re version)
+  (when (re-matches (re-pattern semver-regex-pattern) version)
     (-> (str/split version #"\.|-")
         (second)
         (Integer/parseInt))))
@@ -48,7 +53,7 @@
 (defn patch
   "Get the patch part of the version."
   [version]
-  (when (re-matches semver-re version)
+  (when (re-matches (re-pattern semver-regex-pattern) version)
     (-> (str/split version #"\.|-")
         (nth 2)
         (Integer/parseInt))))
@@ -57,7 +62,7 @@
 (defn pre-release
   "Get the pre-release part of the version - if any."
   [version]
-  (when (re-matches semver-re version)
+  (when (re-matches (re-pattern semver-regex-pattern) version)
     (-> (str/split version #"-" 2)
         (get 1 nil))))
 
