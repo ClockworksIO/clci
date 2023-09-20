@@ -328,6 +328,7 @@
      changelog-ast)))
 
 
+;; TODO: still needed or might be deprecated? At least will need rewriting
 (defn update-changelog!
   ""
   ([commit-log] (update-changelog! commit-log nil))

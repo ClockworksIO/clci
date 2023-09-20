@@ -163,8 +163,6 @@
 
 
 
-
-
-
-(get-product-latest-release-name product)
-
+(comment
+  (get-product-latest-release-name product)
+)

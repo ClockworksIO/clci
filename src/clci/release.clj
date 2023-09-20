@@ -329,34 +329,69 @@
     (derive-current-commit-all-versions)))
 
 
-;; Get the latest release of a product
-;; Takes the `product` and the `scm` information to dispatch the correct
+;; ;; Get the latest release of a product
+;; ;; Takes the `product` and the `scm` information to dispatch the correct
+;; ;; scm provider implementation
+;; (defmulti get-product-latest-release (fn [_ scm] (get-in scm [:provider :name])))
+
+;; ;; Get the latest release for SCM provider github
+;; ;; !!! warning
+;; ;;
+;; ;;     Only works with a single product release or a combined release because the
+;; ;;     github API can only provide a single release marked as _latest_.
+;; (defmethod get-product-latest-release :github [product scm]
+;;   (let [repo-name (get-in scm [:provider :repo])
+;;         owner     (get-in scm [:provider :owner])
+;;         ;; release   (gh/get-latest-release owner repo-name)
+;;         ;; tag       (gh/get-tag owner repo-name (:tag_name release))
+;;         last-release-name  (git/get-product-latest-release-name product)
+;;         release   (gh/get-release-by-tag-name owner repo-name last-release-name)
+;;         tag       (gh/get-tag owner repo-name (:tag_name release))]
+;;     ;(println "last release name: " last-release-name)
+;;     ;(println "last release: " (gh-release->release release tag))
+;;     (gh-release->release release tag)))
+
+;; ;; Only github is supported at this time.
+;; ;; Support for other SCM provider may follow in the future. Do you want to support
+;; ;; another SCM provider? I'd love to receive a PR for this :)
+;; (defmethod get-product-latest-release :default [_ scm] (ex-info "Invalid SCM provider!" {:scm scm}))
+
+
+;; Get the latest releases of all products
+;; Takes the `products` and the `scm` information to dispatch the correct
 ;; scm provider implementation
-(defmulti get-product-latest-release (fn [_ scm] (get-in scm [:provider :name])))
+(defmulti get-products-latest-releases (fn [_ scm] (get-in scm [:provider :name])))
 
 
 ;; Get the latest release for SCM provider github
+;;
+;; Returns a map of releases where each key of the map is a product key (keyword)
+;; and the value is a release following the specs of `:clci.release/release`.
+;;
 ;; !!! warning
 ;;
-;;     Only works with a single product release or a combined release because the
-;;     github API can only provide a single release marked as _latest_.
-(defmethod get-product-latest-release :github [product scm]
+;;     A request to the Github REST API is send for each product to fetch information
+;;     about the latest release published on Github for each product.
+(defmethod get-products-latest-releases :github [products scm]
   (let [repo-name (get-in scm [:provider :repo])
-        owner     (get-in scm [:provider :owner])
-        ;; release   (gh/get-latest-release owner repo-name)
-        ;; tag       (gh/get-tag owner repo-name (:tag_name release))
-        last-release-name  (git/get-product-latest-release-name product)
-        release   (gh/get-release-by-tag-name owner repo-name last-release-name)
-        tag       (gh/get-tag owner repo-name (:tag_name release))]
-    (println "last release name: " last-release-name)
-    (println "last release: " (gh-release->release release tag))
-    (gh-release->release release tag)))
+        owner     (get-in scm [:provider :owner])]
+    (->> products
+         (mapv (fn [product]
+                 [(:key product) {:name (git/get-product-latest-release-name product)}]))
+         (mapv (fn [[k datum]]
+                 [k (assoc datum :gh-release (gh/get-release-by-tag-name owner repo-name (:name datum)))]))
+         (mapv (fn [[k datum]]
+                 [k (assoc datum :gh-tag (gh/get-tag owner repo-name (get-in datum [:gh-release :tag_name])))]))
+         (mapv (fn [[k datum]]
+                 [k (gh-release->release (:gh-release datum) (:gh-tag datum))]))
+         (into (sorted-map)))))
 
 
 ;; Only github is supported at this time.
 ;; Support for other SCM provider may follow in the future. Do you want to support
 ;; another SCM provider? I'd love to receive a PR for this :)
-(defmethod get-product-latest-release :default [_ scm] (ex-info "Invalid SCM provider!" {:scm scm}))
+(defmethod get-products-latest-releases :default [_ scm] (ex-info "Invalid SCM provider!" {:scm scm}))
+
 
 
 (defn- prepare-release-single-product
@@ -365,7 +400,8 @@
   [set-version? update-changelog?]
   (let [repo                 (rp/read-repo)
         product              (get-in repo [:products 0])
-        latest-release       (get-product-latest-release product (:scm repo))
+        latest-releases      (get-products-latest-releases [product] (:scm repo))
+        latest-release       (first (vals latest-releases))
         amended-commit-log   (amend-commit-log (git/commits-on-branch-since {:since (get-in latest-release [:commit :hash])}))
         derived-version      (derive-current-commit-version-single-product-impl amended-commit-log product)]
     (when set-version?
@@ -388,8 +424,35 @@
    NOT IMPLEMENTED YET! 
    
    Please see #111 for more information why this is not yet implemented."
-  [_ _]
-  (ex-info "Not implemented yet! See #111." {}))
+  [set-version? update-changelog?]
+  (let [repo                 (rp/read-repo)
+        products             (get repo :products [])
+        latest-releases      (get-products-latest-releases products (:scm repo))
+        ;; produce a map where the key is a product key and the value is a
+        ;; log with amended commits that affect the product
+        amended-commit-logs  (->> latest-releases
+                                  (mapv (fn [[k release]]
+                                          [k
+                                           (->> (git/commits-on-branch-since {:since (get-in release [:commit :hash])})
+                                                (amend-commit-log)
+                                                ;; TODO: a function to filter commit is affected using only the product key would improve 
+                                                (filter #(rp/product-affected-by-commit? % (rp/get-product-by-key k repo))))]))
+                                  (into (sorted-map)))
+        derived-versions      (->> amended-commit-logs
+                                   (mapv (fn [[k log]]
+                                           [k
+                                            (derive-current-commit-version-single-product-impl
+                                              log (rp/get-product-by-key k repo))]))
+                                   (into (sorted-map)))]
+    (doseq [p products]
+      (when set-version?
+        (when (not= (:version p) (get derived-versions (:key p)))
+          (rp/update-product-version (get derived-versions (:key p)) (:key p))))
+      (when update-changelog?
+        (chl/update-changelog!-impl (get amended-commit-logs (:key p)) p nil)))
+    {:latest-releases latest-releases
+     ;; :amended-logs    amended-commit-logs
+     :derived-versions derived-versions}))
 
 
 (defn prepare-release!
@@ -419,4 +482,6 @@
    [x] create function to fetch specific gh release")
 
 
-(prepare-release! {:update-version? true :update-changelog? true})
+(comment
+  (prepare-release! {:update-version? false :update-changelog? true})
+)
