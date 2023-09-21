@@ -403,13 +403,17 @@
         latest-releases      (get-products-latest-releases [product] (:scm repo))
         latest-release       (first (vals latest-releases))
         amended-commit-log   (amend-commit-log (git/commits-on-branch-since {:since (get-in latest-release [:commit :hash])}))
-        derived-version      (derive-current-commit-version-single-product-impl amended-commit-log product)]
+        derived-version      (derive-current-commit-version-single-product-impl amended-commit-log product)
+        release-info         {:tag        (str (release-prefix product) derived-version)
+                              :published  (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (java.util.Date.))}
+        ;; TODO: make this a proper later than comparison
+        newer-release?       (not= (:version product) derived-version)]
     (when set-version?
       (rp/update-product-version derived-version (:key product)))
     (when update-changelog?
-      (chl/update-changelog! amended-commit-log))
-    {:version derived-version
-     :amended-log amended-commit-log}))
+      (chl/update-changelog!-impl amended-commit-log product (when newer-release? release-info)))
+    {:latest-version  latest-release
+     :derived-version derived-version}))
 
 
 (defn- prepare-combined-release
@@ -443,13 +447,18 @@
                                            [k
                                             (derive-current-commit-version-single-product-impl
                                               log (rp/get-product-by-key k repo))]))
-                                   (into (sorted-map)))]
+                                   (into (sorted-map)))
+        yyyymmdd-today        (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (java.util.Date.))
+        ;; TODO: make this a proper later than comparison
+        with-release          (fn [p d-v]
+                                (when (not= (:version p) d-v) {:tag       (str (release-prefix p) d-v)
+                                                               :published yyyymmdd-today}))]
     (doseq [p products]
       (when set-version?
         (when (not= (:version p) (get derived-versions (:key p)))
           (rp/update-product-version (get derived-versions (:key p)) (:key p))))
       (when update-changelog?
-        (chl/update-changelog!-impl (get amended-commit-logs (:key p)) p nil)))
+        (chl/update-changelog!-impl (get amended-commit-logs (:key p)) p (with-release p (get derived-versions (:key p))))))
     {:latest-releases latest-releases
      ;; :amended-logs    amended-commit-logs
      :derived-versions derived-versions}))

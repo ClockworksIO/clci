@@ -314,18 +314,18 @@
    If no changelog exists an empty changelog will be created and filled with the
    new entries derived from the commit-log.
    Writes to the `changelog.md` file!"
-  ([commit-log product release]
-   (when-not (changelog-exists?)
-     (create-changelog-stub))
-   (let [changelog-path          (join-paths (:root product) "CHANGELOG.md")
-         current-changelog-text  (slurp changelog-path)
-         changelog-ast (text->ast current-changelog-text)
-         changelog-ast  (if (some? release)
-                          (changelog-ast-add-release changelog-ast commit-log (:tag release) (:published release))
-                          (changelog-ast-add-unreleased changelog-ast commit-log))]
-     (spit changelog-path
-           (ast->text changelog-ast))
-     changelog-ast)))
+  [commit-log product release]
+  (when-not (changelog-exists?)
+    (create-changelog-stub))
+  (let [changelog-path          (join-paths (:root product) "CHANGELOG.md")
+        current-changelog-text  (slurp changelog-path)
+        changelog-ast (text->ast current-changelog-text)
+        changelog-ast  (if (some? release)
+                         (changelog-ast-add-release changelog-ast commit-log (:tag release) (:published release))
+                         (changelog-ast-add-unreleased changelog-ast commit-log))]
+    (spit changelog-path
+          (ast->text changelog-ast))
+    changelog-ast))
 
 
 ;; TODO: still needed or might be deprecated? At least will need rewriting
