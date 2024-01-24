@@ -2,7 +2,7 @@
 name: Task
 about: A small unit of work, usually a sub item of another issue.
 title: ''
-labels: task
+labels: ['task']
 assignees: ''
 
 ---

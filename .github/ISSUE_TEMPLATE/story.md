@@ -1,13 +1,13 @@
 ---
 name: Story
-about: A User Story describes a feature by the application.
+about: A User Story describes new value implemented by the application.
 title: ''
-labels: ['story', 'feature']
+labels: ['story']
 assignees: ''
 
 ---
 
-Explain your feature in simple words following the the form '_As a < type of user >, I want < some goal > so that < some reason >._'
+Explain your value in simple words following the the form '_As a < type of user >, I want < some goal > so that < some reason >._'
 
 **Rationale**
 A reasoning about the User Story. Describe when and optionally why this is a relevant interaction scenario.
