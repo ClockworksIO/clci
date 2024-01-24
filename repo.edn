@@ -3,4 +3,4 @@
   :url "git@github.com:ClockworksIO/clci.git",
   :provider {:name :github, :repo "clci", :owner "ClockworksIO"}},
  :products
- [{:root ".", :version "0.18.1", :key :clci, :release-prefix "clci"}]}
+ [{:root ".", :version "0.19.0", :key :clci, :release-prefix "clci"}]}
