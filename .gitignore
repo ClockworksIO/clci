@@ -5,3 +5,4 @@ target/
 .clj-kondo/
 .babashka/
 example/
+dummy-repo/

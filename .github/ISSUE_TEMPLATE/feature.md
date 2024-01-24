@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-_The Feature is a significant solution that will yield value to a stakeholder and plans the concrete implementation of this functionality. Its size is too large to be implemented easyly in the scope of what might be a sprint. Yet in difference to a Feature, the Feature can specify high level constraints for the implementation of the new functionality. A Feature is usually split into several smaller Stories._
+_The Feature is a significant solution that will yield value to a stakeholder and plans the concrete implementation of this functionality. Its size is too large to be implemented easyly in the scope of what might be a sprint. Yet in difference to an Initiative, the Feature can specify high level constraints for the implementation of the new functionality. A Feature is usually split into several smaller Stories._
 <!-- **Note**: The definition is based on the feature definition from the [SAFe 6.0 framework by © Scaled Agile, Inc](https://scaledagileframework.com/blog/glossary_term/features/). -->
 
 ## Problem
