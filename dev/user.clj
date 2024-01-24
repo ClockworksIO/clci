@@ -52,7 +52,7 @@
 (defmulti render (fn [{:keys [element]} _] element))
 
 
-(defmethod render :text [elem history]
+(defmethod render :text [elem _]
   (if (:linebreak? elem)
     (print (str (:text elem) "\n"))
     (print (:text elem)))
@@ -60,7 +60,7 @@
  )
 
 (defmethod render :choose [elem history]
-  (let [filter-fn               (get elem :filter #(fn [_ options] options))
+  (let [filter-fn               (get elem :filter (fn [_ options] options))
         options                 (filter-fn history (:options elem))
         limit                   (get elem :limit 1)
         step                    (:step elem)
@@ -74,7 +74,7 @@
 ;(gum :choose ["A" "B"] :limit 1)
 
 
-(defmethod render :wait [elem history]
+(defmethod render :wait [elem _]
  (-> (shell {:out :string} (format "sleep %s" (get elem :seconds 0))) 
    :exit 
    (shell-exit-with-error?)
@@ -133,13 +133,15 @@
    {:step     :select-template-label
     :element  :text
     :text     "Please select a template for your new product:"}
-   {:step     :select-template
-    :element  :choose
-    :filter   (fn [history options] true)
-    :options  [{:name "Clojure" :key :clojure} 
-               {:name "Babashka" :key :babashka}
-               {:name "ClojureScript" :key :clojurescript}
-               {:name "Nbb" :key :nbb}]}])
+   ; {:step     :select-template
+   ;  :element  :choose
+   ;  :filter   (fn [history options] 
+   ;              options)
+   ;  :options  [{:name "Clojure" :key :clojure} 
+   ;             {:name "Babashka" :key :babashka}
+   ;             {:name "ClojureScript" :key :clojurescript}
+   ;             {:name "Nbb" :key :nbb}]}
+   ])
 
 
 
