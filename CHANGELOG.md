@@ -12,6 +12,7 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ### Other
 
+- changelog generation is working again
 - add missing specs
 - add string utility to detect blanks
 - prepare feature

@@ -328,7 +328,7 @@
     changelog-ast))
 
 
-;; TODO: still needed or might be deprecated? At least will need rewriting
+;; TODO: rewrite this to take nothing and get+prep the commit log by itself
 (defn update-changelog!
   ""
   ([commit-log] (update-changelog! commit-log nil))

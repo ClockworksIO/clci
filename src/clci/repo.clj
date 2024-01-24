@@ -26,7 +26,6 @@
   (pretty-spit! "deps.edn" data))
 
 
-
 ;;
 ;; Utilities to work with bb.edn ;;
 ;;

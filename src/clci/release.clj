@@ -424,10 +424,7 @@
 
 (defn- prepare-release-all-products
   "Prepare a release for all products.
-   
-   NOT IMPLEMENTED YET! 
-   
-   Please see #111 for more information why this is not yet implemented."
+  "
   [set-version? update-changelog?]
   (let [repo                 (rp/read-repo)
         products             (get repo :products [])
@@ -449,10 +446,12 @@
                                               log (rp/get-product-by-key k repo))]))
                                    (into (sorted-map)))
         yyyymmdd-today        (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (java.util.Date.))
-        ;; TODO: make this a proper later than comparison
+        ;; TODO: make this a proper later than comparison [x]
         with-release          (fn [p d-v]
-                                (when (not= (:version p) d-v) {:tag       (str (release-prefix p) d-v)
-                                                               :published yyyymmdd-today}))]
+                                ;; (when (not= (:version p) d-v)
+                                (when (sv/newer? d-v (:version p))
+                                  {:tag       (str (release-prefix p) d-v)
+                                   :published yyyymmdd-today}))]
     (doseq [p products]
       (when set-version?
         (when (not= (:version p) (get derived-versions (:key p)))
