@@ -172,16 +172,21 @@
   "All available and valid types for products."
   #{:application :library :other})
 
+
 (s/def :clci.repo.product/root string?)
 (s/def :clci.repo.product/key keyword?)
 (s/def :clci.repo.product/version string?)
 (s/def :clci.repo.product/type valid-product-types)
 (s/def :clci.repo.product/no-release? boolean?)
-(s/def :clci.repo/product (s/keys :req-un [:clci.repo.product/root
-                                           :clci.repo.product/key
-                                           :clci.repo.product/version
-                                           :clci.repo.product/type]
-                                  :opt-un [:clci.repo.product/no-release?]))
+
+
+(s/def :clci.repo/product
+  (s/keys :req-un [:clci.repo.product/root
+                   :clci.repo.product/key
+                   :clci.repo.product/version
+                   :clci.repo.product/type]
+          :opt-un [:clci.repo.product/no-release?]))
+
 
 (s/def :clci.repo/products (s/coll-of :clci.repo/product))
 

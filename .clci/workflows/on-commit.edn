@@ -23,6 +23,7 @@
    :inputs  {:paths       ["src"]
              :no-fail      true}}
   {:ref     :re-add-files
+   :scope   :repository
    :action  clci.actions.core/git-add-files-action
    :inputs  {:files :!job.staged-files/staged}}
   ]}
