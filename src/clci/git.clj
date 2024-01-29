@@ -78,3 +78,12 @@
   (-> (shell {:out :string} "git --no-pager diff --name-only --no-color --cached --diff-filter=ACM")
       :out
       str/split-lines))
+
+
+(defn is-repository?
+  "Test if the current directory is a git repository."
+  []
+  (-> (shell {:out :string} "git rev-parse --is-inside-work-tree")
+      :exit
+      (= 0)))
+
