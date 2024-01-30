@@ -41,6 +41,7 @@
     (if linebreak?
       (print (str text "\n"))
       (print text))
+    (flush)
     {:step (:step elem)}))
 
 
@@ -64,6 +65,16 @@
     (if (= status 0)
       {:step step
        :input (first result)}
+      {:step      step
+       :failure?  true})))
+
+
+(defmethod render :confirm [elem _]
+  (let [step (:step elem)
+        {:keys [status result]} (gum :confirm :as :bool :selected.border "normal")]
+    (if (= status 0)
+      {:step step
+       :input result}
       {:step      step
        :failure?  true})))
 
@@ -104,50 +115,6 @@
 
 
 
-(def repository-setup-dialog
-  ""
-  [{:step       :welcome-msg
-    :element    :text
-    :text       (str/join
-                  "\n"
-                  ["You are about to setup the current repository using clci."
-                   "This assistant will guide you through the steps."])
-    :linebreak? true}
-   {:step     :wait-before-start
-    :element  :wait
-    :seconds  1}
-   {:step     :scm-provider-question-label
-    :element  :text
-    :text     "Which SCM provider would you like to use?"}
-   {:step     :select-scm-provider
-    :element  :choose
-    :options  [{:name "Github" :key :github}]}
-   {:step     :scm-repository-name-question-label
-    :element  :text
-    :text     "What name has your repository at the SCM?"}
-   {:step     :select-scm-repository-name
-    :element  :input
-    :placeholder "Repository Name"}
-   {:step     :scm-repository-owner-question-label
-    :element  :text
-    :text     "Who is the owner of your repository at the SCM?"}
-   {:step     :select-scm-repository-owner
-    :element  :input
-    :placeholder "Repository Owner"}
-   {:step     :summary
-    :element  :text
-    :format   (fn [_ history]
-                (str/join "\n"
-                          [(format "SCM Provider: %s" (-> history (find-step :select-scm-provider) :selected-options first :name))
-                           (format "Repository Name: %s" (-> history (find-step :select-scm-repository-name) :input))
-                           (format "Repository Owner: %s" (-> history (find-step :select-scm-repository-owner) :input))]))}
-   {:step     :confirm-label
-    :element  :text
-    :text     "Please confirm your declarations:"}
-   {:step     :confirm
-    :element  :choose
-    :options  [{:name "Yes" :key :yes} {:name "No" :key :no}]}])
-
-
 ;; (run-linear-dialog repository-setup-dialog)
 
+;; (gum :confirm :as :bool :prompt.border "normal" :selected.border "normal")

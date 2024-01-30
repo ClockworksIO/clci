@@ -5,7 +5,7 @@
     [clci.assistant.dialog :as dialog]
     [clci.git :as git]
     [clci.repo :as repo]
-    [clci.term :refer [blue red green yellow grey white cyan]]
+    [clci.term :refer [blue red green yellow grey white cyan magenta]]
     [clojure.string :as str]))
 
 
@@ -133,7 +133,21 @@
     :text     "Who is the owner of your repository at the SCM?"}
    {:step     :select-scm-repository-owner
     :element  :input
-    :placeholder "Repository Owner"}])
+    :placeholder "Repository Owner"}
+   {:step     :summary
+    :element  :text
+    :format   (fn [_ history]
+                (str/join "\n"
+                          [(format "%s: %s" (blue "SCM Provider") (-> history (dialog/find-step :select-scm-provider) :selected-options first :name magenta))
+                           (format "%s: %s" (blue "Repository Name") (-> history (dialog/find-step :select-scm-repository-name) :input green))
+                           (format "%s: %s" (blue "Repository Owner") (-> history (dialog/find-step :select-scm-repository-owner) :input yellow))]))}
+   {:step     :confirm-label
+    :element  :text
+    :text     "Are your declarations correct?"}
+   {:step     :confirmation
+    :element  :confirm
+    :options  [{:name "Yes" :key :yes} {:name "No" :key :no}]}])
+
 
 
 (defn run-setup-assistant
@@ -153,17 +167,21 @@
       ;; Validate the preflight check is good
       (= ::failure (pre-setup-check os-type {}))
       (do
-        (println (red "Unable to run the setup assistant."))
-        (println (blue "At least one required binary is missing on your system."))
-        (println (blue "Please install all required dependencies and try again.")))
+        (print (red "Unable to run the setup assistant.\n"))
+        (print (blue "At least one required binary is missing on your system.\n"))
+        (print (blue "Please install all required dependencies and try again.\n"))
+        (flush))
       :else
-      (let [data            (dialog/run-linear-dialog repository-setup-dialog)
+      (let [user-input      (dialog/run-linear-dialog repository-setup-dialog)
             scm             :git
-            scm-provider    (-> data (dialog/find-step :select-scm-provider) :selected-options first)
-            scm-repo-name   (-> data (dialog/find-step :select-scm-repository-name) :input)
-            scm-repo-owner  (-> data (dialog/find-step :select-scm-repository-owner) :input)]
-        (println scm scm-provider scm-repo-name scm-repo-owner)
-        (repo/repo-base {:scm scm
-                         :scm-provider (:key scm-provider)
-                         :scm-repo-name scm-repo-name
-                         :scm-repo-owner scm-repo-owner})))))
+            scm-provider    (-> user-input (dialog/find-step :select-scm-provider) :selected-options first)
+            scm-repo-name   (-> user-input (dialog/find-step :select-scm-repository-name) :input)
+            scm-repo-owner  (-> user-input (dialog/find-step :select-scm-repository-owner) :input)]
+        (when-not (-> user-input (dialog/find-step :confirmation) :input)
+          (System/exit 1))
+        (-> {:scm scm
+             :scm-provider (:key scm-provider)
+             :scm-repo-name scm-repo-name
+             :scm-repo-owner scm-repo-owner}
+            (repo/repo-base)
+            (repo/write-repo!))))))
