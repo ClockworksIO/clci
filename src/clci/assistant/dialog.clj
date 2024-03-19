@@ -120,7 +120,9 @@
 
 
 (defn find-selected-option
-  ""
+  "Find and return the user selection from a dialog Choose step
+   with a single select.
+   Takes the dialogs `history` and the key of the `step`."
   [history step]
   (-> (find-step history step)
       :selected-options
@@ -128,28 +130,29 @@
 
 
 (defn find-selected-options
-  ""
+  "Find and return the user selections from a dialog Choose step.
+   Takes the dialogs `history` and the key of the `step`."
   [history step]
   (-> (find-step history step)
       :selected-options))
 
 
 (defn find-input
-  ""
+  "Find and return the user input from a dialog Input step.
+   Takes the dialogs `history` and the key of the `step`."
   [history step]
   (-> (find-step history step)
       :input))
 
 
 (defn- not-empty-seq?
+  "Predicate to test if the given `sq` is a non-empty sequence."
   [sq]
-  (and (seq? sq) (not (empty? sq))))
+  (and (seq? sq) (seq sq)))
 
 
 (defn- find-step-rec
   [step-data arg-path]
-  (println arg-path)
-  (println step-data)
   (cond
     ;;
     (empty? arg-path)
@@ -159,7 +162,7 @@
     (find-step-rec ((first arg-path) step-data) (rest arg-path))
     ;;
     (seq? step-data)
-    (do (println "HERE") (find-step-rec (nth (first arg-path) step-data) (rest arg-path)))
+    (find-step-rec (nth (first arg-path) step-data) (rest arg-path))
     ;;
     (coll? step-data)
     (find-step-rec (get step-data (first arg-path)) (rest arg-path))
@@ -168,34 +171,68 @@
 
 
 (defn find-in-step
-  ""
+  "Get a specific nested value from a dialog input step.
+   Takes the dialogs `history`, the key of the `step` and a path
+   of nested qualifiers `arg` and returns the value at the given path.
+   Similar to `(get-in col path)`.
+   See example below."
   [history step & args]
   (let [step-data (find-step history step)]
-    (find-step-rec step-data args))
-  ;; (apply get-in (find-step history step) args)
-  )
+    (find-step-rec step-data args)))
+
+
+(comment
+  ;; Example on how the `find-in-step` 
+  (def history
+    [{:step :welcome-msg}
+     {:step :wait-before-start, :failure? false}
+     {:step :product-type-question-label}
+     {:step :select-product-type, :selected-options '({:name "App", :key :app})}
+     {:step :select-template-label}
+     {:step :select-template, :selected-options '({:name "Clojure", :key :clojure})}
+     {:step :product-name-label}
+     {:step :product-name, :input "aProductAwesome"} {:step :product-nondefault-root-label}
+     {:step :product-nondefault-root-select, :selected-options '({:name "Yes", :key :yes})}
+     {:step :product-root-label}
+     {:step :product-root, :input "./a-path"}
+     {:step :use-clci-actions-label}
+     {:step :select-action-aliases, :selected-options ()}])
+
+    (find-in-step history :product-name)
+    (find-in-step history :product-name :input)
+    (find-in-step history :product-nondefault-root-select :selected-options)
+    (find-in-step history :product-nondefault-root-select :selected-options first)
+    (find-in-step history :product-nondefault-root-select :selected-options first :name)
+    (find-in-step history :product-nondefault-root-select :selected-options 0)
+    (find-in-step history :product-nondefault-root-select :selected-options 0 :name)
+)
 
 
 
 (defn run-linear-dialog
-  "Run a dialog in liear order based on the diven `dialog` declaration.
+  "Run a dialog in linear order based on the given `dialog` declaration.
    Stops execution if an error occurs. Returns the history of the dialog."
   [dialog]
-  (start-in-new-line)
-  (loop [head     (first dialog)
-         tail     (rest dialog)
-         history  []]
-    (cond
-      ;; no more items left
-      (nil? head)
-      history
-      ;; error on the previous item
-      (-> history last :failure?)
-      (ex-info "Unable to execute full dialog!" {:history history})
-      ;; step should be skipped?
-      ((get head :skip? (constantly false)) head history)
-      (recur (first tail) (rest tail) history)
-      ;; otherwise continue with the next element
-      :else
-      (recur (first tail) (rest tail) (conj history (render head history))))))
+  (let [skip-fn     (fn [step] (or (get step :skip?) (constantly 0)))
+        skip-count  (fn [step history] ((skip-fn step) step history))
+        skip?       (fn [step history] (> (skip-count step history) 0))]
+    (start-in-new-line)
+    (loop [head     (first dialog)
+           tail     (rest dialog)
+           history  []]
+      (cond
+        ;; no more items left
+        (nil? head)
+        history
+        ;; error on the previous item
+        (-> history last :failure?)
+        (ex-info "Unable to execute full dialog!" {:history history})
+        ;; step should be skipped?
+        (skip? head history)
+        (recur (first (drop (skip-count head history) tail)) (rest (drop (skip-count head history) tail)) history)
+        ;; otherwise continue with the next element
+        :else
+        (recur (first tail) (rest tail) (conj history (render head history)))))))
 
+
+;; TODO: the skip mechnism reqyuires some explanmation

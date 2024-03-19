@@ -59,11 +59,14 @@
                 (format "Do you want to use a different product root directory (default is \"./%s/\")" (:input (dialog/find-step history :product-name))))}
    {:step     :product-nondefault-root-select
     :element  :choose
-    :options  [{:name "Yes" :key :yes}
-               {:name "No" :key :no}]}
+    :options  [{:name "No" :key :no}
+               {:name "Yes" :key :yes}]}
    {:step     :product-root-label
     :element  :text
-    :skip?    (fn [_ history] (= :no (get-in (dialog/find-step history :product-nondefault-root-select) [:selected-options 0 :key])))
+    :skip?    (fn [_ history]
+                (if (= :no (dialog/find-in-step history :product-nondefault-root-select :selected-options first :key))
+                  2
+                  0))
     :text     "Please specify the root directory of the new product."}
    {:step         :product-root
     :element      :input
@@ -94,6 +97,7 @@
 (run-add-product-assistant)
 
 
+
 (def foo
   [{:step :welcome-msg}
    {:step :wait-before-start, :failure? false}
@@ -102,12 +106,12 @@
    {:step :select-template-label}
    {:step :select-template, :selected-options '({:name "Clojure", :key :clojure})}
    {:step :product-name-label}
-   {:step :product-name, :input "123"} {:step :product-nondefault-root-label}
-   {:step :product-nondefault-root-select, :selected-options '({:name "Yes", :key :yes})}
-   {:step :product-root-label}
-   {:step :product-root, :input "./foo"}
+   {:step :product-name, :input "dd"}
+   {:step :product-nondefault-root-label}
+   {:step :product-nondefault-root-select, :selected-options '({:name "No", :key :no})}
+   {:step :product-root, :input nil}
    {:step :use-clci-actions-label}
-   {:step :select-action-aliases, :selected-options ()}])
+   {:step :select-action-aliases, :selected-options '({:name "kondo", :key :kondo})}])
 
 
 (dialog/find-in-step foo :product-name)
@@ -116,10 +120,12 @@
 (dialog/find-in-step foo :product-nondefault-root-select :selected-options)
 
 (dialog/find-in-step foo :product-nondefault-root-select :selected-options first)
-(dialog/find-in-step foo :product-nondefault-root-select :selected-options first :name)
+(dialog/find-in-step foo :product-nondefault-root-select :selected-options first :key)
 
 (dialog/find-in-step foo :product-nondefault-root-select :selected-options 0)
 (dialog/find-in-step foo :product-nondefault-root-select :selected-options 0 :name)
+
+(= :no (dialog/find-in-step foo :product-nondefault-root-select :selected-options first :key))
 
 
 ;; (run-linear-dialog linear-dialog)

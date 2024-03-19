@@ -154,7 +154,7 @@
     :invalid-initial-version (println (red "\u2A2F") " The initial version must follow the Semantic Versioning Specification!")
     :no-workflow-found-for-trigger (println (yellow "No workflow found for the trigger"))
     :workflows-not-spec-conform (println (red "Some workflows do not conform to spec!") err)
-    (println (red "unkwnon error") "\n" err)))
+    (println (red "unknown error") "\n" err)))
 
 
 (defn print-help
