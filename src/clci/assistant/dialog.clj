@@ -119,6 +119,63 @@
        first))
 
 
+(defn find-selected-option
+  ""
+  [history step]
+  (-> (find-step history step)
+      :selected-options
+      first))
+
+
+(defn find-selected-options
+  ""
+  [history step]
+  (-> (find-step history step)
+      :selected-options))
+
+
+(defn find-input
+  ""
+  [history step]
+  (-> (find-step history step)
+      :input))
+
+
+(defn- not-empty-seq?
+  [sq]
+  (and (seq? sq) (not (empty? sq))))
+
+
+(defn- find-step-rec
+  [step-data arg-path]
+  (println arg-path)
+  (println step-data)
+  (cond
+    ;;
+    (empty? arg-path)
+    step-data
+    ;;
+    (and (not-empty-seq? step-data) (fn? (first arg-path)))
+    (find-step-rec ((first arg-path) step-data) (rest arg-path))
+    ;;
+    (seq? step-data)
+    (do (println "HERE") (find-step-rec (nth (first arg-path) step-data) (rest arg-path)))
+    ;;
+    (coll? step-data)
+    (find-step-rec (get step-data (first arg-path)) (rest arg-path))
+    ;;
+    :else step-data))
+
+
+(defn find-in-step
+  ""
+  [history step & args]
+  (let [step-data (find-step history step)]
+    (find-step-rec step-data args))
+  ;; (apply get-in (find-step history step) args)
+  )
+
+
 
 (defn run-linear-dialog
   "Run a dialog in liear order based on the diven `dialog` declaration.
@@ -135,6 +192,10 @@
       ;; error on the previous item
       (-> history last :failure?)
       (ex-info "Unable to execute full dialog!" {:history history})
+      ;; step should be skipped?
+      ((get head :skip? (constantly false)) head history)
+      (recur (first tail) (rest tail) history)
       ;; otherwise continue with the next element
       :else
       (recur (first tail) (rest tail) (conj history (render head history))))))
+
