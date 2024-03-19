@@ -1,10 +1,12 @@
 (ns clci.assistant.dialog
-  ""
+  "This module provides the means to define and execute dialogs
+   in a terminal for interactive user input.
+   The module uses [gum](https://github.com/charmbracelet/gum) and simple
+   build-in mechanisms to display information and read user input."
   (:require
     [babashka.process :refer [shell]]
     [bblgum.core :refer [gum]]
-    [clci.util.core :refer [in?]]
-    [clojure.string :as str]))
+    [clci.util.core :refer [in?]]))
 
 
 
@@ -29,10 +31,33 @@
 
 
 (defmulti render
-  ""
+  "Render an item from a dialog declaration.
+   
+   This multimethod takes an element from a dialog declaration
+   and renders the corresponding input or output element in the
+   terminal.
+   
+   All elements receive a map of keyword indexed arguments to 
+   control the rendering of the element and the history of the
+   previous user input. The later can be used to render contextual
+   information.
+   
+   Each method returns a map with the mandatory `:step` key holding the
+   key of the dialog step, the optional `:failure?` key with a boolean
+   value indicating if a failure occured while rendering the dialog step
+   and a set of dialog element specific keys.
+   ```"
   (fn [{:keys [element]} _] element))
 
 
+;; Render a simple Text element
+;; A Text element is a simple print statement on the active terminal.
+;; Takes the mandatory keyword arg `:text` with the actual text
+;; Also takes the optional arguments:
+;; | key                 | description                         |
+;; | --------------------|-------------------------------------|
+;; | `:linebreak?`       | Indicator if to add a linebreak after the text (defaults as true)
+;; | `:format`           | Function `(string, history) -> string` to format the text using data from the input history
 (defmethod render :text [elem history]
   (let [linebreak?  (get elem :linebreak? true)
         text        (if-let [fmt-fn (:format elem)]
@@ -87,7 +112,7 @@
 
 
 (defn find-step
-  "Find the step of the given `history` identified by the `step` key."
+  "Find a step in the given `history` identified by the `step` key."
   [history step]
   (->> history
        (filter (fn [el] (= (:step el) step)))
@@ -96,7 +121,8 @@
 
 
 (defn run-linear-dialog
-  ""
+  "Run a dialog in liear order based on the diven `dialog` declaration.
+   Stops execution if an error occurs. Returns the history of the dialog."
   [dialog]
   (start-in-new-line)
   (loop [head     (first dialog)
@@ -112,9 +138,3 @@
       ;; otherwise continue with the next element
       :else
       (recur (first tail) (rest tail) (conj history (render head history))))))
-
-
-
-;; (run-linear-dialog repository-setup-dialog)
-
-;; (gum :confirm :as :bool :prompt.border "normal" :selected.border "normal")

@@ -1,11 +1,11 @@
 (ns clci.assistant.setup
-  ""
+  "This module defines an assistant to setup clci."
   (:require
     [babashka.process :refer [shell]]
     [clci.assistant.dialog :as dialog]
     [clci.git :as git]
     [clci.repo :as repo]
-    [clci.term :refer [blue red green yellow grey white cyan magenta]]
+    [clci.term :refer [blue red green yellow magenta]]
     [clojure.string :as str]))
 
 
@@ -16,7 +16,9 @@
 
 
 (defn get-linux-os-details
-  ""
+  "Get details about a linux operating system and return it as map.
+   This includes the `:name` of the linux distribution and the
+   `:kernel-release`."
   []
   (let [os-release (-> (shell {:out :string} "cat /etc/os-release")
                        :out
@@ -38,6 +40,8 @@
 
 
 (defn get-system-information
+  "Get basic information about the current system and return it as map.
+   This includes the `:os-type` (i.e. \"Linux\") and the `:architecture`."
   []
   (let [os-type     (System/getProperty "os.name")
         os-details  (get-os-details os-type)]
@@ -81,13 +85,13 @@
 
 
 
-;;
+;; Run several checks before clci can be setup.
 ;; Returns nil when check was successful, `::failure` otherwise
 (defmulti pre-setup-check (fn [os & _] os))
 
 
+;; Execute the pre setup checks specific for systems running linux.
 (defmethod pre-setup-check "Linux" [_ & {:keys [silent?] :or {silent? false}}]
-  (println silent?)
   (let [installed-binaries      (mapv unix-binary-installed? required-binaries-unix)
         all-binaries-installed? (every? (fn [[_ _ status]] (= status ::ok)) installed-binaries)]
     (when-not silent?
@@ -105,7 +109,7 @@
 
 
 (def repository-setup-dialog
-  ""
+  "Dialog used to assist a user to setup a newv repository with clci."
   [{:step       :welcome-msg
     :element    :text
     :text       (str/join
@@ -151,8 +155,14 @@
 
 
 (defn run-setup-assistant
-  ""
-  [args]
+  "Run the setup assistant.
+   
+   The setup assistant helps a user to setup a repository managed using clci.
+   
+   Before setting up the actual repository several checks are performed.
+   After passing all checks the setup dialog is started and the repository
+   is setup to use clci according to the user input."
+  [_]
   (let [{:keys [os-type]} (get-system-information)]
     (print-welcome)
     (cond
