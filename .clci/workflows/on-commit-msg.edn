@@ -6,5 +6,6 @@
  :jobs
  [{:ref     :lint-commit-msg
    :action  clci.actions.core/conventional-commit-linter-action
+   :scope   :repository
    :inputs  {}}
   ]}
