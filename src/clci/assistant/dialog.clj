@@ -152,6 +152,9 @@
 
 
 (defn- find-step-rec
+  "Implementation of `find-in-step`.
+   Recursively walks the given `step-data` based on the `arg-path` and
+   returns the element specified by the path if it exists."
   [step-data arg-path]
   (cond
     ;;
@@ -162,7 +165,7 @@
     (find-step-rec ((first arg-path) step-data) (rest arg-path))
     ;;
     (seq? step-data)
-    (find-step-rec (nth (first arg-path) step-data) (rest arg-path))
+    (find-step-rec (nth step-data (first arg-path) nil) (rest arg-path))
     ;;
     (coll? step-data)
     (find-step-rec (get step-data (first arg-path)) (rest arg-path))
@@ -235,4 +238,4 @@
         (recur (first tail) (rest tail) (conj history (render head history)))))))
 
 
-;; TODO: the skip mechnism reqyuires some explanmation
+;; TODO: the skip mechanism requires some explanation
