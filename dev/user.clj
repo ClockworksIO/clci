@@ -56,7 +56,7 @@
    {:step     :product-nondefault-root-label
     :element  :text
     :format   (fn [_ history]
-                (format "Do you want to use a different product root directory (default is \"./%s/\")" (:input (dialog/find-step history :product-name))))}
+                (format "Would you like to use a different product root directory (default is \"./%s/\")?" (:input (dialog/find-step history :product-name))))}
    {:step     :product-nondefault-root-select
     :element  :choose
     :options  [{:name "No" :key :no}
@@ -71,6 +71,32 @@
    {:step         :product-root
     :element      :input
     :placeholder  "<product-root>"}
+   {:step     :product-nondefault-key-label
+    :element  :text
+    :format   (fn [_ history]
+                (format "Would you like to specify a custom product key (default is \"%s\")?" (keyword (:input (dialog/find-step history :product-name)))))}
+   {:step     :product-nondefault-key-select
+    :element  :choose
+    :options  [{:name "No" :key :no}
+               {:name "Yes" :key :yes}]}
+   {:step     :product-key-label
+    :element  :text
+    :skip?    (fn [_ history]
+                (if (= :no (dialog/find-in-step history :product-nondefault-key-select :selected-options first :key))
+                  2
+                  0))
+    :text     "Please specify the key of the new product."}
+   {:step         :product-key
+    :element      :input
+    :post-fn      keyword
+    :placeholder  "<product-key>"}
+   {:step     :product-no-release?-label
+    :element  :text
+    :text     "Do you want to create distinct releases for the product automatically?"}
+   {:step     :product-no-release?-select
+    :element  :choose
+    :options  [{:name "No" :key :no}
+               {:name "Yes" :key :yes}]}
    {:step     :use-clci-actions-label
     :element  :text
     :text     "Would you like to add aliases to your product to use the following Actions?"}
@@ -80,22 +106,46 @@
     :options  [{:name "kondo" :key :kondo} {:name "clj-format" :key :clj-format}]}])
 
 
+(defn with-new-product
+  "Add a new `product` to the given `repo`."
+  [repo product]
+  (update repo :products #(conj product)))
+
+
+;; goes in repo.edn
+(defn add-product!
+  "Add a new product to the repo configuration.
+   Throws an exception if the given `product` violates the product specs."
+  [product]
+  ;; (when-not (repo/valid-repo? repo)
+  ;;  (ex-info "Repo configuration missing or invalid!" {:cause ::invalid-repo-configuration}))
+  (when-not (repo/valid-product? product)
+    (ex-info "Product specification invalid!" {:cause ::invalid-product-specification}))
+  (repo/write-repo! (with-new-product (repo/read-repo) product)))
+
+
 (defn run-add-product-assistant
   ""
   []
   (let [repo (repo/read-repo)]
-    (if-not (s/valid? :clci.repo/repo repo)
-      (do
-        (print (red "Unable to run the assistant.\n"))
-        (print (yellow "The current directory does not has a valid repo.edn configuration file!\n"))
-        (flush))
-      (let [user-input      (dialog/run-linear-dialog  add-product-dialog)
-            new-product     {:root (dialog/find-step user-input :product-name)}]
-        user-input))))
+    (when-not (repo/valid-repo?)
+      (print (red "Unable to run the assistant.\n"))
+      (print (yellow "The current directory does not has a valid repo.edn configuration file!\n"))
+      (flush)
+      (System/exit 1))
+    (print (green "repo configuration is valid.\n"))
+    (flush)
+    (let [user-input      (dialog/run-linear-dialog  add-product-dialog)
+          new-product     {:name        (dialog/find-in-step user-input :product-name :input)
+                           :root        (or (dialog/find-in-step user-input :product-root :input) (dialog/find-in-step user-input :product-name :input))
+                           :key         (or (dialog/find-in-step user-input :product-key :input) (keyword (dialog/find-in-step user-input :product-name :input)))
+                           :version     "0.0.0"
+                           :no-release? (not= :yes (dialog/find-in-step user-input :product-no-release?-select :selected-options first :key))}]
+      new-product)))
+
 
 
 (run-add-product-assistant)
-
 
 
 (def foo

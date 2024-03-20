@@ -86,10 +86,12 @@
 (defmethod render :input [elem _]
   (let [placeholder     (get elem :placeholder "...")
         step            (:step elem)
+        post-tf         (get elem :post-fn identity)
         {:keys [status result]} (gum :input :placeholder placeholder)]
     (if (= status 0)
-      {:step step
-       :input (first result)}
+      {:step      step
+       :input     (post-tf (first result))
+       :raw-input (first result)}
       {:step      step
        :failure?  true})))
 

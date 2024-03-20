@@ -7,6 +7,62 @@
     [clojure.spec.alpha :as s]))
 
 
+;;
+;; Specs for the repo configuration
+;;
+
+(def valid-scm
+  "A collection of valid scms."
+  #{:git})
+
+
+(def valid-scm-provider
+  "A collection of valid scm provider."
+  #{:github})
+
+
+(def valid-product-types
+  "All available and valid types for products."
+  #{:application :library :other})
+
+
+(s/def :clci.repo.scm/type valid-scm)
+(s/def :clci.repo.scm/url string?)
+(s/def :clci.repo.scm.provider/name valid-scm-provider)
+(s/def :clci.repo.scm.provider/repo string?)
+(s/def :clci.repo.scm.provider/owner string?)
+
+
+(s/def :clci.repo.scm/provider
+  (s/keys :req-un [:clci.repo.scm.provider/name
+                   :clci.repo.scm.provider/repo
+                   :clci.repo.scm.provider/owner]))
+
+
+(s/def :clci.repo/scm
+  (s/keys :req-un [:clci.repo.scm/type
+                   :clci.repo.scm/url]))
+
+
+(s/def :clci.repo.product/root string?)
+(s/def :clci.repo.product/key keyword?)
+(s/def :clci.repo.product/version string?)
+(s/def :clci.repo.product/type valid-product-types)
+(s/def :clci.repo.product/no-release? boolean?)
+
+
+(s/def :clci.repo/product
+  (s/keys :req-un [:clci.repo.product/root
+                   :clci.repo.product/key
+                   :clci.repo.product/version
+                   :clci.repo.product/type]
+          :opt-un [:clci.repo.product/no-release?]))
+
+
+(s/def :clci.repo/products (s/coll-of :clci.repo/product))
+
+(s/def :clci.repo/repo (s/keys :req-un [:clci.repo/scm :clci.repo/products]))
+
 
 ;;
 ;; Utilities to work with deps.edn ;;
@@ -26,9 +82,8 @@
   (pretty-spit! "deps.edn" data))
 
 
-
 ;;
-;; Utilities to work with bb.edn ;;
+;; Utilities to work with bb.edn
 ;;
 
 (defn read-bb
@@ -86,14 +141,61 @@
   (pretty-spit! "repo.edn" data))
 
 
-(def valid-scm
-  "A collection of valid scms."
-  #{:git})
+(defn valid-repo?
+  "Predicate to test if a valid repo configuration exists."
+  ([] (->> (read-repo) (s/valid? :clci.repo/repo)))
+  ([repo] (s/valid? :clci.repo/repo repo)))
 
 
-(def valid-scm-provider
-  "A collection of valid scm provider."
-  #{:github})
+(defn get-paths
+  "TODO: combine with utils from monorepo!"
+  []
+  ["src"])
+
+
+(defn valid-product?
+  "Predicate to test if the given product specification is valid."
+  [product]
+  (s/valid? :clci.repo/product product))
+
+
+(defn single-product?
+  "Test if the repository contains more than a single product.
+  This is the case when more than one entry exists in the repo.edn :products field."
+  []
+  (= (count (-> (read-repo) :products)) 1))
+
+
+(defn get-products
+  "Get all products."
+  ([] (-> (read-repo) :products))
+  ([repo] (get repo :products [])))
+
+
+(defn- get-product-impl
+  "Get a product by a specific attribute - implementation."
+  [k v repo]
+  (case k
+    :key (u/find-first (fn [p] (= v (:key p))) (:products repo))
+    :release-prefix (u/find-first (fn [p] (= v (:release-prefix p))) (:products repo))))
+
+
+(defn- get-product
+  "Get a product by a specific attribute."
+  [k v repo]
+  (get-product-impl k v repo))
+
+
+(defn get-product-by-key
+  "Get a product by its key."
+  ([key] (get-product :key key (read-repo)))
+  ([key repo] (get-product :key key repo)))
+
+
+(defn get-product-by-release-prefix
+  "Get a product by its release-prefix."
+  ([prefix] (get-product :release-prefix prefix (read-repo)))
+  ([prefix repo] (get-product :release-prefix prefix repo)))
 
 
 (defn- scm-url
@@ -126,20 +228,20 @@
   (assoc base :provider (scm-provider-conf provider repo-name repo-owner)))
 
 
-(defn with-single-product
-  "Add the basic product configuration for a single product at the
-  repositories root to the base.
-  Takes the repo `base`, map."
-  [base & {:keys [initial-version] :or {initial-version "0.0.0-semver"}}]
-  (when-not (sv/valid-version-tag? initial-version)
-    (throw
-      (ex-info
-        "The initial version must follow the semantic versioning specification."
-        {:reason :invalid-initial-version})))
-  (assoc base
-         :products
-         [(cond-> {:root ""}
-            (some? initial-version) (assoc :version initial-version))]))
+;; (defn with-single-product
+;;   "Add the basic product configuration for a single product at the
+;;   repositories root to the base.
+;;   Takes the repo `base`, map."
+;;   [base & {:keys [initial-version] :or {initial-version "0.0.0-semver"}}]
+;;   (when-not (sv/valid-version-tag? initial-version)
+;;     (throw
+;;       (ex-info
+;;         "The initial version must follow the semantic versioning specification."
+;;         {:reason :invalid-initial-version})))
+;;   (assoc base
+;;          :products
+;;          [(cond-> {:root ""}
+;;             (some? initial-version) (assoc :version initial-version))]))
 
 
 (defn repo-base
@@ -150,60 +252,6 @@
                   (with-scm-provider (:scm-provider opts) (:scm-repo-name opts) (:scm-repo-owner opts)))})
 
 
-(s/def :clci.repo.scm/type valid-scm)
-(s/def :clci.repo.scm/url string?)
-(s/def :clci.repo.scm.provider/name valid-scm-provider)
-(s/def :clci.repo.scm.provider/repo string?)
-(s/def :clci.repo.scm.provider/owner string?)
-
-
-(s/def :clci.repo.scm/provider
-  (s/keys :req-un [:clci.repo.scm.provider/name
-                   :clci.repo.scm.provider/repo
-                   :clci.repo.scm.provider/owner]))
-
-
-(s/def :clci.repo/scm
-  (s/keys :req-un [:clci.repo.scm/type
-                   :clci.repo.scm/url]))
-
-
-(def valid-product-types
-  "All available and valid types for products."
-  #{:application :library :other})
-
-
-(s/def :clci.repo.product/root string?)
-(s/def :clci.repo.product/key keyword?)
-(s/def :clci.repo.product/version string?)
-(s/def :clci.repo.product/type valid-product-types)
-(s/def :clci.repo.product/no-release? boolean?)
-
-
-(s/def :clci.repo/product
-  (s/keys :req-un [:clci.repo.product/root
-                   :clci.repo.product/key
-                   :clci.repo.product/version
-                   :clci.repo.product/type]
-          :opt-un [:clci.repo.product/no-release?]))
-
-
-(s/def :clci.repo/products (s/coll-of :clci.repo/product))
-
-(s/def :clci.repo/repo (s/keys :req-un [:clci.repo/scm :clci.repo/products]))
-
-
-;; (s/def ::initial-version string?)
-;; (s/def ::scm some?)
-;; (s/def ::scm-provider some?)
-;; (s/def ::scm-repo-name string?)
-;; (s/def ::scm-repo-owner string?)
-
-
-;; (s/fdef repo-base
-;;   :args (s/cat :opts (s/keys :req-un [::scm :scm-provider ::scm-repo-name ::scm-repo-owner]))
-;;   :ret map?
-;; )
 
 (defn update-product-version
   "Update the version in the repo.edn file.
@@ -265,46 +313,3 @@
 ;; MONOREPO FUNCTIONALITY ;;
 ;;
 
-(defn get-paths
-  "TODO: combine with utils from monorepo!"
-  []
-  ["src"])
-
-
-(defn single-product?
-  "Test if the repository contains more than a single product.
-  This is the case when more than one entry exists in the repo.edn :products field."
-  []
-  (= (count (-> (read-repo) :products)) 1))
-
-
-(defn get-products
-  "Get all products."
-  []
-  (-> (read-repo) :products))
-
-
-(defn- get-product-impl
-  "Get a product by a specific attribute - implementation."
-  [k v repo]
-  (case k
-    :key (u/find-first (fn [p] (= v (:key p))) (:products repo))
-    :release-prefix (u/find-first (fn [p] (= v (:release-prefix p))) (:products repo))))
-
-
-(defn- get-product
-  "Get a product by a specific attribute."
-  [k v repo]
-  (get-product-impl k v repo))
-
-
-(defn get-product-by-key
-  "Get a product by its key."
-  ([key] (get-product :key key (read-repo)))
-  ([key repo] (get-product :key key repo)))
-
-
-(defn get-product-by-release-prefix
-  "Get a product by its release-prefix."
-  ([prefix] (get-product :release-prefix prefix (read-repo)))
-  ([prefix repo] (get-product :release-prefix prefix repo)))
