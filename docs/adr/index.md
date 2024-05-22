@@ -23,4 +23,5 @@ The full specification as defined by `io.clockworks` can be found as a copy in [
 - [ADR013 - Automated Releases](./adr013-automated_releases.md)
 - [ADR014 - Workflows and Actions](./adr014-workflows.md)
 - [ADR015 - Changelog](./adr015-changelog.md)
-- [ADR016 - Issue Types](./adr016-issue-types.md)
+- [ADR016 - Issue Types](./adr016-issue_types.md)
+- [ADR017 - Assistant Dialogs](./adr017-assistant_dialogs.md)
