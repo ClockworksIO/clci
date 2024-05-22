@@ -210,6 +210,8 @@
 
 (def changelog007-text (slurp "./test/assets/changelog007.md"))
 
+(def changelog008-text (slurp "./test/assets/changelog008.md"))
+
 
 (def changelog000-ast-expected
   '([:AST
@@ -479,7 +481,8 @@
     (is (parseable? parser changelog004-text))
     (is (parseable? parser changelog005-text))
     (is (parseable? parser changelog006-text))
-    (is (parseable? parser changelog007-text))))
+    (is (parseable? parser changelog007-text))
+    (is (parseable? parser changelog008-text))))
 
 
 (deftest changelog-parser-validation

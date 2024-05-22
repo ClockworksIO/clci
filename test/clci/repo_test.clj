@@ -1,10 +1,28 @@
 (ns clci.repo-test
   "This module provides tests for the `git` module."
   (:require
+    [clci.petshop :as petshop]
     [clci.repo :as rp]
     [clci.test-data :as datasets]
     [clci.util.core :refer [same-elements?]]
     [clojure.test :refer [deftest testing is]]))
+
+
+(deftest get-product-by-attribute
+  (testing "Testing utility to get a product by its key"
+    (is (map? (rp/get-product-by-key :storefront petshop/repo)))
+    (is (map? (rp/get-product-by-key :shop-backend petshop/repo)))
+    (is (nil? (rp/get-product-by-key :i-do-not-exist petshop/repo))))
+  (testing "Testing utility to get a product by its release prefix"
+    (is (map? (rp/get-product-by-release-prefix "storefront" petshop/repo)))
+    (is (map? (rp/get-product-by-release-prefix "shop-backend" petshop/repo)))
+    (is (nil? (rp/get-product-by-release-prefix "i-do-not-exist" petshop/repo)))))
+
+
+(deftest get-brick-by-key
+  (testing "Testing to get a brick by its key."
+    (is (map? (rp/get-brick-by-key :docker-client petshop/repo)))
+    (is (nil? (rp/get-brick-by-key :i-do-not-exist petshop/repo)))))
 
 
 (deftest affected-products

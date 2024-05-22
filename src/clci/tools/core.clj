@@ -2,16 +2,26 @@
   "This modules exposes tools to run on a repo."
   (:require
     [babashka.cli :refer [parse-opts]]
-    [clci.actions.core :refer [lines-of-code-action format-clj-action lint-clj-action antq-action update-changelog-action]]
-    [clci.actions.impl :refer [lines-of-code-action-text-reporter lines-of-code-action-edn-reporter format-clj-action-reporter lint-clj-action-reporter antq-action-text-reporter antq-action-edn-reporter]]
+    [clci.actions.core :refer [antq-action format-clj-action
+                               lines-of-code-action lint-clj-action]]
+    [clci.actions.impl :refer [antq-action-edn-reporter
+                               antq-action-text-reporter
+                               format-clj-action-reporter
+                               lines-of-code-action-edn-reporter
+                               lines-of-code-action-text-reporter
+                               lint-clj-action-reporter]]
+    [clci.changelog :refer [update-brick-changelog! update-product-changelog!]]
     [clci.release :as rel]
-    [clci.repo :refer [get-paths update-product-version]]
-    [clci.term :refer [red blue magenta]]
+    [clci.repo :refer [get-brick-by-key get-bricks get-paths get-product-by-key
+                       get-products read-repo update-brick-version
+                       update-product-version]]
+    [clci.repo :as rp]
+    [clci.semver :as sv]
+    [clci.term :refer [blue green magenta red yellow]]
     [clci.tools.carve :as carve]
     ;; [clci.tools.cloverage :as cov]
     [clci.tools.ghooks :as gh]
     [clci.tools.mkdocs :as mkdocs]
-    [clci.workflow.reporter :refer [default-reporter]]
     [clci.workflow.runner :refer [run-job]]
     [clojure.core.match :refer [match]]
     [clojure.string :as str]))
@@ -220,45 +230,104 @@ Options:
 Usage: clci release <options>
 
 Options:
-  --update-version    Set if you would like to update the version of all products. 
-  --create-releases   Set to create releases for all products.
-  --draft             Set if you would like to mark the new release as draft.
-  --pre-release       Set if you would like to mark the new release as pre-release.
-  --help              Print help.
+    --update-version    Sete to update the versions of bricks and products based on the commit history.
+    --release           Set to create a new Release using the Github API.
+    --pre-release       Set if you would like to mark the new release as pre-release.
+    --dry-run           If set, no actual release is created. Prints the information how a release would look like.
+    --help              Print help.
   
 ")))
+
+
+(defn get-new-version-for-key
+  ""
+  [versions p-key]
+  (->> versions
+       (filter
+         (fn [[key _]] (= key p-key)))
+       first
+       second))
+
+
+(defn- version-updates
+  [products new-versions]
+  (mapv (fn [{:keys [key version]}]
+          {:product key
+           :current-version (sv/version-str->vec version)
+           :new-version (or (get-new-version-for-key new-versions key) (sv/version-str->vec version))})
+        products))
+
+
+(defn- brick-updates
+  [bricks new-versions]
+  (mapv (fn [{:keys [key version]}]
+          {:brick key
+           :current-version (sv/version-str->vec version)
+           :new-version (or (get-new-version-for-key new-versions key) (sv/version-str->vec version))})
+        bricks))
+
+
+(defn update-product-versions!
+  ""
+  [product-version-updates]
+  (doseq [update product-version-updates]
+    (println (str (magenta (:current-version update)) (yellow "->")  (magenta (:new-version update)) "for product") (magenta (:product update)))
+    (update-product-version (sv/version-vec->str (:new-version update)) (:product update))))
+
+
+(defn update-brick-versions!
+  ""
+  [brick-version-updates]
+  (doseq [update brick-version-updates]
+    (println (str (magenta (:current-version update)) (yellow "->")  (magenta (:new-version update)) "for product") (magenta (:brick update)))
+    (update-brick-version (sv/version-vec->str (:new-version update)) (:brick update))))
+
+
+(defn release!-impl
+  ""
+  [update-version? release? pre-release? dry-run?]
+  (let [repo            (read-repo)
+        new-product-versions  (rel/calculate-products-version repo)
+        product-updates       (version-updates (get-products repo) new-product-versions)
+        new-brick-versions    (rel/calculate-bricks-version repo)
+        brick-updates         (brick-updates (get-bricks repo) new-brick-versions)]
+    (println (blue "[1 / 3] - Update bricks version information."))
+    (if (and update-version? (not dry-run?))
+      (update-brick-versions! brick-updates)
+      (println "skipping"))
+    (println (blue "[2 / 3] - Update product version information."))
+    (if (and update-version? (not dry-run?))
+      (update-product-versions! product-updates)
+      (println "skipping"))
+    (println (blue "[3 / 3] - Create Releases on Github."))
+    (if (and release? (not dry-run?))
+      (rel/release-new-products! pre-release?)
+      (println "skipping"))
+    (println (green "successful"))))
 
 
 (defn release!
   "Create a new release."
   [_]
-  (let [spec   {:update-version   {:coerce :boolean :default false :desc "Set if you would like to update the version of all products."}
-                :create-releases  {:coerce :boolean :Default false :desc "Set to create releases for all products."}
-                :draft            {:coerce :boolean :desc "Set if you would like to mark the new release as draft."}
+  (let [spec   {:release          {:coerce :boolean :desc "Set if you would like create a new Release."}
+                :update-version   {:coerce :boolean :desc "Set if you would like update the versions of bricks and products."}
                 :pre-release      {:coerce :boolean :desc "Set if you would like to mark the new release as pre-release."}
+                :dry-run          {:coerce :boolean :desc "If set, no actual release is created. Prints the information how a release would look like."}
                 :help             {:coerce   :boolean
                                    :desc     "Print help."
                                    :default  false}}
         opts   (parse-opts *command-line-args* {:spec spec})]
+    (println (blue "[RELEASE] - Create new Product Releases"))
+    (when (:dry-run opts)
+      (println (yellow "-- Dry Run --")))
+
     (cond
       ;; print help
       (:help opts)
       (print-help-release!)
-      ;; update product versions
-      (:update-version opts)
-      (let [new-versions    (rel/derive-current-commit-version)]
-        (println (blue "[NEW RELEASES] - Set new versions for products:"))
-        (doseq [[key version] new-versions]
-          (println (magenta (format "%s for product %s" version key)))
-          (update-product-version version key)))
-      ;; create new releases
-      (:create-releases opts)
-      (do
-        (println (blue "[NEW RELEASES] - Create Releases"))
-        (rel/create-releases))
-      ;; fallback to printing the help
+      ;; Create the releases
       :else
-      (print-help-release!))))
+      (release!-impl (:update-version opts) (:release opts) (:pre-release opts) (:dry-run opts)))))
 
 
 (defn- print-help-outdated
@@ -315,48 +384,86 @@ Options:
       (print-help-outdated))))
 
 
-(defn- print-help-update-changelog
-  "Print the help of the update-changelog tool."
+(defn- print-help-changelog!
+  "Print the help of the changelog tool."
   []
   (println
     (str/trim
       "
-Usage: clci update-changelog <options>
+Usage: clci changelog <options>
 
 Options:
-  --release     Optional release name to use to create a new release section.
+  --product     The key of the product to generate the changelog for.
+                Use `:ALL` to update all product changelogs.
+  --brick       The key of the brick to generate the changelog for.
+                Use `:ALL` to update all brick changelogs.
+  --version     Optional (release) version used to update the changelog. 
+                When not set, changes are put in the 'Unreleased' section.
   --help        Print help.
   
 ")))
 
 
-(defn- update-changelog
+(defn update-changelog!-impl
+  "Implements the changelog update.
+   Takes the `brick` and `product` keywords to specify which brick or
+   product changelog should be updated. When `:ALL` is provided as
+   value, then all brick or product changelogs are updated."
+  [brick product]
+  (let [repo        (rp/read-repo)
+        products    (rp/get-products repo)
+        bricks      (rp/get-bricks repo)]
+    (println (blue "Updating the Changelogs"))
+    (println (blue "[1 / 2] Updating Brick Changelogs"))
+    ;; first the bricks
+    (cond
+      ;; update all brick changelogs
+      (= :ALL brick)
+      (do
+        (println (blue ""))
+        (doseq [brick bricks]
+          (update-brick-changelog! repo brick)))
+      ;; update the changelog of a specific brick
+      (some? brick)
+      (update-brick-changelog! repo (get-brick-by-key brick repo))
+      :else
+      (println (yellow "No product selected - skipping.")))
+    ;; then the products
+    (println (blue "[2 / 2] Updating Product Changelogs"))
+    (cond
+      ;; update all product changelogs
+      (= :ALL product)
+      (do
+        (println (blue ""))
+        (doseq [product products]
+          (update-product-changelog! repo product)))
+      ;; update the changelog of a specific product
+      (some? product)
+      (update-product-changelog! repo (get-product-by-key product repo))
+      :else
+      (println (yellow "No product selected - skipping.")))
+    (println (green "Successfully updated the changelogs."))))
+
+
+(defn changelog!
   "Update the changelog."
   [_]
-  (let [spec   {:release          {:coerce   :string
-                                   :desc     "Optional release name used to update the changelog with a release."
+  (let [spec   {:product          {:coerce :keyword :desc "The key of the product to generate the changelog for."}
+                :brick            {:coerce :keyword :desc "The key of the brick to generate the changelog for."}
+                :version          {:coerce   :string
+                                   :desc     "Optional (release) version used to update the changelog. When not set, changes are put in the 'Unreleased' section."
                                    :default  nil}
                 :help             {:coerce   :boolean
                                    :desc     "Print help."
                                    :default  false}}
-        opts   (parse-opts *command-line-args* {:spec spec})
-        workflow-key :update-changelog
-        reporter default-reporter]
+        opts   (parse-opts *command-line-args* {:spec spec})]
     (cond
       ;; print help
       (:help opts)
-      (print-help-update-changelog)
+      (print-help-changelog!)
       ;; run changelog update
       :else
-      (let [report  (run-job
-                      update-changelog-action
-                      "Update the Changelog"
-                      workflow-key
-                      {:release     (:release opts)}
-                      reporter)]
-        (if (:failure? report)
-          (ex-info "" {})
-          (println (:report report)))))))
+      (update-changelog!-impl (:brick opts) (:product opts)))))
 
 
 (def format-clojure-job
@@ -383,10 +490,10 @@ Options:
    :description "Find outdated dependencies."})
 
 
-(def update-changelog-job
-  "A job to update the changelog."
-  {:fn          update-changelog
-   :description "Update the changelog."})
+;; (def update-changelog-job
+;;   "A job to update the changelog."
+;;   {:fn          update-changelog
+;;    :description "Update the changelog."})
 
 
 ;; TODO: not working yet

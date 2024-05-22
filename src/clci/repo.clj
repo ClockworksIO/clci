@@ -78,6 +78,13 @@
 
 
 ;;
+;; Definitions and Constants 
+;;
+
+(def brick-dir "bricks")
+
+
+;;
 ;; Utilities to work with repo.edn ;;
 ;;
 
@@ -159,6 +166,18 @@
   ([prefix repo] (get-product :release-prefix prefix repo)))
 
 
+(defn get-bricks
+  "Get all bricks."
+  ([] (-> (read-repo) :bricks))
+  ([repo] (get repo :bricks [])))
+
+
+(defn get-brick-by-key
+  "Get a brick by its key."
+  ([key] (get-brick-by-key key (read-repo)))
+  ([key repo] (u/find-first (fn [b] (= key (:key b))) (:bricks repo))))
+
+
 (defn- scm-url
   "Derive the scm url based on the scm `provider` and the `name` and `owner` of the repository."
   [provider name owner]
@@ -232,14 +251,24 @@
 
 (defn update-product-version
   "Update the version in the repo.edn file.
-  Takes the `version` as string and the product identifier.
-  If only the version is supplied, the function assumes the repo has only a single product."
-
+  Takes the `version` as string and the product identifier."
   [version product-key]
   (let [repo     (read-repo)
         idx      (u/find-first-index (:products repo) #(= (get % :key) product-key))
         product  (get-in repo [:products idx])]
     (->> (assoc-in repo [:products idx] (assoc product :version version))
+         (pretty-spit! "repo.edn"))))
+
+
+(defn update-brick-version
+  "Update the version in the repo.edn file.
+  Takes the `version` as string and the brick identifier."
+
+  [version brick-key]
+  (let [repo     (read-repo)
+        idx      (u/find-first-index (:bricks repo) #(= (get % :key) brick-key))
+        brick  (get-in repo [:bricks idx])]
+    (->> (assoc-in repo [:bricks idx] (assoc brick :version version))
          (pretty-spit! "repo.edn"))))
 
 

@@ -1,10 +1,10 @@
 (ns clci.release-test
   "This module provides tests for release tool."
   (:require
+    [clci.petshop :as petshop]
     [clci.release :as rel]
     [clci.test-data :as datasets]
-    [clci.util.core :refer [in? not-in?]]
-    [clojure.test :refer [deftest testing is]]))
+    [clojure.test :refer [deftest testing is are]]))
 
 
 
@@ -79,107 +79,56 @@
      :created_at  (gen/generate (sg/string-generator rfc3339-datetime-re))}))
 
 
+(def release-tags-example
+  "Exampels to test the information extraction of version tags.
+   Each entry is a vector of 
+   `[full-tag-str expected-release-prefix-str expected-maj-min-patch-str expected-semver-str]`."
+  [["release-1.2.4" "release" "1.2.4" "1.2.4"]
+   ["some-release-34.2.44" "some-release" "34.2.44" "34.2.44"]
+   ["1.2.4" nil "1.2.4" "1.2.4"]
+   ["some-very-long-prefix-release-1.2.4" "some-very-long-prefix-release" "1.2.4" "1.2.4"]
+   ["release-1.2.44-20240501.1" "release" "1.2.44" "1.2.44-20240501.1"]
+   ["release-12.2.44-beta-1.202405010211" "release" "12.2.44" "12.2.44-beta-1.202405010211"]])
+
+
 (deftest get-version-from-release-name
-  (testing "Testing to get the version string from a release name"
-    (is (= "1.2.4" (rel/release-name->version "release-1.2.4")))
-    (is (= "34.2.44" (rel/release-name->version "some-release-34.2.44")))
-    (is (= "1.2.4" (rel/release-name->version "1.2.4")))
-    (is (= "1.2.4" (rel/release-name->version "some-very-long-prefix-release-1.2.4")))))
+  (testing "Testing to get the prefix, version and mmp parts from a release name."
+    (doseq [[full-tag prefix mmp version] release-tags-example]
+      (are [x y] (= x y)
+        prefix (rel/tag->release-prefix full-tag)
+        mmp (rel/release-tag->maj-min-patch full-tag)
+        version (rel/release-tag->semver-tag full-tag)))))
 
 
-(deftest affected-products-many-products
-  (testing "Testing helper function which products are affected by a commit - many products."
-    (let [amended-commit-log (rel/amend-commit-log datasets/raw-commits-dataset-1)]
-      (is (let [result (rel/affected-products (nth amended-commit-log 0) datasets/product-dataset-1)]
-            (empty? result)))
-      (is (let [result (rel/affected-products (nth amended-commit-log 1) datasets/product-dataset-1)]
-            (in? result '(:pwa :minor))))
-      (is (let [result (rel/affected-products (nth amended-commit-log 2) datasets/product-dataset-1)]
-            (and
-              (in? result '(:pwa :minor))
-              (not-in? result '(:backend :minor)))))
-      (is (let [result (rel/affected-products (nth amended-commit-log 3) datasets/product-dataset-1)]
-            (and
-              (in? result '(:backend :minor))
-              (not-in? result '(:pwa :minor)))))
-      (is (let [result (rel/affected-products (nth amended-commit-log 4) datasets/product-dataset-1)]
-            (empty? result)))
-      (is (let [result (rel/affected-products (nth amended-commit-log 5) datasets/product-dataset-1)]
-            (and
-              (in? result '(:pwa :patch))
-              (in? result '(:backend :patch))))))))
+(deftest affected-products
+  (testing "Testing if commit affects product using the petshop datasets."
+    (is (rel/commit-affects-product? (first petshop/get-git-commits-on-branch-a) (petshop/get-product :storefront)))
+    (is (not (rel/commit-affects-product? (second petshop/get-git-commits-on-branch-a) (petshop/get-product :storefront))))
+    (is (not (rel/commit-affects-product? (first petshop/get-git-commits-on-branch-a) (petshop/get-product :mobile))))
+    (is (not (rel/commit-affects-product? (second petshop/get-git-commits-on-branch-a) (petshop/get-product :mobile))))
+    (is (not (rel/commit-affects-product? (first petshop/get-git-commits-on-branch-a) (petshop/get-product :shop-backend))))
+    (is (not (rel/commit-affects-product? (second petshop/get-git-commits-on-branch-a) (petshop/get-product :shop-backend))))
+
+    (is (not (rel/commit-affects-product? (first petshop/get-git-commits-on-branch-b) (petshop/get-product :storefront))))
+    (is (not (rel/commit-affects-product? (second petshop/get-git-commits-on-branch-b) (petshop/get-product :storefront))))
+    (is (not (rel/commit-affects-product? (first petshop/get-git-commits-on-branch-b) (petshop/get-product :mobile))))
+    (is (not (rel/commit-affects-product? (second petshop/get-git-commits-on-branch-b) (petshop/get-product :mobile))))
+    (is (rel/commit-affects-product? (first petshop/get-git-commits-on-branch-b) (petshop/get-product :shop-backend)))
+    (is (not (rel/commit-affects-product? (second petshop/get-git-commits-on-branch-b) (petshop/get-product :shop-backend))))))
 
 
-(deftest derive-versions-many-products
-  (testing "Testing to derive the current versions of app products based on the commit log - many products."
-    (let [derived-versions (rel/derive-current-commit-all-versions-impl
-                             (rel/amend-commit-log datasets/raw-commits-dataset-1)
-                             datasets/product-dataset-1)]
-      (is (= "0.2.1" (:pwa derived-versions)))
-      (is (= "0.1.1" (:backend derived-versions)))
-      (is (= "0.3.0" (:common derived-versions))))))
-
-
-
-(deftest commit-version-increment-single-product
-  (testing "Testing helper function how a commit increments a version - single product."
-    (let [amended-commit-log (rel/amend-commit-log datasets/raw-commits-dataset-2)]
-      (is (nil? (rel/derive-version-increment (-> amended-commit-log (nth 0) :ast))))
-      (is (=
-            (rel/derive-version-increment (-> amended-commit-log (nth 1) :ast))
-            :major))
-      (is (= (rel/derive-version-increment (-> amended-commit-log (nth 2) :ast)) :minor))
-      (is (let [result (rel/derive-version-increment (-> amended-commit-log (nth 3) :ast))]
-            (= result :minor)))
-      (is (let [result (rel/derive-version-increment (-> amended-commit-log (nth 4) :ast))]
-            (= result :patch))))))
-
-
-(deftest derive-versions-single-product
-  (testing "Testing to derive the current versions of app products based on the commit log - single product."
-    (let [derived-version (rel/derive-current-commit-version-single-product-impl
-                            (rel/amend-commit-log datasets/raw-commits-dataset-2)
-                            (first datasets/product-dataset-2))]
-      (is (= "2.2.1" (:app derived-version))))))
-
-
-(deftest new-release-required?
-  (testing "Testing if a new release is required based on the derived version and latest release."
-    (let [derived-versions (rel/derive-current-commit-all-versions-impl
-                             (rel/amend-commit-log datasets/raw-commits-dataset-1)
-                             datasets/product-dataset-1)
-          grouped-releases (-> gh-latest-releases-example-resp
-                               (rel/group-gh-releases-by-prefix)
-                               (rel/reduce-to-last-release))
-          mk-fake-product  (fn [version] {:version version})]
-      (is (rel/new-release-required?
-            (mk-fake-product (get derived-versions :pwa))
-            {:version (get-in grouped-releases ["pwa" :version])}))
-      (is (rel/new-release-required?
-            (mk-fake-product (get derived-versions :backend))
-            {:version (get-in grouped-releases ["kuchen" :version])}))
-      (is (not
-            (rel/new-release-required?
-              (mk-fake-product (get derived-versions :common))
-              {:version (get-in grouped-releases ["common" :version])}))))))
-
-
-(deftest prepare-new-releases
-  (testing "Testing to derive which releases should be created for the repo based on changes."
-    (let [products              (-> datasets/product-dataset-1)
-          fake-releases         (-> gh-latest-releases-example-resp
-                                    (rel/group-gh-releases-by-prefix)
-                                    (rel/reduce-to-last-release))
-          derived-versions      (rel/derive-current-commit-all-versions-impl
-                                  (rel/amend-commit-log datasets/raw-commits-dataset-1)
-                                  datasets/product-dataset-1)
-          fake-repo             {:products (map (fn [p]
-                                                  (assoc p :version (get derived-versions (:key p))))
-                                                products)}
-          result                (into (hash-map) (rel/prepare-new-releases-impl fake-repo fake-releases))]
-
-      (is (contains? result "pwa"))
-      (is (= "0.2.1" (get-in result ["pwa" :version])))
-      (is (contains? result "kuchen"))
-      (is (= "0.1.1" (get-in result ["kuchen" :version])))
-      (is (not (contains? result "common"))))))
+(deftest valid-version-tags
+  (testing "Testing tag validation for product releases"
+    (is (true? (rel/product-release-tag? "backend-1.2.3")))
+    (is (true? (rel/product-release-tag? "back-end-1.2.3")))
+    (is (true? (rel/product-release-tag? "backend-1.2.3-20230102.2")))
+    (is (true? (rel/product-release-tag? "backend-1.2.3-rc1")))
+    (is (false? (rel/product-release-tag? "backend-1.2.-rc1")))
+    (is (false? (rel/product-release-tag? "brick/backend-1.2.3")))
+    (is (false? (rel/product-release-tag? ""))))
+  (testing "Testing tag validation for brick versions"
+    (is (true? (rel/brick-version-tag? "brick/docker-1.2.3")))
+    (is (true? (rel/brick-version-tag? "brick/docker-client-1.2.3")))
+    (is (true? (rel/brick-version-tag? "brick/docker-client-1.2.3-rc33.1")))
+    (is (false? (rel/brick-version-tag? "docker-1.2.3")))
+    (is (false? (rel/brick-version-tag? "")))))

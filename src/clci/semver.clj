@@ -1,9 +1,6 @@
 (ns clci.semver
   "Semantic Versioning related functionality."
   (:require
-    ;; [clci.conventional-commit :as cc]
-    ;; [clci.gh.core :as gh]
-    ;; [clci.git :as git]
     [clojure.string :as str]))
 
 
@@ -11,7 +8,13 @@
   "Regular Expression to match version strings following the
   Semantic Versioning specification.
   See https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string."
-  #"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$")
+  #"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$")
+
+
+(def semver-m-m-p-tag
+  "Regular Expression to match the [major.minor.patch]
+  part of a semver string."
+  #"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)")
 
 
 (defn valid-version-tag?
@@ -82,7 +85,7 @@
 
 
 (defn newer?
-  "Compare two release versions `v1` and `v2` and return true if v1 is newer than v2."
+  "Compare two release versions (strings) `v1` and `v2` and return true if v1 is newer than v2."
   [v1 v2]
   (let [[v1-maj v1-min v1-patch _] (version-str->vec v1)
         [v2-maj v2-min v2-patch _] (version-str->vec v2)]

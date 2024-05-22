@@ -7,7 +7,7 @@
        Please always indicate which datesets can and should be used together.
        This module provides the _COMBINERS_ section for this purpose."
   (:require
-    [clci.test-utils :refer [commit-hash-re rfc3339-datetime-re commit-author-re]]
+    [clci.test-utils :refer [commit-hash-re rfc3339-datetime-re commit-author-re gh-ref-node-id-re]]
     [clojure.spec.gen.alpha :as gen]
     [miner.strgen :as sg]))
 
