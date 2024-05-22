@@ -6,6 +6,7 @@
     [clci.assistant.dialog :as dialog]
     [clci.products :refer [create-product!]]
     [clci.repo :as repo]
+    [clci.templates.clojure :as cljt]
     [clci.term :refer [red green yellow]]
     [clojure.string :as str]))
 
@@ -96,24 +97,8 @@
    {:step     :select-action-aliases-select
     :element  :choose
     :limit    2
-    :options  [{:name "nrepl" :key :nREPL} {:name "clj-format" :key :format}]}])
+    :options  cljt/available-aliases}])
 
-
-;; Method to add an alias to a new product (Clojure products only!)
-;; Works only with pre-defined aliases.
-(defmulti alias-opts (fn [alias] alias))
-
-
-;; Fallback for unknown aliases, they just get ignored
-(defmethod alias-opts :default [_] {})
-
-
-;; Add the option to run an nREPL server for the product during development
-(defmethod alias-opts :nREPL [_] {:extra-deps {'nrepl/nrepl {:mvn/version "1.1.0"}}})
-
-
-;; Add Clojure code formatting using cljstyle. Can be run using a clci Action
-(defmethod alias-opts :format [_] {:deps {'mvxcvi/cljstyle {:mvn/version "0.15.0"}}})
 
 
 (defn run-add-product-assistant
@@ -122,13 +107,12 @@
    assistant dialog."
   []
   (when-not (repo/valid-repo?)
-    ;; (clojure.pprint/pprint )
     (print (red "Unable to run the assistant.\n"))
     (print (yellow "The current directory does not has a valid repo.edn configuration file!\n"))
     (flush)
-    (System/exit 1)
-    (print (green "repo configuration is valid.\n"))
-    (flush))
+    (System/exit 1))
+  (print (green "repo configuration is valid.\n"))
+  (flush)
   (let [user-input        (dialog/run-linear-dialog  add-product-dialog)
         product-type      (dialog/find-in-step user-input :select-product-type :selected-options first :key)
         product-template  (dialog/find-in-step user-input :select-template :selected-options first :key)
@@ -138,7 +122,7 @@
                            :key         (or (dialog/find-in-step user-input :product-key :input) (keyword (dialog/find-in-step user-input :product-name :input)))
                            :version     "0.0.0"
                            :no-release? (not= :yes (dialog/find-in-step user-input :product-no-release?-select :selected-options first :key))
-                           :aliases     (mapv (fn [a-key] [a-key (alias-opts a-key)]) selected-aliases)}]
+                           :aliases     (mapv (fn [a-key] [a-key (cljt/alias-opts a-key)]) selected-aliases)}]
     (create-product! product-type product-template product-opts)
     (println (green "New product created."))))
 

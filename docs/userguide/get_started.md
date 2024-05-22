@@ -53,6 +53,18 @@ To add a new product run the product assistant with `bb clci product add` and fo
 After setting the inputs the assistant will create the necessary directories and files for a new Clojure product and adds a new entry for the product in the `repo.edn` file in the products section.
 The new product will already be prepared for automatic release creation (based on Semantic Versioning and Conventional Commits) using the tools build in clci. The last step creates an alias to run a nREPL server for the product and a second alias to run `cljstyle` to format the code of the product. The later can be invoked using the build-in workflow system of clci.
 
+## Add A Brick
+
+To add a Clojure Brick simply use the assistant with `bb clci brick add` and follow these steps:
+
+1. Select _Clojure_ as template
+2. Choose a name for the app, i.e. "database"
+3. Select a brick key. You can just stick with the default.
+4. Select booth _nREPL_ and _clj-format_ to automatically add aliases to the `deps.edn` file of the new brick for automations.
+
+After setting the inputs the assistant will create the necessary directories and files for a new Clojure brick and adds a new entry for the brick in the `repo.edn` file in the bricks section.
+The new brick will already be prepared for automatic release creation (based on Semantic Versioning and Conventional Commits) using the tools build in clci. The last step creates an alias to run a nREPL server for the brick and a second alias to run `cljstyle` to format the code of the brick. The later can be invoked using the build-in workflow system of clci.
+
 ## Setup Git Hooks
 
 t.b.d.
