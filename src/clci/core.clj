@@ -3,6 +3,7 @@
   a task to manage that project."
   (:require
     [babashka.cli :as cli]
+    [clci.assistant.bricks :refer [run-add-brick-assistant]]
     [clci.assistant.products :refer [run-add-product-assistant]]
     [clci.assistant.setup :refer [run-setup-assistant]]
     [clci.term :refer [yellow blue red green]]
@@ -126,6 +127,12 @@
   (run-add-product-assistant))
 
 
+(defn add-brick
+  "Add a new Brick to the repo using the brick assistant."
+  [_]
+  (run-add-brick-assistant))
+
+
 (defn- handle-main-input-errors
   "Handle errors caused by invalid input passed to the main function.
   Show a useful error message to the user."
@@ -150,6 +157,8 @@ setup                                   Setup the repository for clci.
 setup git-hooks [options...]            Setup git hooks to trigger clci workflows.
 
 product add                             Add a product using the Product Assistant.
+
+brick add                               Add a brick using the Brick Assistant.
        
 run trigger <trigger> [options...]      Run the given <trigger> to execute the relevant workflows.
   available options:
@@ -175,6 +184,8 @@ list jobs                               List all available jobs.
                :commit-msg     {:coerce :boolean :desc "Set to create a hook for a commit-msg workflow."}}}
        {:cmds ["product" "add"]
         :fn   add-product}
+       {:cmds ["brick" "add"]
+        :fn   add-brick}
        {:cmds ["run" "trigger"]
         :fn   run-workflow-trigger
         :args->opts [:trigger]
