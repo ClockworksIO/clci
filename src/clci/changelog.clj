@@ -15,9 +15,14 @@
     [babashka.fs :refer [exists?]]
     [clci.conventional-commit :as cc]
     [clci.git :as git]
-    [clci.repo :as rp]
-    [clci.util.core :refer [any postwalk-reduce join-paths find-first]]
-    [clci.util.tree :refer [ast-get-node ast-dissoc-nodes ast-insert-after]]
+    [clci.github :as gh]
+    [clci.release :refer [commit-affects-brick? commit-affects-product?
+                          find-brick-latest-version-tag
+                          get-product-latest-release transform-commit-log]]
+    [clci.repo :as rp :refer [get-brick-by-key get-product-by-key valid-brick?
+                              valid-product?]]
+    [clci.util.core :refer [any join-paths postwalk-reduce]]
+    [clci.util.tree :refer [ast-dissoc-nodes ast-get-node ast-insert-after]]
     [clojure.string :as str]
     [instaparse.core :as insta]))
 
@@ -303,10 +308,10 @@
     (postwalk-reduce ast->text-impl ast str)))
 
 
-(defn update-changelog!-impl
+(defn update-changelog-ast!-impl
   "Update the changelog.
    Takes at least the `commit-log`.
-   The optional `release` is a map conform to the `:clci.release/release` spec.
+   The optional `version-info` is a map with two keys `:version` and `:published`.
    If no release is provided, then all changes described in the commit-log will
    be added to the Unreleased section of the changelog. Otherwise a new Release
    is added to the changelog and all pending changes in the Unreleased section
@@ -314,60 +319,82 @@
    If no changelog exists an empty changelog will be created and filled with the
    new entries derived from the commit-log.
    Writes to the `changelog.md` file!"
-  ([commit-log product release]
+  ([commit-log path version-info]
    (when-not (changelog-exists?)
      (create-changelog-stub))
-   (let [changelog-path          (join-paths (:root product) "CHANGELOG.md")
+   (let [changelog-path          (join-paths path "CHANGELOG.md")
          current-changelog-text  (slurp changelog-path)
          changelog-ast (text->ast current-changelog-text)
-         changelog-ast  (if (some? release)
-                          (changelog-ast-add-release changelog-ast commit-log (:tag release) (:published release))
+         changelog-ast  (if (some? version-info)
+                          (changelog-ast-add-release changelog-ast commit-log (:version version-info) (:published version-info))
                           (changelog-ast-add-unreleased changelog-ast commit-log))]
      (spit changelog-path
            (ast->text changelog-ast))
      changelog-ast)))
 
 
-(defn update-changelog!
+(defn update-product-changelog!
+  "Update the changelog of a product.
+   Takes the `repo` following `:clci/repo` spec and the `product` following
+   the `:clci.repo/product` spec. Optionally takes a `version-info` map with the keys
+   `:version` and `:published` to create a new changelog entry for this specific version.
+   When no version-info is supplied, the entries are added to the _Unreleased_ section of
+   the changelog."
+  ([repo product] (update-product-changelog! repo product nil))
+  ([repo product version-info]
+   (when-not (and (valid-product? product) (get-product-by-key (:key product) repo))
+     (throw (ex-info "Product does not exist in repository." {:cause :product-does-not-exist})))
+   (let [last-release                (get-product-latest-release repo product)
+         commits-since-last-release  (->> (git/commits-on-branch-since {:since (get-in last-release [:commit :hash])})
+                                          (transform-commit-log)
+                                          (filter (fn [c] (commit-affects-product? c product))))]
+     (update-changelog-ast!-impl commits-since-last-release (:root product) version-info))))
+
+
+(defn update-brick-changelog!
+  "Update the changelog of a brick.
+   Takes the `repo` following `:clci/repo` spec and the `brick` following
+   the `:clci.repo/brick` spec. Optionally takes a `version-info` map with the keys
+   `:version` and `:published` to create a new changelog entry for this specific version.
+   When no version-info is supplied, the entries are added to the _Unreleased_ section of
+   the changelog."
+  ([repo brick] (update-brick-changelog! repo brick nil))
+  ([repo brick version-info]
+   (when-not (and (valid-brick? brick) (get-brick-by-key (:key brick) repo))
+     (throw (ex-info "Brick does not exist in repository." {:cause :brick-does-not-exist})))
+   (let [gh-tags                       (gh/get-all-tag-refs (get-in repo [:scm :provider :owner]) (get-in repo [:scm :provider :repo]))
+         tags                          (gh/tag-refs->tags gh-tags)
+         last-brick-tag                (find-brick-latest-version-tag brick tags)
+         commits-since-last-version    (->> (git/commits-on-branch-since {:since (:commit-sha last-brick-tag)})
+                                            (transform-commit-log)
+                                            (filter (fn [c] (commit-affects-brick? c brick))))]
+     (update-changelog-ast!-impl commits-since-last-version (join-paths rp/brick-dir (:root brick)) version-info))))
+
+
+(defn update-bricks-changelogs
   ""
-  ([commit-log] (update-changelog! commit-log nil))
-  ([commit-log release]
-   (let [all-products  (rp/get-products)
-         products-map  (rp/group-and-filter-commits-by-product commit-log all-products)]
-     (doseq [[product-key commits] products-map]
-       (update-changelog!-impl commits (find-first (fn [p] (= (:key p) product-key)) all-products) release)))))
+  [repo])
 
 
 (comment
   "Example how to use the `update-changelog` function."
   (def scm-owner  "clockworksIO")
   (def scm-repo   "clci")
+  (def product    {:root "common" :key :common :release-prefix "common" :version "0.3.0"})
+  (def brick      {:root "docker" :key :docker :version "0.12.1"})
 
   (def repo
     {:scm {:provider {:name :github
                       :owner scm-owner
-                      :repo scm-repo}}})
+                      :repo scm-repo}}
+     :products [product]
+     :bricks   [brick]})
 
-  ;; get the latest release using the clci.release module
-  (def latest-release
-    (release/get-latest-release repo))
-
-  ;; get all commits since the latest release
-  (def commits-since-release
-    (git/commits-on-branch-since {:since (get-in latest-release [:commit :hash]) :branch "feat/clci-94"}))
-
-  ;; amend the commits
-  (def amended-commits-since-release
-    (release/amend-commit-log commits-since-release))
-
-  ;; update the changelog with commits, no new release
-  (update-changelog! amended-commits-since-release)
+  ;; update the changelog of a brick with no new version
+  (update-brick-changelog! repo brick)
   
-  ;; update the changelo with commits releated to a new release
-  (update-changelog!
-    amended-commits-since-release
-    {:tag "1.2.3"
-     :published "2024-11-12"})
+  ;; update the changelog of a product with a new release
+  (update-product-changelog! repo product {:version "0.3.1" :published "2024-07-15"})
   )
 
 

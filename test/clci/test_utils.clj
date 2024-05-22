@@ -14,6 +14,11 @@
   #"[0-9a-f]{5,40}")
 
 
+(def gh-ref-node-id-re
+  "Regex to describe the github node_id of a ref node."
+  #"REF_[0-9a-zA-Z]{40}")
+
+
 ;; Spec for a git commit hash.
 ;; Can be used to generate commit hashes i.e. for generative testing.
 (s/def ::commit-hash

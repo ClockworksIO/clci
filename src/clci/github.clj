@@ -10,16 +10,28 @@
   
   **note**: This module contains code based on https://github.com/borkdude/gh-release-artifact."
   (:require
+    [babashka.fs :as fs]
     [babashka.http-client :as http]
     [cheshire.core :as cheshire]
     [clci.git :as git]
+    [clci.util.core :refer [slurp-env-file]]
     [clojure.string :as str]))
 
 
 (defn- gh-token
-  "Get the Github access token from the environment."
+  "Get the Github access token from the environment.
+   Reads the token in priority
+   1. `.repl.env` file if present
+   2. `.env` file if present
+   3. From the environment variables otherwise"
   []
-  (System/getenv "GITHUB_TOKEN"))
+  (cond
+    (fs/exists? ".repl.env")
+    (:GITHUB_TOKEN (slurp-env-file ".repl.env"))
+    (fs/exists? ".env")
+    (:GITHUB_TOKEN (slurp-env-file ".env"))
+    :else
+    (System/getenv "GITHUB_TOKEN")))
 
 
 (defn- path
@@ -141,3 +153,69 @@
     (-> (http/get url (with-headers {}))
         :body
         (cheshire/parse-string true))))
+
+
+(defn get-all-tag-refs
+  "Get all tags.
+   Uses the Github refs API to get all tag refs.
+   Takes the `owner` and the `repo` name and the `tag`.
+   Returns a list of git refs pointing to a tag."
+  [owner repo]
+  (-> (http/get (path endpoint "repos" owner repo "git" "refs" "tags") (with-headers {}))
+      :body
+      (cheshire/parse-string true)))
+
+
+(defn tag-ref->tag
+  "Transform a github tag ref into a tag.
+   Takes a single tag ref as returned by the GH API and returns a single
+   tag in map form.
+   **Example result**:
+   ```clojure
+   {:name \"clci-0.15.0\"
+    :sha \"6c7ec5872d417472f727f3d8e2a35fddad8ab593\"
+    :ref \"refs/tags/clci-0.15.0\"
+    :url \"https://api.github.com/repos/ClockworksIO/clci/git/refs/tags/clci-0.15.0\"
+   }
+   ```"
+  [ref]
+  {:name (-> (:ref ref) (str/split #"refs/tags/") last)
+   :commit-sha (get-in ref [:object :sha])
+   :ref (:ref ref)
+   :url (:url ref)})
+
+
+(defn tag-refs->tags
+  "Transform a list of github tag refs to a vector of tags.
+   Takes a list `tag-refs` with tag refs as returned from the GH API and transformes
+   each ref to a tag representation."
+  [tag-refs]
+  (mapv tag-ref->tag tag-refs))
+
+
+
+(defn get-tree
+  "Returns a single tree using the SHA1 value or ref name for that tree.
+   Takes the `owner` and the `repo` name and the `tree-sha` for a specific tree. 
+   Optionally takes the `recursive?` option. If set, then the tree is fetched
+   recursively."
+  ([owner repo tree-sha] (get-tree owner repo tree-sha false))
+  ([owner repo tree-sha recursive?]
+   (let [uri (if recursive?
+               (with-query-params (path endpoint "repos" owner repo "git" "trees" tree-sha) {:recursive true})
+               (path endpoint "repos" owner repo "git" "trees" tree-sha))]
+     (-> (http/get uri (with-headers {}))
+         :body
+         (cheshire/parse-string true)))))
+
+
+(defn get-content
+  "Returns a single tree using the SHA1 value or ref name for that tree.
+   Takes the `owner` and the `repo` name, the `resource-path` denoting the
+   path of the file or directory to fetch relativer to the repository root
+   and the `ref` option to specify the ref (i.e. a branch name) that 
+   should be uses to fetch the content."
+  [owner repo resource-path ref]
+  (-> (http/get (with-query-params (path endpoint "repos" owner repo "contents" resource-path) {:ref ref}) (with-headers {}))
+      :body
+      (cheshire/parse-string true)))

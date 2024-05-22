@@ -6,3 +6,4 @@ target/
 .babashka/
 example/
 dummy-repo/
+.repl.env

@@ -4,10 +4,10 @@
   (:require
     [babashka.process :refer [sh]]
     [carve.api :as api]
-    [clci.changelog :refer [update-changelog!]]
+    ;; [clci.changelog :refer [update-changelog!]]
     [clci.conventional-commit :refer [valid-commit-msg?]]
     [clci.git :refer [staged-files current-branch-name commits-on-branch-since]]
-    [clci.release :refer [get-latest-release amend-commit-log]]
+    ;; [clci.release :refer [get-latest-release transform-commit-log]]
     [clci.repo :refer [read-repo get-products]]
     [clci.util.core :refer [any]]
     [clci.workflow.workflow :refer [get-workflow-history workflow-successful?]]
@@ -247,18 +247,18 @@
   "Implementation of the update-changelog action."
   [ctx]
   (try
-    (let [release-name                  (get-in ctx [:job :inputs :release])
-          new-release                   (if release-name
-                                          {:tag       (get-in ctx [:job :inputs :release])
-                                           :published (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (java.util.Date.))}
-                                          nil)
-          repo                          (read-repo)
-          latest-release                (get-latest-release repo)
-          commits-since-release         (commits-on-branch-since {:since (get-in latest-release [:commit :hash]) :branch (current-branch-name)})
-          amended-commits-since-release (amend-commit-log commits-since-release)]
-      (update-changelog! amended-commits-since-release new-release)
-      {:outputs {}
-       :failure false})
+    ;; (let [release-name                  (get-in ctx [:job :inputs :release])
+    ;;       new-release                   (if release-name
+    ;;                                       {:tag       (get-in ctx [:job :inputs :release])
+    ;;                                        :published (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (java.util.Date.))}
+    ;;                                       nil)
+    ;;       repo                          (read-repo)
+    ;;       latest-release                (get-latest-release repo)
+    ;;       commits-since-release         (commits-on-branch-since {:since (get-in latest-release [:commit :hash]) :branch (current-branch-name)})
+    ;;       amended-commits-since-release (transform-commit-log commits-since-release)]
+    ;;   (update-changelog! amended-commits-since-release new-release)
+    ;;   {:outputs {}
+    ;;    :failure false})
     (catch Exception _
       {:outputs {}
        :failure true})))

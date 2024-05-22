@@ -1,7 +1,7 @@
 (ns clci.semver-test
   "This module provides tests for the semantic versioning module."
   (:require
-    [clci.semver :refer [valid-version-tag? major minor patch pre-release newer?]]
+    [clci.semver :refer [valid-version-tag? major minor patch pre-release newer? semver-m-m-p-tag]]
     [clojure.test :refer [deftest testing is]]))
 
 
@@ -49,3 +49,13 @@
     (is (newer? "12.24.342" "1.0.0"))
     (is (newer? "51.0.0" "1.2.3"))
     (is (not (newer? "1.2.3" "1.2.5")))))
+
+
+(deftest semver-m-m-p-tag-tests
+  (testing "Test the regex to find only the `<major>.<minor>.<patch>` part of the version."
+    (is (true? (some? (re-find semver-m-m-p-tag "1.2.3"))))
+    (is (true? (some? (re-find semver-m-m-p-tag "0.1.0"))))
+    (is (true? (some? (re-find semver-m-m-p-tag "12.312.31234"))))
+    (is (true? (some? (re-find semver-m-m-p-tag "0.0.0"))))
+    (is (false? (some? (re-find semver-m-m-p-tag "a.0.0"))))
+    (is (false? (some? (re-find semver-m-m-p-tag "12.a4.123"))))))

@@ -79,7 +79,8 @@
    "format"             tools/format-clojure-job
    "lint"               tools/lint-clojure-job
    "outdated"           tools/outdated-job
-   "update-changelog"   tools/update-changelog-job})
+   ;; "update-changelog"   tools/update-changelog-job
+   })
 
 
 ;; TODO: only a stubb
@@ -168,6 +169,15 @@ run trigger <trigger> [options...]      Run the given <trigger> to execute the r
 run job <job> [options...]              Run the Job <job> with optional arguments [options].
 
 list jobs                               List all available jobs.
+       
+release                                 Create a new release.
+    --update-version                    Set to update the versions of bricks and products based on the commit history.
+    --release                           Set to create a new Release using the Github API.
+    --pre-release                       Set if you would like to mark the new release as pre-release.
+    --dry-run                           If set, no actual release is created. Prints the information how a release would look like.
+       
+Other flags:
+    --help                              Print this help.
 ")))
 
 
@@ -201,6 +211,8 @@ list jobs                               List all available jobs.
         :args->opts [:job]}
        {:cmds ["list" "jobs"]
         :fn list-jobs}
+       {:cmds ["changelog"]
+        :fn tools/changelog!}
        {:cmds ["release"]
         :fn tools/release!}
        {:cmds []

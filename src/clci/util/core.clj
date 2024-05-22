@@ -28,6 +28,18 @@
       (edn/read-string)))
 
 
+(defn slurp-env-file
+  "Read a file in the .env format and provide the contents
+   as a map with keyword keys."
+  ([] (slurp-env-file ".repl.env"))
+  ([path]
+   (->> (slurp path)
+        (str/split-lines)
+        (map (fn [line] (str/split line #"=")))
+        (map (fn [[key value]] [(keyword (str/trim key)) (str/trim value)]))
+        (into {}))))
+
+
 (defn join-paths
   "Takes an arboitrary number of (partital) paths and joins them together.
   Handles slashes at the end of the path.

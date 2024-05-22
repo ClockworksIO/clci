@@ -14,7 +14,7 @@
  
  :deps      {org.clojure/clojure                      {:mvn/version "1.11.1"}
              babashka/process                         {:mvn/version "0.4.16"}
-             org.babashka/cli {:mvn/version "0.6.46"},
+             org.babashka/cli                         {:mvn/version "0.6.46"},
              org.babashka/http-client                 {:mvn/version "0.1.4"}
              io.github.babashka/instaparse.bb         {:git/sha "15fc62057162e794b1bb2297c90885c669bb744d"}
              io.github.clj-kondo/clj-kondo-bb         {:git/tag "v2023.01.20" 
