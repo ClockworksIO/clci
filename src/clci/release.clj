@@ -598,7 +598,7 @@
         owner     (get-in repo [:scm :provider :owner])]
     (try
       (if (sv/newer? (:version product) (:version latest-release))
-        (gh/create-release {:owner owner :repo repo-name :tag (str (release-prefix product) (:version product)) :draft false :pre-release pre-release?})
+        (gh/create-release {:owner owner :repo repo-name :tag (str (release-prefix product) "-" (:version product)) :draft false :pre-release pre-release?})
         :release-for-version-exists)
       (catch Exception ex
         (throw (ex-info "Unable to create release" {:cause :github-api-error :data (ex-data ex)}))))))

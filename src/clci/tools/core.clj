@@ -24,7 +24,10 @@
     [clci.tools.mkdocs :as mkdocs]
     [clci.workflow.runner :refer [run-job]]
     [clojure.core.match :refer [match]]
-    [clojure.string :as str]))
+    [clojure.string :as str])
+  (:import
+    java.time.LocalDateTime
+    java.time.format.DateTimeFormatter))
 
 
 (defn- coerce-paths
@@ -409,10 +412,12 @@ Options:
    Takes the `brick` and `product` keywords to specify which brick or
    product changelog should be updated. When `:ALL` is provided as
    value, then all brick or product changelogs are updated."
-  [brick product]
+  [brick product version]
   (let [repo        (rp/read-repo)
         products    (rp/get-products repo)
-        bricks      (rp/get-bricks repo)]
+        bricks      (rp/get-bricks repo)
+        date-today  (fn []
+                      (.format (LocalDateTime/now) (DateTimeFormatter/ofPattern "yyyy-MM-dd")))]
     (println (blue "Updating the Changelogs"))
     (println (blue "[1 / 2] Updating Brick Changelogs"))
     ;; first the bricks
@@ -425,7 +430,7 @@ Options:
           (update-brick-changelog! repo brick)))
       ;; update the changelog of a specific brick
       (some? brick)
-      (update-brick-changelog! repo (get-brick-by-key brick repo))
+      (update-brick-changelog! repo (get-brick-by-key brick repo) {:version version :published (date-today)})
       :else
       (println (yellow "No product selected - skipping.")))
     ;; then the products
@@ -439,7 +444,7 @@ Options:
           (update-product-changelog! repo product)))
       ;; update the changelog of a specific product
       (some? product)
-      (update-product-changelog! repo (get-product-by-key product repo))
+      (update-product-changelog! repo (get-product-by-key product repo) {:version version :published (date-today)})
       :else
       (println (yellow "No product selected - skipping.")))
     (println (green "Successfully updated the changelogs."))))
@@ -463,7 +468,7 @@ Options:
       (print-help-changelog!)
       ;; run changelog update
       :else
-      (update-changelog!-impl (:brick opts) (:product opts)))))
+      (update-changelog!-impl (:brick opts) (:product opts) (:version opts)))))
 
 
 (def format-clojure-job
