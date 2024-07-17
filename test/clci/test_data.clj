@@ -7,7 +7,7 @@
        Please always indicate which datesets can and should be used together.
        This module provides the _COMBINERS_ section for this purpose."
   (:require
-    [clci.test-utils :refer [commit-hash-re rfc3339-datetime-re commit-author-re gh-ref-node-id-re]]
+    [clci.test-utils :refer [commit-hash-re rfc3339-datetime-re commit-author-re]]
     [clojure.spec.gen.alpha :as gen]
     [miner.strgen :as sg]))
 
@@ -29,17 +29,24 @@
   [{:root "" :key :app :release-prefix "app" :version "1.41.2-alpha"}])
 
 
+(def brick-dataset-1
+  "Fragment with several bricks."
+  [{:key :docker :root "docker" :version "0.12.3"}])
+
+
 (def repo-dataset-1
   "A full repo config dataset. 
    - uses github as SCM
-   - has multiple products"
+   - has multiple products
+   - has several bricks"
   {:scm
    {:type 		:git
     :url 			"git@github.com:ClockworksIO/clci.git"
     :provider {:name :github
                :repo "clci"
                :owner "ClockworksIO"}}
-   :products product-dataset-1})
+   :products product-dataset-1
+   :bricks brick-dataset-1})
 
 
 (def repo-dataset-2
