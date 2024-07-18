@@ -86,4 +86,3 @@
   (-> (shell {:out :string} "git rev-parse --is-inside-work-tree")
       :exit
       (= 0)))
-

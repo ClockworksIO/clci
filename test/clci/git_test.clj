@@ -5,4 +5,3 @@
     [clci.test-data :as datasets]
     [clci.util.core :refer [same-elements?]]
     [clojure.test :refer [deftest testing is]]))
-

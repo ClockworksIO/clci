@@ -35,4 +35,3 @@
     (spit (join-paths default-src-dir "core.clj") (format "(ns brick.%s.core)" brick-name))
     (spit (join-paths default-src-dir "impl.clj") (format "(ns brick.%s.impl)" brick-name))
     (repo/add-brick! brick-entry)))
-

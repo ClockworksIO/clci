@@ -396,6 +396,3 @@
   ;; update the changelog of a product with a new release
   (update-product-changelog! repo product {:version "0.3.1" :published "2024-07-15"})
   )
-
-
-

@@ -46,4 +46,3 @@ bb clci run trigger git-%s --verbose" (java.util.Date.) hook))
   (when s
     (let [extension (last (str/split s #"\."))]
       (extensions extension))))
-
