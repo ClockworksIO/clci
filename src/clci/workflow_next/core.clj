@@ -86,7 +86,7 @@
    ;; '[AND [COMPONENT IS :product] [PRODUCT KEY IS :pwa]] 
    ;; '[AND [COMPONENT IS :product] [PRODUCT KEY IS [:pwa :backend]]]
    ;; '[COMPONENT IS [:product :brick]]
-   :action                'clci.actions.clojure/format
+   :action               'clci.workflow-next.core/format-action ; 'clci.actions.clojure/format
    :with-side-effects?    true ; this job has side effects because code is formatted in place
    })
 
@@ -102,7 +102,7 @@
    :produced-artefacts    [{:key :staged-files}]
    :scope                 :repository
    :filter                []
-   :action                'clci.actions.git/list-staged-files
+   :action                'clci.workflow-next.core/git-list-staged-files-action; 'clci.actions.git/list-staged-files
    :with-side-effects?    false})
 
 
@@ -116,7 +116,7 @@
    :produced-artefacts    []
    :scope                 :repository
    :filter                []
-   :action                'clci.actions.git/add
+   :action                'clci.workflow-next.core/git-add-files-action; 'clci.actions.git/add
    :with-side-effects?    false})
 
 
@@ -132,7 +132,7 @@
 
 
 (defn format-action-fn
-  [context get-artefact put-artefact ch])
+  [context get-artefact put-artefact send-feedback])
 
 
 (def format-action
@@ -167,6 +167,16 @@
    :required-resources        [{:key :files :conform [:vector :string] :description "The files that should be added as a list."}]
    :produced-artefacts        []
    :fn                        'clci.workflow-next.core/add-files-fn})
+
+
+(defn list-staged-files-fn
+  [context get-artefact put-artefact send-feedback]
+  (let [dummy-files [".gitignore" "index.md" "src/example/core.clj"]])
+  (send-feedback {:msg "Set an artefact value"}))
+
+
+(defn add-files-fn
+  [context get-artefact put-artefact send-feedback])
 
 
 (comment
@@ -219,7 +229,10 @@
 (defn execute-job
   ""
   [context artefact-store send-feedback job]
-  (send-feedback {:msg "Running an actuak Job!" :job job}))
+  (send-feedback {:msg "Running an actual Job!" :job job})
+  (requiring-resolve (:action job))
+  (let [action (deref (resolve (:action job)))]
+    (send-feedback {:msg "Job action" :action action})))
 
 
 (defn get-next-job
@@ -279,3 +292,9 @@
   (run-workflow workflow' artefact-store collector) 
   
   )
+
+
+
+
+
+(deref (resolve 'clci.workflow-next.core/format-action))
