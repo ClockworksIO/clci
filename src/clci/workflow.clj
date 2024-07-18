@@ -13,7 +13,3 @@
 ;;    [{:ref     :lint-commit-msg
 ;;      :action  actions/conventional-commit-linter-action
 ;;      :inputs  nil}]})
-
-
-
-

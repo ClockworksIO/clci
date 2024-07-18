@@ -32,4 +32,3 @@
     (spit (join-paths clj-user-dir "user.clj") "(ns user)")
     (spit (join-paths default-src-dir "core.clj") (format "(ns %s.core)" product-name))
     (repo/add-product! product-entry)))
-

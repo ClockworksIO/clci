@@ -49,5 +49,3 @@
 (s/def ::commit-author
   (s/spec (s/and string? #(re-matches commit-author-re %))
           :gen #(sg/string-generator commit-author-re)))
-
-

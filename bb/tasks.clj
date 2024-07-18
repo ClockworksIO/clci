@@ -4,6 +4,3 @@
   (:require
     [babashka.cli :as cli]
     [clci.carve :refer [carve-impl]]))
-
-
-

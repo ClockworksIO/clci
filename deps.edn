@@ -12,29 +12,29 @@
  ;; build target directory - used to place build artifacts
  :target-dir  "target"
  
- :deps      {org.clojure/clojure                      {:mvn/version "1.11.1"}
-             babashka/process                         {:mvn/version "0.4.16"}
-             org.babashka/cli                         {:mvn/version "0.6.46"},
-             org.babashka/http-client                 {:mvn/version "0.1.4"}
-             io.github.babashka/instaparse.bb         {:git/sha "15fc62057162e794b1bb2297c90885c669bb744d"}
-             io.github.clj-kondo/clj-kondo-bb         {:git/tag "v2023.01.20" 
-                                                       :git/sha "adfc7df"}
+ :deps      {org.clojure/clojure                      {:mvn/version "1.11.3"}
+             babashka/process                         {:mvn/version "0.5.22"}
+             org.babashka/cli                         {:mvn/version "0.8.59"},
+             org.babashka/http-client                 {:mvn/version "0.4.19"}
+             io.github.babashka/instaparse.bb         {:git/sha "059045f6a8450bda74eb30136ddd2c5475f788d1"}
+             io.github.clj-kondo/clj-kondo-bb         {:git/tag "v2023.12.15" 
+                                                       :git/sha "24eec12"}
              io.github.borkdude/carve                 {:git/url "https://github.com/borkdude/carve"
                                                        :git/tag "v0.3.5"
                                                        :git/sha "6f0f3bf"}
              io.github.matthewdowney/linesofcode-bb   {:git/tag "v0.0.2" 
                                                        :git/sha "12e4f52"}
-             cheshire/cheshire                        {:mvn/version "5.11.0"}
+             cheshire/cheshire                        {:mvn/version "5.13.0"}
              org.clojure/test.check                   {:mvn/version "1.1.1"}
              com.widdindustries/cljc.java-time        {:mvn/version "0.1.21"}
-             org.clojure/core.match                   {:mvn/version "1.0.1"}
-             com.velisco/strgen                       {:mvn/version "0.2.4"}
-             io.github.lispyclouds/bblgum             {:git/sha "1d4de3d49b84f64d1b71930fa1161f8d2622a4d9"}}
+             org.clojure/core.match                   {:mvn/version "1.1.0"}
+             com.velisco/strgen                       {:mvn/version "0.2.5"}
+             io.github.lispyclouds/bblgum             {:git/sha "b1b939ae5ae522a55499a8260b450e8898f77781"}}
 
  :aliases
- {:format				   {:deps 	{mvxcvi/cljstyle                       {:mvn/version "0.15.0"}}}
-  :outdated        {:deps   {com.github.liquidz/antq               {:mvn/version "2.2.992"}}}
+ {:format				   {:deps 	{mvxcvi/cljstyle                       {:mvn/version "0.16.630"}}}
+  :outdated        {:deps   {com.github.liquidz/antq               {:mvn/version "2.8.1206"}}}
   :coverage        {:deps   {cloverage/cloverage                   {:mvn/version "1.2.4"}}}
-  :nREPL           {:deps   {nrepl/nrepl                           {:mvn/version "1.0.0"}}}
+  :nREPL           {:deps   {nrepl/nrepl                           {:mvn/version "1.2.0"}}}
   }
  }

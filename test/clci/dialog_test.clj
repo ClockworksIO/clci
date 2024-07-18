@@ -42,4 +42,3 @@
       (is (nil? (find-in-step history :product-nondefault-root-select :text)))
       (is (nil? (find-in-step history :product-nondefault-root-select :selected-options second)))
       (is (nil? (find-in-step history :product-nondefault-root-select :selected-options 3))))))
-

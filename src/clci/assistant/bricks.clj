@@ -74,4 +74,3 @@
                            :aliases     (mapv (fn [a-key] [a-key (cljt/alias-opts a-key)]) selected-aliases)}]
     (create-brick! brick-template brick-opts)
     (println (green "New Brick created."))))
-

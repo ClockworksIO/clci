@@ -301,4 +301,3 @@
                      :action  action
                      :inputs  inputs}]}]
     (reporter (run-workflow workflow :manual))))
-
