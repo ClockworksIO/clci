@@ -6,6 +6,20 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+## [0.25.2] - 2024-07-19
+
+### Fixed
+
+This commit resolves the bug that no changelog updates were possible
+when trunk is not master. This fix allows to either give an explicit
+command line argument to specify the trunk branch when running the
+release task or to use the trunk as configured in the repo.edn file. as
+a fallback master is used as trunk.
+
+This commit also updates the ci pipeline and removes alternative cache
+keys.
+
+
 ## [0.25.1] - 2024-07-19
 
 ### Fixed
