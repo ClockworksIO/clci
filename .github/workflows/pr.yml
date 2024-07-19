@@ -39,7 +39,6 @@ jobs:
             ~/.deps.clj
           # List all files containing dependencies:
           key: cljdeps-${{ hashFiles('deps.edn', 'bb.edn') }}
-          restore-keys: cljdeps-
       # Fetch all dependencies
       - name: Fetch Dependencies
         run: clojure -P && bb prepare

@@ -319,14 +319,14 @@
    If no changelog exists an empty changelog will be created and filled with the
    new entries derived from the commit-log.
    Writes to the `changelog.md` file!"
-  ([commit-log path version-info]
+  ([commit-log path release]
    (when-not (changelog-exists?)
      (create-changelog-stub))
    (let [changelog-path          (join-paths path "CHANGELOG.md")
          current-changelog-text  (slurp changelog-path)
          changelog-ast (text->ast current-changelog-text)
-         changelog-ast  (if (some? version-info)
-                          (changelog-ast-add-release changelog-ast commit-log (:version version-info) (:published version-info))
+         changelog-ast  (if (some? release)
+                          (changelog-ast-add-release changelog-ast commit-log (:version release) (:published release))
                           (changelog-ast-add-unreleased changelog-ast commit-log))]
      (spit changelog-path
            (ast->text changelog-ast))
@@ -340,15 +340,14 @@
    `:version` and `:published` to create a new changelog entry for this specific version.
    When no version-info is supplied, the entries are added to the _Unreleased_ section of
    the changelog."
-  ([repo product] (update-product-changelog! repo product nil))
-  ([repo product version-info]
-   (when-not (and (valid-product? product) (get-product-by-key (:key product) repo))
-     (throw (ex-info "Product does not exist in repository." {:cause :product-does-not-exist})))
-   (let [last-release                (get-product-latest-release repo product)
-         commits-since-last-release  (->> (git/commits-on-branch-since {:since (get-in last-release [:commit :hash])})
-                                          (transform-commit-log)
-                                          (filter (fn [c] (commit-affects-product? c product))))]
-     (update-changelog-ast!-impl commits-since-last-release (:root product) version-info))))
+  [repo product & {:keys [trunk version published]}]
+  (when-not (and (valid-product? product) (get-product-by-key (:key product) repo))
+    (throw (ex-info "Product does not exist in repository." {:cause :product-does-not-exist})))
+  (let [last-release                (get-product-latest-release repo product)
+        commits-since-last-release  (->> (git/commits-on-branch-since {:since (get-in last-release [:commit :hash]) :branch trunk})
+                                         (transform-commit-log)
+                                         (filter (fn [c] (commit-affects-product? c product))))]
+    (update-changelog-ast!-impl commits-since-last-release (:root product) {:version version :published published})))
 
 
 (defn update-brick-changelog!
@@ -358,17 +357,16 @@
    `:version` and `:published` to create a new changelog entry for this specific version.
    When no version-info is supplied, the entries are added to the _Unreleased_ section of
    the changelog."
-  ([repo brick] (update-brick-changelog! repo brick nil))
-  ([repo brick version-info]
-   (when-not (and (valid-brick? brick) (get-brick-by-key (:key brick) repo))
-     (throw (ex-info "Brick does not exist in repository." {:cause :brick-does-not-exist})))
-   (let [gh-tags                       (gh/get-all-tag-refs (get-in repo [:scm :provider :owner]) (get-in repo [:scm :provider :repo]))
-         tags                          (gh/tag-refs->tags gh-tags)
-         last-brick-tag                (find-brick-latest-version-tag brick tags)
-         commits-since-last-version    (->> (git/commits-on-branch-since {:since (:commit-sha last-brick-tag)})
-                                            (transform-commit-log)
-                                            (filter (fn [c] (commit-affects-brick? c brick))))]
-     (update-changelog-ast!-impl commits-since-last-version (join-paths rp/brick-dir (:root brick)) version-info))))
+  [repo brick & {:keys [trunk version published]}]
+  (when-not (and (valid-brick? brick) (get-brick-by-key (:key brick) repo))
+    (throw (ex-info "Brick does not exist in repository." {:cause :brick-does-not-exist})))
+  (let [gh-tags                       (gh/get-all-tag-refs (get-in repo [:scm :provider :owner]) (get-in repo [:scm :provider :repo]))
+        tags                          (gh/tag-refs->tags gh-tags)
+        last-brick-tag                (find-brick-latest-version-tag brick tags)
+        commits-since-last-version    (->> (git/commits-on-branch-since {:since (:commit-sha last-brick-tag) :branch trunk})
+                                           (transform-commit-log)
+                                           (filter (fn [c] (commit-affects-brick? c brick))))]
+    (update-changelog-ast!-impl commits-since-last-version (join-paths rp/brick-dir (:root brick)) {:version version :published published})))
 
 
 (defn update-bricks-changelogs
