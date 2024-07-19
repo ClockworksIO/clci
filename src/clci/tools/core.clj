@@ -12,14 +12,12 @@
                                lint-clj-action-reporter]]
     [clci.changelog :refer [update-brick-changelog! update-product-changelog!]]
     [clci.release :as rel]
-    [clci.repo :refer [get-brick-by-key get-brick-version get-bricks get-paths
-                       get-product-by-key get-product-version get-products
-                       read-repo update-brick-version update-product-version]]
-    [clci.repo :as rp]
+    [clci.repo :as rp :refer [get-brick-by-key get-brick-version get-bricks get-paths
+                              get-product-by-key get-product-version get-products
+                              read-repo update-brick-version update-product-version]]
     [clci.semver :as sv]
     [clci.term :refer [blue green magenta red yellow]]
     [clci.tools.carve :as carve]
-    ; [clci.tools.cloverage :as cov]
     [clci.tools.ghooks :as gh]
     [clci.tools.mkdocs :as mkdocs]
     [clci.workflow.runner :refer [run-job]]
@@ -399,13 +397,14 @@ Options:
 Usage: clci changelog <options>
 
 Options:
-  --product     The key of the product to generate the changelog for.
-                Use `:ALL` to update all product changelogs.
-  --brick       The key of the brick to generate the changelog for.
-                Use `:ALL` to update all brick changelogs.
-  --version     Optional (release) version used to update the changelog. 
-                When not set, changes are put in the 'Unreleased' section.
-  --help        Print help.
+  --product           The key of the product to generate the changelog for.
+                      Use `:ALL` to update all product changelogs.
+  --brick             The key of the brick to generate the changelog for.
+                      Use `:ALL` to update all brick changelogs.
+  --version           Optional (release) version used to update the changelog. 
+                      When not set, changes are put in the 'Unreleased' section.
+  --trunk             Set a branch name that specifies the trunk different from the default 'master'.
+  --help              Print help.
   
 ")))
 
@@ -415,7 +414,7 @@ Options:
    Takes the `brick` and `product` keywords to specify which brick or
    product changelog should be updated. When `:ALL` is provided as
    value, then all brick or product changelogs are updated."
-  [brick product version]
+  [trunk brick product version]
   (let [repo        (rp/read-repo)
         products    (rp/get-products repo)
         bricks      (rp/get-bricks repo)
@@ -430,10 +429,10 @@ Options:
       (do
         (println (blue ""))
         (doseq [brick bricks]
-          (update-brick-changelog! repo brick)))
+          (update-brick-changelog! repo brick {:trunk trunk})))
       ;; update the changelog of a specific brick
       (some? brick)
-      (update-brick-changelog! repo (get-brick-by-key brick repo) {:version (or version (get-brick-version product)) :published (date-today)})
+      (update-brick-changelog! repo (get-brick-by-key brick repo) {:version (or version (get-brick-version product)) :published (date-today) :trunk trunk})
       :else
       (println (yellow "No product selected - skipping.")))
     ;; then the products
@@ -444,10 +443,10 @@ Options:
       (do
         (println (blue ""))
         (doseq [product products]
-          (update-product-changelog! repo product)))
+          (update-product-changelog! repo product {:trunk trunk})))
       ;; update the changelog of a specific product
       (some? product)
-      (update-product-changelog! repo (get-product-by-key product repo) {:version (or version (get-product-version product)) :published (date-today)})
+      (update-product-changelog! repo (get-product-by-key product repo) {:version (or version (get-product-version product)) :published (date-today) :trunk trunk})
       :else
       (println (yellow "No product selected - skipping.")))
     (println (green "Successfully updated the changelogs."))))
@@ -461,17 +460,19 @@ Options:
                 :version          {:coerce   :string
                                    :desc     "Optional (release) version used to update the changelog. When not set, changes are put in the 'Unreleased' section."
                                    :default  nil}
+                :trunk            {:coerce :string :desc "Set a branch name that specifies the trunk different from the default 'master'."}
                 :help             {:coerce   :boolean
                                    :desc     "Print help."
                                    :default  false}}
-        opts   (parse-opts *command-line-args* {:spec spec})]
+        opts   (parse-opts *command-line-args* {:spec spec})
+        trunk  (or (:trunk opts) (get-in (read-repo) [:scm :trunk]) "master")]
     (cond
       ;; print help
       (:help opts)
       (print-help-changelog!)
       ;; run changelog update
       :else
-      (update-changelog!-impl (:brick opts) (:product opts) (:version opts)))))
+      (update-changelog!-impl trunk (:brick opts) (:product opts) (:version opts)))))
 
 
 (def format-clojure-job

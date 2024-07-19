@@ -42,7 +42,6 @@ jobs:
             ~/.deps.clj
           # List all files containing dependencies:
           key: cljdeps-${{ hashFiles('deps.edn', 'bb.edn') }}
-          restore-keys: cljdeps-
       # Create the actual release
       - name: create release
         run: |
