@@ -12,14 +12,14 @@
                                lint-clj-action-reporter]]
     [clci.changelog :refer [update-brick-changelog! update-product-changelog!]]
     [clci.release :as rel]
-    [clci.repo :refer [get-brick-by-key get-bricks get-paths get-product-by-key
-                       get-products read-repo update-brick-version
-                       update-product-version]]
+    [clci.repo :refer [get-brick-by-key get-brick-version get-bricks get-paths
+                       get-product-by-key get-product-version get-products
+                       read-repo update-brick-version update-product-version]]
     [clci.repo :as rp]
     [clci.semver :as sv]
     [clci.term :refer [blue green magenta red yellow]]
     [clci.tools.carve :as carve]
-    ;; [clci.tools.cloverage :as cov]
+    ; [clci.tools.cloverage :as cov]
     [clci.tools.ghooks :as gh]
     [clci.tools.mkdocs :as mkdocs]
     [clci.workflow.runner :refer [run-job]]
@@ -433,7 +433,7 @@ Options:
           (update-brick-changelog! repo brick)))
       ;; update the changelog of a specific brick
       (some? brick)
-      (update-brick-changelog! repo (get-brick-by-key brick repo) {:version version :published (date-today)})
+      (update-brick-changelog! repo (get-brick-by-key brick repo) {:version (or version (get-brick-version product)) :published (date-today)})
       :else
       (println (yellow "No product selected - skipping.")))
     ;; then the products
@@ -447,7 +447,7 @@ Options:
           (update-product-changelog! repo product)))
       ;; update the changelog of a specific product
       (some? product)
-      (update-product-changelog! repo (get-product-by-key product repo) {:version version :published (date-today)})
+      (update-product-changelog! repo (get-product-by-key product repo) {:version (or version (get-product-version product)) :published (date-today)})
       :else
       (println (yellow "No product selected - skipping.")))
     (println (green "Successfully updated the changelogs."))))

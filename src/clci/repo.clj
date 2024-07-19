@@ -163,6 +163,14 @@
   ([key repo] (get-product :key key repo)))
 
 
+(defn get-product-version
+  "Get the version of a product.
+   Takes the `key` of the product and an optional `repo` config.
+   Returns the version of the product as it is currently set in the repo.edn config."
+  ([key] (get-product-version key (read-repo)))
+  ([key repo] (-> (get-product-by-key key repo) :version)))
+
+
 (defn get-product-by-release-prefix
   "Get a product by its release-prefix."
   ([prefix] (get-product :release-prefix prefix (read-repo)))
@@ -179,6 +187,14 @@
   "Get a brick by its key."
   ([key] (get-brick-by-key key (read-repo)))
   ([key repo] (u/find-first (fn [b] (= key (:key b))) (:bricks repo))))
+
+
+(defn get-brick-version
+  "Get the version of a brick.
+   Takes the `key` of the brick and an optional `repo` config.
+   Returns the version of the brick as it is currently set in the repo.edn config."
+  ([key] (get-brick-version key (read-repo)))
+  ([key repo] (-> (get-brick-by-key key repo) :version)))
 
 
 (defn- scm-url
