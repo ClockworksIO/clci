@@ -69,12 +69,14 @@
   "Get the version of the given `release` in a convenient vec format.
   Returns a vector in the format `[major minor patch pre-release]` where
   the first three parts are integers and the pre-release part is a string.
-  A `release` must be a map with the keys :commit, :tag and :name."
+  A `release` must be a map with the keys :commit, :tag and :name.
+  If the version-str is nil, returns nil."
   [version-str]
-  [(major version-str)
-   (minor version-str)
-   (patch version-str)
-   (pre-release version-str)])
+  (when-not (nil? version-str)
+    [(major version-str)
+     (minor version-str)
+     (patch version-str)
+     (pre-release version-str)]))
 
 
 (defn version-vec->str
@@ -90,6 +92,7 @@
   (let [[v1-maj v1-min v1-patch _] (version-str->vec v1)
         [v2-maj v2-min v2-patch _] (version-str->vec v2)]
     (cond
+      (and (some? v1) (nil? v2)) true
       (> (int v1-maj) (int v2-maj)) true
       (> (int v1-min) (int v2-min)) true
       (> (int v1-patch) (int v2-patch)) true
