@@ -5,7 +5,7 @@
   :provider {:name :github, :repo "clci", :owner "ClockworksIO"}},
  :products
  [{:root ".",
-   :version "0.24.0",
+   :version "0.25.0",
    :key :clci,
    :release-prefix "clci",
    :type :other}]}
