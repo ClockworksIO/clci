@@ -446,9 +446,9 @@
    Calculates the new version using the semver convention and conventional commits. 
    Commits not following the conventional commit specification are ignored.
    Returns the new version as vector `[major minor patch]`."
-  [last-tag brick]
+  [last-tag brick & {:keys [trunk]}]
   (let [version (sv/version-str->vec (:version brick))
-        commits-since-tag (transform-commit-log (git/commits-on-branch-since {:since (:commit-sha last-tag)}))
+        commits-since-tag (transform-commit-log (git/commits-on-branch-since {:since (:commit-sha last-tag) :branch trunk}))
         increments (->> commits-since-tag
                         (filter (fn [commit] (commit-affects-brick? commit brick)))
                         (remove nil?)
@@ -465,7 +465,7 @@
    Returns a vector of `[<brick-key> <version>]` where the version is in
    vector form.
    Calling this function will issue a request to the Github API."
-  [repo]
+  [repo & {:keys [trunk]}]
   (let [bricks              (rp/get-bricks repo)
         gh-tags             (gh/get-all-tag-refs (get-in repo [:scm :provider :owner]) (get-in repo [:scm :provider :repo]))
         tags                (gh/tag-refs->tags gh-tags)
@@ -481,7 +481,8 @@
         [(:key brick)
          (calculate-brick-version
            (get-brick-tag (:key brick))
-           brick)])
+           brick
+           {:trunk trunk})])
       bricks)))
 
 
@@ -530,10 +531,10 @@
    the new version using the semver convention and conventional commits. Commits not following the
    conventional commit specification are ignored.
    Returns the new version as vector `[major minor patch]`."
-  [last-release product]
+  [last-release product & {:keys [trunk]}]
   (let [version (sv/version-str->vec (:version product))
         commits-since-last-release (transform-commit-log
-                                     (git/commits-on-branch-since {:since (get-in last-release [:commit :hash])}))
+                                     (git/commits-on-branch-since {:since (get-in last-release [:commit :hash]) :branch trunk}))
         increments (->> commits-since-last-release
                         (filter (fn [commit] (commit-affects-product? commit product)))
                         (remove nil?)
@@ -556,7 +557,7 @@
    Returns a vector of `[<product-key> <version>]` where the version is in
    vector form.
    Calling this function will issue a request to the Github API."
-  [repo]
+  [repo & {:keys [trunk]}]
   (let [products            (rp/get-products repo)
         product-releases    (get-products-latest-release repo products)
         get-release         (fn [p-key]
@@ -570,7 +571,8 @@
         [(:key product)
          (calculate-product-version
            (get-release (:key product))
-           product)])
+           product
+           {:trunk trunk})])
       products)))
 
 

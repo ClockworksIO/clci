@@ -27,6 +27,7 @@
 
 (s/def :clci.repo.scm/type valid-scm)
 (s/def :clci.repo.scm/url string?)
+(s/def :clci.repo.scm/trunk string?)
 (s/def :clci.repo.scm.provider/name valid-scm-provider)
 (s/def :clci.repo.scm.provider/repo string?)
 (s/def :clci.repo.scm.provider/owner string?)
@@ -40,7 +41,9 @@
 
 (s/def :clci.repo/scm
   (s/keys :req-un [:clci.repo.scm/type
-                   :clci.repo.scm/url]))
+                   :clci.repo.scm/url
+                   :clci.repo.scm/provider]
+          :opt-un [:clci.repo.scm/trunk]))
 
 
 (s/def :clci.repo.product/root string?)

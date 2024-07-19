@@ -235,6 +235,7 @@ Usage: clci release <options>
 Options:
     --update-version    Sete to update the versions of bricks and products based on the commit history.
     --release           Set to create a new Release using the Github API.
+    --trunk             Set a branch name that specifies the trunk different from the default 'master'.
     --pre-release       Set if you would like to mark the new release as pre-release.
     --dry-run           If set, no actual release is created. Prints the information how a release would look like.
     --help              Print help.
@@ -288,11 +289,11 @@ Options:
 
 (defn release!-impl
   ""
-  [update-version? release? pre-release? dry-run?]
+  [trunk update-version? release? pre-release? dry-run?]
   (let [repo            (read-repo)
-        new-product-versions  (rel/calculate-products-version repo)
+        new-product-versions  (rel/calculate-products-version repo {:trunk trunk})
         product-updates       (version-updates (get-products repo) new-product-versions)
-        new-brick-versions    (rel/calculate-bricks-version repo)
+        new-brick-versions    (rel/calculate-bricks-version repo {:trunk trunk})
         brick-updates         (brick-updates (get-bricks repo) new-brick-versions)]
     (println (blue "[1 / 3] - Update bricks version information."))
     (if (and update-version? (not dry-run?))
@@ -315,11 +316,13 @@ Options:
   (let [spec   {:release          {:coerce :boolean :desc "Set if you would like create a new Release."}
                 :update-version   {:coerce :boolean :desc "Set if you would like update the versions of bricks and products."}
                 :pre-release      {:coerce :boolean :desc "Set if you would like to mark the new release as pre-release."}
+                :trunk            {:coerce :string :desc "Set a branch name that specifies the trunk different from the default 'master'."}
                 :dry-run          {:coerce :boolean :desc "If set, no actual release is created. Prints the information how a release would look like."}
                 :help             {:coerce   :boolean
                                    :desc     "Print help."
                                    :default  false}}
-        opts   (parse-opts *command-line-args* {:spec spec})]
+        opts   (parse-opts *command-line-args* {:spec spec})
+        trunk  (or (:trunk opts) (get-in (read-repo) [:scm :trunk]) "master")]
     (println (blue "[RELEASE] - Create new Product Releases"))
     (when (:dry-run opts)
       (println (yellow "-- Dry Run --")))
@@ -330,7 +333,7 @@ Options:
       (print-help-release!)
       ;; Create the releases
       :else
-      (release!-impl (:update-version opts) (:release opts) (:pre-release opts) (:dry-run opts)))))
+      (release!-impl trunk (:update-version opts) (:release opts) (:pre-release opts) (:dry-run opts)))))
 
 
 (defn- print-help-outdated
