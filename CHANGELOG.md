@@ -6,6 +6,12 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+## [0.25.1] - 2024-07-19
+
+### Fixed
+
+- resolves null error of #150
+
 ## [0.25.0] - 2024-07-19
 
 ### Added
