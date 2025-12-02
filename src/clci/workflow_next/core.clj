@@ -1,15 +1,19 @@
 (ns clci.workflow-next.core
   ""
   (:require
-    [clci.util.core :refer [find-first find-first-index]]
-    [clci.util.dev :refer [document document-spec]]
-    [clci.workflow-next.artefact :refer [empty-artefact-store get-artefact put-artefact]]
-    [clojure.core.async :as a :refer [go-loop]]
-    [clojure.pprint :refer [pprint]]
-    [clojure.spec.alpha :as spec])
+   [babashka.fs :as fs]
+   [babashka.process :refer [shell]]
+   [clci.util.core :refer [find-first find-first-index]]
+   [clci.util.dev :refer [document document-spec ToDo]]
+   [clci.workflow-next.artefact :refer [empty-artefact-store get-artefact
+                                        put-artefact]]
+   [clojure.core.async :as a :refer [go-loop]]
+   [clojure.pprint :refer [pprint]]
+   [clojure.spec.alpha :as spec]
+   [clojure.string :as str])
   (:import
-    java.time.LocalDateTime
-    java.time.format.DateTimeFormatter))
+   java.time.format.DateTimeFormatter
+   java.time.LocalDateTime))
 
 
 (def date-time-formatter
@@ -264,7 +268,10 @@
   ""
   [context artefact-store send-feedback job]
   (send-feedback {:msg "Running Job" :job (:key job)})
-  (requiring-resolve (:action job))
+  (try 
+    (requiring-resolve (:action job))
+      (catch java.io.FileNotFoundException _
+        (throw (ex-info "The Action refered by the Job does not exist on the classpath." {:cause :action-not-on-classpath :action (:action job)}))))
   (let [action              (deref (resolve (:action job)))
         artefact-ctx-base   {:workflow  (:workflow context)
                              :execution (:execution context)}
@@ -292,7 +299,6 @@
     (requiring-resolve (:fn action))
     (send-feedback {:msg "Action FN" :fn (deref (resolve (:fn action))) :level :debug})
     ((deref (resolve (:fn action))) {} get-resource put-artefact! send-feedback)))
-
 
 (defn get-next-job
   "Get the next job in the workflow.
@@ -440,3 +446,150 @@
 
 
 ;; (deref (resolve 'clci.workflow-next.core/format-action))
+
+
+
+(def format-java-source-files
+  ""
+  {:key                   :format-java-source-files
+   :name                  "Format Java Sources"
+   :description           "Format all Java source Files."
+   :required-resources    [{:key :src-dirs :static ["/home/tupel/Dev/projects/wholeX/wholesale-platform-utilities/baseline-testing/lib/src"]}
+                           ;{:key :src-files :static ["resources/foo/Bar.java" "resources/foo/Doeh.java"]}
+                           {:key :jar-path :static "/home/tupel/.local/bin/google-java-format-1.23.0-all-deps.jar"}]
+   :produced-artefacts    [{:key :formated-java-files :type :edn}]
+   :scope                 :component
+   :filter                []
+   :action                'clci.workflow-next.core/format-java-source-files-action
+   :with-side-effects?    true})
+
+
+(def format-java-source-files-action
+  {:key                       :clci.actions.java/format
+   :description               "This Action formats all Java source files at the specified path using `google-java-format`."
+   :with-side-effects?        true
+   :scope                     :component
+   ;; this implies the workdir in which the action is run is the directory where the component is located.
+   :vars                      [{:key :src-dirs :conform [:vector :string] :required true :description "A vector of directory paths where Java source files are located."}
+                               {:key :src-files :conform [:vector :string] :required true :description "A vector of file paths of Java source files."}
+                               {:key :jar-path :conform [:string] :required true :description "The path to the jar file of google-java-format"}]
+   :produced-artefacts        []
+   :fn                        'clci.workflow-next.core/format-java-with-google-java-format})
+
+
+(defn java-file?
+  "Predicate to test if the file at given path is a java source file."
+  [f-path]
+  (some? (re-matches #".*\.java" f-path)))
+
+
+(comment
+  (java-file? "foo.java") ;=> true
+  (java-file? "./src/foo.java") ;=> true
+  (java-file? "/foo/path/oh.java") ;=> true
+  (java-file? "foo/ds.fof") ;=> false
+  )
+
+
+(defn list-java-files-recursively
+  ""
+  [paths]
+  (reduce (fn [acc path]
+            (let [path (str path)]
+            (cond
+              (java-file? path) (conj acc path)
+              (fs/directory? path) (concat acc (list-java-files-recursively (fs/list-dir path))))))
+    []
+    paths))
+
+(comment
+  (list-java-files-recursively ["/home/tupel/Dev/projects/wholeX/wholesale-platform-utilities/baseline-testing/lib/src"])
+  )
+
+
+; (defn- list-java-files
+;   [path]
+;   (try
+;     (fs/list-dir path "*/**/*.java")
+;     (catch java.nio.file.NoSuchFileException ex
+;       (throw (ex-info "Not a valid source directory." {:cause :java-source-directory-does-not-exist :path (ex-message ex)})))))
+
+; (fs/list-dir "/home/tupel/Dev/projects/wholeX/wholesale-platform-utilities/baseline-testing/lib/src/" (fn [p] true))
+
+
+(defn format-java-with-google-java-format
+  "Implementation of the format-java-action.
+   Shells out to `google-java-format` and formats Java code."
+  [context get-resource put-artefact send-feedback]
+  (send-feedback {:msg "Running Java format Action." :state :running :level :debug})
+  (let [jar-path  (get-resource :jar-path)
+        src-dirs  (get-resource :src-dirs)
+        src-files (get-resource :src-files)
+        extra-source-files (list-java-files-recursively src-dirs)]
+    (when-not (fs/exists? jar-path)
+      (throw (ex-info "The specified jar file of `google-java-format` does not exist." {:cause :jar-file-does-not-exist :jar-path jar-path})))
+    (send-feedback {:msg "extra-source-files: " :extra-source-files extra-source-files :dir (get-resource :src-dirs)})
+    (send-feedback {:msg "All files: " :src-files (str/join " " (concat src-files extra-source-files)) :state :running :level :debug})
+    (let [proc (-> (shell {:out :string :err :string :continue true} (format "java -jar %s %s" jar-path (str/join " " (concat src-files extra-source-files)))))]
+      (send-feedback {:msg "proc: " :proc proc})
+      )
+    
+    
+    )
+    
+  
+  ;(send-feedback {:msg "Resource :src-dirs" :resource (get-resource :src-dirs)})
+  ;(send-feedback {:msg "Resource :src-files" :resource (get-resource :src-files)})
+  ;(send-feedback {:msg "Resource :jar-path" :resource (get-resource :jar-path)})
+  )
+
+
+(-> (shell {:out :string :err :string :continue true :dir "/home/tupel/Dev/projects/wholeX/wholesale-platform-utilities/baseline-testing/lib"} 
+      (format "java -jar %s  ./src/main/java/org/example/Library.java" "/home/tupel/.local/bin/google-java-format-1.23.0-all-deps.jar"))
+  ;:out
+ )
+
+; {:proc #object[java.lang.ProcessImpl 0xfb4af83 "Process[pid=2268235, exitValue=0]"], :exit 0, :in #object[java.lang.ProcessBuilder$NullOutputStream 0x203af096 "java.lang.ProcessBuilder$NullOutputStream@203af096"], 
+;  :out "/*\n * This source file was generated by the Gradle 'init' task\n */\npackage org.example;\n\npublic class Library {\n  public boolean someLibraryMethod() {\n    return true;\n  }\n}\n", :err "", :prev nil, 
+;  :cmd ["java" "-jar" "/home/tupel/.local/bin/google-java-format-1.23.0-all-deps.jar" "./src/main/java/org/example/Library.java"]}
+
+
+(def java-workflow
+  {:key             :java-workflow
+   :name            "Java Workflow"
+   :description     "Just an example to test this new workflow system."
+   :jobs
+   [format-java-source-files]})
+
+
+(comment
+  ;; initialize an empty artefact store
+  (def artefact-store (empty-artefact-store))
+  ;; dummy collector function
+  (def collector (fn [ch]
+                   (go-loop [msg (a/<! ch)]
+                     (try
+                       (pprint msg)
+                       (catch Exception e (println "Oh Noes something went terribly wrong!")))
+                     (recur (a/<! ch)))))
+  ;; run the workflow
+  (run-workflow java-workflow artefact-store collector :debug? true) 
+  )
+
+
+(ToDo
+  {:desc "Implement a new workflow system." 
+   :issue "clci-136"}
+  [:workflow/specs "Workflow Spec Validation"
+   [:todo "Implement a function to check if an Action conforms to spec"]
+   [:todo "Implement a function to check if a Job conforms to spec"]
+   [:todo "Implement a function to check if a Workflow conforms to spec"]]
+  [:workflow/resources "Workflow Resources" 
+   [:todo "Check a given resource read from the artefact store conforms to the spec"]
+   [:todo "Check a given artefact conforms to spec when writing it to the artefact store"]
+   [:todo "Fallback to a var default value when no resource is set for that var"]
+  [:workflow/runner
+   [:todo "Support running jobs on (single) components"]]
+  [:actions "Update build-in Actions to work with the new workflow system"]
+   [:doing "Action: create-random-integer-action"]]
+)

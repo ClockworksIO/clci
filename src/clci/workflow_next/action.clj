@@ -12,6 +12,7 @@
 
 
 (spec/def :clci.action/key keyword?)
+(spec/def :clci.action/name string?)
 (spec/def :clci.action/description string?)
 (spec/def :clci.action/with-side-effects? boolean?)
 (spec/def :clci.action/scope action-scopes)
@@ -22,6 +23,7 @@
 
 (spec/def :clci/action
   (spec/keys :req-un [:clci.action/key
+                      :clci.action/name
                       :clci.action/description
                       :clci.action/with-side-effects?
                       :clci.action/scope
@@ -32,6 +34,9 @@
 
 (document-spec {} :clci.action/key
                "The key to identify an Action. Used to reference an Action in a Job.")
+ 
+(document-spec {} :clci.action/name
+  "The name of the Action. Should be short and descriptive.")
 
 
 (document-spec {} :clci.action/description

@@ -2,7 +2,7 @@
   "Implementations of the actionsprovided by clci.
    This includes the implementation of ad-hoc actions."
   (:require
-    [babashka.process :refer [sh]]
+    [babashka.process :refer [sh shell]]
     [carve.api :as api]
     ;; [clci.changelog :refer [update-changelog!]]
     [clci.conventional-commit :refer [valid-commit-msg?]]
@@ -15,6 +15,33 @@
     [clojure.edn :as edn]
     [clojure.string :as str]
     [com.mjdowney.loc :as loc]))
+
+
+;;;;
+;;;; Action Functions of the `Misc` category ;;;;
+;;;;
+
+
+; fn [ctx]
+;                       {:outputs {:number (rand-int     (get-in ctx [:job :inputs :maximum] (get-in random-integer-action-inputs [:maximum :default])))}
+;                        :failure false})
+
+
+(defn random-integer-action-impl
+  "Implementation of the format-java-action.
+   Shells out to `google-java-format` and formats Java code."
+  [context get-resource put-artefact send-feedback]
+  (let [minimum       (get-resource :minimum)
+        maximum       (get-resource :maximum)
+        random-number (+ minimum (rand-int maximum))]
+    (send-feedback 
+      {:msg   (format "Created random integer %d between %d and %d" random-number minimum maximum )
+       :level :debug})
+    (put-artefact :random-number  random-number)))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 (defn conventional-commit-linter-action-impl
@@ -262,3 +289,25 @@
     (catch Exception _
       {:outputs {}
        :failure true})))
+
+
+(defn format-java-with-google-java-format
+  "Implementation of the format-java-action.
+   Shells out to `google-java-format` and formats Java code."
+  [context get-resource put-artefact send-feedback])
+
+
+(-> (shell {:out :string :err :string :continue true :dir "/home/tupel/Dev/projects/wholeX/wholesale-platform-utilities/baseline-testing/lib"} 
+      (format "java -jar %s  ./src/main/java/org/example/Library.java" "/home/tupel/.local/bin/google-java-format-1.23.0-all-deps.jar"))
+  ;:out
+ )
+
+
+; curl -OL https://github.com/google/google-java-format/releases/download/v1.23.0/google-java-format-1.23.0-all-deps.jar
+
+; (defn list-staged-files-fn
+;   [context get-resource put-artefact send-feedback]
+;   (let [dummy-files [".gitignore" "index.md" "src/example/core.clj"]]
+;     (send-feedback {:msg "Set an artefact value" :level :debug})
+;     (put-artefact :staged-files dummy-files)))
+

@@ -18,26 +18,39 @@
                                :description "True if the commit message follows the Conventional Commit specification."}}})
 
 
-(def random-integer-action-inputs
-  {:maximum {:type          :integer
-             :description   "Upper bound of the random number created."
-             :required      false
-             :default       1000}})
+; (def random-integer-action-inputs
+;   {:maximum {:type          :integer
+;              :description   "Upper bound of the random number created."
+;              :required      false
+;              :default       1000}})
 
+
+; (def create-random-integer-action
+;   "An example Action that create a random integer."
+;   {:name            "Random Integer"
+;    :key             :random-integer
+;    :description     "Create a random integer and writes it to the context."
+;    :scopes          [:repository :product]
+;    :impure?     		false
+;    :fn              (fn [ctx]
+;                       {:outputs {:number (rand-int     (get-in ctx [:job :inputs :maximum] (get-in random-integer-action-inputs [:maximum :default])))}
+;                        :failure false})
+;    :inputs          random-integer-action-inputs
+;    :outputs         {:number  {:type        :integer
+;                                :description "The number created by the action"}}})
 
 (def create-random-integer-action
-  "An example Action that create a random integer."
-  {:name            "Random Integer"
-   :key             :random-integer
-   :description     "Create a random integer and writes it to the context."
-   :scopes          [:repository :product]
-   :impure?     		false
-   :fn              (fn [ctx]
-                      {:outputs {:number (rand-int     (get-in ctx [:job :inputs :maximum] (get-in random-integer-action-inputs [:maximum :default])))}
-                       :failure false})
-   :inputs          random-integer-action-inputs
-   :outputs         {:number  {:type        :integer
-                               :description "The number created by the action"}}})
+  {:key                       :clci.actions.misc/random-integer
+   :name                      "Random Integer"
+   :description               "Create a random integer and writes it to the context."
+   :with-side-effects?        false
+   :scope                     :repository
+   ;; this implies the workdir in which the action is run is the directory where the component is located.
+   :vars                      [{:key :maximum :conform [:integer] :required false :default 1000 :description "Upper bound of the random number created."}
+                               {:key :minimum :conform [:integer] :required false :default 0 :description "Lower bound of the random number created."}]
+   :produced-artefacts        [{:key :random-number :conform [:integer] :description "The number created by the action"}]
+   :fn                        'clci.actions.core/format-java-with-google-java-format})
+
 
 
 (def increment-integer-action
@@ -193,3 +206,17 @@
    :inputs          {:release  {:type         :string
                                 :description  "Optional release name to use to update the changelog."}}
    :outputs         {}})
+
+
+
+(def format-java-action
+  {:key                       :clci.actions.java/format
+   :description               "This Action formats all Java source files at the specified path using `google-java-format`."
+   :with-side-effects?        true
+   :scope                     :component
+   ;; this implies the workdir in which the action is run is the directory where the component is located.
+   :vars                      [{:key :src-dirs :conform [:vector :string] :required true :description "A vector of directory paths where Java source files are located."}
+                               {:key :src-files :conform [:vector :string] :required true :description "A vector of file paths of Java source files."}
+                               {:key :jar-path :conform [:string] :required true :description "The path to the jar file of google-java-format"}]
+   :produced-artefacts        []
+   :fn                        'clci.actions.core/format-java-with-google-java-format})
